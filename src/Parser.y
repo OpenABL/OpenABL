@@ -9,15 +9,19 @@
 
 %code requires
 {
+#include "AST.hpp"
+
 namespace OpenABL {
 class ParserContext;
 }
+
 }
 
 %{
 
-#include "AST.hpp"
 #include "ParserContext.hpp"
+
+using namespace OpenABL::AST;
 
 OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 
@@ -40,6 +44,8 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   BITWISE_AND
   BITWISE_XOR
   BITWISE_OR
+  SHIFT_LEFT
+  SHIFT_RIGHT
   NOT
   QM
   DOT
@@ -53,16 +59,23 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   LBRACE
   RBRACE
   ASSIGN
-
   ARROW
   EQUALS
   NOT_EQUALS
   SMALLER_EQUALS
   GREATER_EQUALS
-  SHIFT_LEFT
-  SHIFT_RIGHT
   LOGICAL_AND
   LOGICAL_OR
+  ADD_ASSIGN
+  SUB_ASSIGN
+  MUL_ASSIGN
+  DIV_ASSIGN
+  MOD_ASSIGN
+  BITWISE_AND_ASSIGN
+  BITWISE_XOR_ASSIGN
+  BITWISE_OR_ASSIGN
+  SHIFT_LEFT_ASSIGN
+  SHIFT_RIGHT_ASSIGN
 
   INT
   FLOAT
@@ -81,68 +94,108 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 %left LOGICAL_AND
 %left LOGICAL_OR
 /* TODO: Ternary */
-%left ASSIGN PLUS_ASSIGN MINUS_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN BITWISE_AND_ASSIGN BITWISE_XOR_ASSIGN BITWISE_OR_ASSIGN SHIFT_LEFT_ASSIGN SHIFT_RIGHT_ASSIGN
+%left ASSIGN ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN BITWISE_AND_ASSIGN BITWISE_XOR_ASSIGN BITWISE_OR_ASSIGN SHIFT_LEFT_ASSIGN SHIFT_RIGHT_ASSIGN
+
+%type <std::string> IDENTIFIER;
+%type <OpenABL::AST::Type *> type;
+%type <OpenABL::AST::Param *> param;
+%type <OpenABL::AST::ParamList *> param_list;
+%type <OpenABL::AST::StatementList *> statement_list;
+%type <OpenABL::AST::FunctionDeclaration *> func_decl;
+%type <OpenABL::AST::Expression *> expression;
+%type <OpenABL::AST::Statement *> statement;
 
 %%
 
 start: declaration_list;
 
 declaration_list: %empty
-				| declaration_list declaration;
+                | declaration_list declaration;
 
 declaration: agent_decl
-		   | func_decl;
+           | func_decl;
 
 agent_decl: AGENT IDENTIFIER LBRACE RBRACE;
 
-func_decl: type IDENTIFIER LPAREN param_list RPAREN LBRACE statement_list RBRACE;
+func_decl: type IDENTIFIER LPAREN param_list RPAREN LBRACE statement_list RBRACE
+             { $$ = new FunctionDeclaration($1, $2, $4, $7, @$); };
 
-param_list: %empty
-		  | param_list param;
+param_list: %empty { $$ = new ParamList(); }
+          | param_list param { $1->emplace_back($2); $$ = $1; };
 
-param: type IDENTIFIER
-	 | type IDENTIFIER ARROW IDENTIFIER;
+param: type IDENTIFIER { $$ = new Param($1, $2, @$); };
 
-type: IDENTIFIER;
+type: IDENTIFIER { $$ = new Type($1, @$); };
 
-statement_list: %empty
-			  | statement_list statement;
+statement_list: %empty { $$ = new StatementList(); }
+              | statement_list statement { $1->emplace_back($2); $$ = $1; };
 
-statement: expression SEMI;
+statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
+         ;
 
-expression: IDENTIFIER
-		  | LPAREN expression RPAREN
+expression: IDENTIFIER { $$ = new VarExpression($1, @$); }
+          | LPAREN expression RPAREN { $$ = $2; }
 
-		  | expression ADD expression
-		  | expression SUB expression
-		  | expression MUL expression
-		  | expression DIV expression
-		  | expression MOD expression
-		  | expression BITWISE_AND expression
-		  | expression BITWISE_XOR expression
-		  | expression BITWISE_OR expression
-		  | expression SHIFT_LEFT expression
-		  | expression SHIFT_RIGHT expression
-		  | expression EQUALS expression
-		  | expression NOT_EQUALS expression
-		  | expression SMALLER expression
-		  | expression SMALLER_EQUALS expression
-		  | expression GREATER expression
-		  | expression GREATER_EQUALS expression
-		  | expression LOGICAL_AND expression
-		  | expression LOGICAL_OR expression
+          | expression ADD expression
+              { $$ = new BinaryOpExpression(BinaryOp::ADD, $1, $3, @$); }
+          | expression SUB expression
+              { $$ = new BinaryOpExpression(BinaryOp::SUB, $1, $3, @$); }
+          | expression MUL expression
+              { $$ = new BinaryOpExpression(BinaryOp::MUL, $1, $3, @$); }
+          | expression DIV expression
+              { $$ = new BinaryOpExpression(BinaryOp::DIV, $1, $3, @$); }
+          | expression MOD expression
+              { $$ = new BinaryOpExpression(BinaryOp::MOD, $1, $3, @$); }
+          | expression BITWISE_AND expression
+              { $$ = new BinaryOpExpression(BinaryOp::BITWISE_AND, $1, $3, @$); }
+          | expression BITWISE_XOR expression
+              { $$ = new BinaryOpExpression(BinaryOp::BITWISE_XOR, $1, $3, @$); }
+          | expression BITWISE_OR expression
+              { $$ = new BinaryOpExpression(BinaryOp::BITWISE_OR, $1, $3, @$); }
+          | expression SHIFT_LEFT expression
+              { $$ = new BinaryOpExpression(BinaryOp::SHIFT_LEFT, $1, $3, @$); }
+          | expression SHIFT_RIGHT expression
+              { $$ = new BinaryOpExpression(BinaryOp::SHIFT_RIGHT, $1, $3, @$); }
+          | expression EQUALS expression
+              { $$ = new BinaryOpExpression(BinaryOp::EQUALS, $1, $3, @$); }
+          | expression NOT_EQUALS expression
+              { $$ = new BinaryOpExpression(BinaryOp::NOT_EQUALS, $1, $3, @$); }
+          | expression SMALLER expression
+              { $$ = new BinaryOpExpression(BinaryOp::SMALLER, $1, $3, @$); }
+          | expression SMALLER_EQUALS expression
+              { $$ = new BinaryOpExpression(BinaryOp::SMALLER_EQUALS, $1, $3, @$); }
+          | expression GREATER expression
+              { $$ = new BinaryOpExpression(BinaryOp::GREATER, $1, $3, @$); }
+          | expression GREATER_EQUALS expression
+              { $$ = new BinaryOpExpression(BinaryOp::GREATER_EQUALS, $1, $3, @$); }
+          | expression LOGICAL_AND expression
+              { $$ = new BinaryOpExpression(BinaryOp::LOGICAL_AND, $1, $3, @$); }
+          | expression LOGICAL_OR expression
+              { $$ = new BinaryOpExpression(BinaryOp::LOGICAL_OR, $1, $3, @$); }
 
-		  | expression ASSIGN expression
-		  | expression PLUS_ASSIGN expression
-		  | expression MINUS_ASSIGN expression
-		  | expression MUL_ASSIGN expression
-		  | expression DIV_ASSIGN expression
-		  | expression MOD_ASSIGN expression
-		  | expression BITWISE_AND_ASSIGN expression
-		  | expression BITWISE_XOR_ASSIGN expression
-		  | expression BITWISE_OR_ASSIGN expression
-		  | expression SHIFT_LEFT_ASSIGN expression
-		  | expression SHIFT_RIGHT_ASSIGN expression;
+          | expression ASSIGN expression
+              { $$ = new AssignExpression($1, $3, @$); }
+          | expression ADD_ASSIGN expression
+              { $$ = new AssignOpExpression(BinaryOp::ADD, $1, $3, @$); }
+          | expression SUB_ASSIGN expression
+              { $$ = new AssignOpExpression(BinaryOp::SUB, $1, $3, @$); }
+          | expression MUL_ASSIGN expression
+              { $$ = new AssignOpExpression(BinaryOp::MUL, $1, $3, @$); }
+          | expression DIV_ASSIGN expression
+              { $$ = new AssignOpExpression(BinaryOp::DIV, $1, $3, @$); }
+          | expression MOD_ASSIGN expression
+              { $$ = new AssignOpExpression(BinaryOp::MOD, $1, $3, @$); }
+          | expression BITWISE_AND_ASSIGN expression
+              { $$ = new AssignOpExpression(BinaryOp::BITWISE_AND, $1, $3, @$); }
+          | expression BITWISE_XOR_ASSIGN expression
+              { $$ = new AssignOpExpression(BinaryOp::BITWISE_XOR, $1, $3, @$); }
+          | expression BITWISE_OR_ASSIGN expression
+              { $$ = new AssignOpExpression(BinaryOp::BITWISE_OR, $1, $3, @$); }
+          | expression SHIFT_LEFT_ASSIGN expression
+              { $$ = new AssignOpExpression(BinaryOp::SHIFT_LEFT, $1, $3, @$); }
+          | expression SHIFT_RIGHT_ASSIGN expression
+              { $$ = new AssignOpExpression(BinaryOp::SHIFT_RIGHT, $1, $3, @$); }
+          ;
 %%
 
 void OpenABL::Parser::error(const OpenABL::location &loc, const std::string &message) {

@@ -30,7 +30,7 @@ ID [a-zA-Z_][a-zA-Z0-9_]*
 {DNUM}  { return Parser::make_INT(loc); }
 {HNUM}  { return Parser::make_INT(loc); }
 {FLOAT} { return Parser::make_FLOAT(loc); }
-{ID}    { return Parser::make_IDENTIFIER(loc); }
+{ID}    { return Parser::make_IDENTIFIER(yytext, loc); }
 
 "+" { return Parser::make_ADD(loc); }
 "-" { return Parser::make_SUB(loc); }
@@ -64,8 +64,8 @@ ID [a-zA-Z_][a-zA-Z0-9_]*
 ">>" { return Parser::make_SHIFT_RIGHT(loc); }
 "&&" { return Parser::make_LOGICAL_AND(loc); }
 "||" { return Parser::make_LOGICAL_OR(loc); }
-"+=" { return Parser::make_PLUS_ASSIGN(loc); }
-"-=" { return Parser::make_MINUS_ASSIGN(loc); }
+"+=" { return Parser::make_ADD_ASSIGN(loc); }
+"-=" { return Parser::make_SUB_ASSIGN(loc); }
 "*=" { return Parser::make_MUL_ASSIGN(loc); }
 "/=" { return Parser::make_DIV_ASSIGN(loc); }
 "%=" { return Parser::make_MOD_ASSIGN(loc); }
