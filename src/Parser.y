@@ -77,6 +77,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   SHIFT_LEFT_ASSIGN
   SHIFT_RIGHT_ASSIGN
 
+  BOOL
   INT
   FLOAT
   IDENTIFIER
@@ -97,14 +98,19 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 %left ASSIGN ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN BITWISE_AND_ASSIGN BITWISE_XOR_ASSIGN BITWISE_OR_ASSIGN SHIFT_LEFT_ASSIGN SHIFT_RIGHT_ASSIGN
 
 %type <std::string> IDENTIFIER;
+%type <bool> BOOL;
+%type <long> INT;
+%type <double> FLOAT;
+
 %type <bool> opt_position;
+%type <OpenABL::AST::Literal *> literal;
 %type <OpenABL::AST::Type *> type;
 %type <OpenABL::AST::AgentMember *> agent_member;
 %type <OpenABL::AST::AgentMemberList *> agent_member_list;
 %type <OpenABL::AST::Param *> param;
 %type <OpenABL::AST::ParamList *> param_list;
 %type <OpenABL::AST::StatementList *> statement_list;
-%type <OpenABL::AST::Declaration *> declaration func_decl agent_decl;
+%type <OpenABL::AST::Declaration *> declaration func_decl agent_decl const_decl;
 %type <OpenABL::AST::DeclarationList *> declaration_list;
 %type <OpenABL::AST::Expression *> expression;
 %type <OpenABL::AST::Statement *> statement;
@@ -117,26 +123,36 @@ declaration_list: %empty { $$ = new DeclarationList(); }
                 | declaration_list declaration { $1->emplace_back($2); $$ = $1; };
 
 declaration: agent_decl
-           | func_decl;
+           | func_decl
+           | const_decl;
 
 agent_decl: AGENT IDENTIFIER LBRACE agent_member_list RBRACE
-		      { $$ = new AgentDeclaration($2, $4, @$); };
+              { $$ = new AgentDeclaration($2, $4, @$); };
 
 agent_member_list: %empty { $$ = new AgentMemberList(); }
-				 | agent_member_list agent_member { $1->emplace_back($2); $$ = $1; };
+                 | agent_member_list agent_member { $1->emplace_back($2); $$ = $1; };
 
 opt_position: %empty { $$ = false; }
-			| POSITION { $$ = true; }
+            | POSITION { $$ = true; }
 
 agent_member: opt_position type IDENTIFIER SEMI { $$ = new AgentMember($1, $2, $3, @$); };
 
 func_decl: type IDENTIFIER LPAREN param_list RPAREN LBRACE statement_list RBRACE
-             { $$ = new FunctionDeclaration($1, $2, $4, $7, @$); };
+             { $$ = new FunctionDeclaration(false, $1, $2, $4, $7, @$); }
+         | INTERACT type IDENTIFIER LPAREN param_list RPAREN LBRACE statement_list RBRACE
+             { $$ = new FunctionDeclaration(true, $2, $3, $5, $8, @$); };
 
 param_list: %empty { $$ = new ParamList(); }
           | param_list param { $1->emplace_back($2); $$ = $1; };
 
 param: type IDENTIFIER { $$ = new Param($1, $2, @$); };
+
+const_decl: type IDENTIFIER ASSIGN literal SEMI
+              { $$ = new ConstDeclaration($1, $2, $4, @$); };
+
+literal: BOOL { $$ = new BoolLiteral($1, @$); }
+       | INT { $$ = new IntLiteral($1, @$); }
+       | FLOAT { $$ = new FloatLiteral($1, @$); };
 
 type: IDENTIFIER { $$ = new Type($1, @$); };
 
@@ -212,5 +228,5 @@ expression: IDENTIFIER { $$ = new VarExpression($1, @$); }
 %%
 
 void OpenABL::Parser::error(const OpenABL::location &loc, const std::string &message) {
-  std::cerr << "Parse error: " << message << std::endl;
+  std::cerr << "Parse error: " << message << " on line " << loc.begin.line << std::endl;
 }

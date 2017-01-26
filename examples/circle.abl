@@ -19,10 +19,6 @@ interact sep_aggr(Point in -> out, Point other) {
   out.pos += diff;
 }
 
-eval inCircle(Point b1){
-  // TODO
-}
-
 main() {
   Point points[1024];
 
@@ -41,6 +37,4 @@ main() {
       out = tmp;
     }
   }
-   
-  eval(inCircle, points)
 }

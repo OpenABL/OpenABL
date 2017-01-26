@@ -11,6 +11,9 @@ using OpenABL::Parser;
   OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx)
 
 static OpenABL::location loc;
+/* Run each time a pattern matches */
+#define YY_USER_ACTION loc.columns (yyleng);
+
 %}
 
 DNUM [0-9]+
@@ -21,15 +24,32 @@ ID [a-zA-Z_][a-zA-Z0-9_]*
 
 %%
 
+%{
+/* Run on each yylex call */
+loc.step();
+%}
+
 "agent"    { return Parser::make_AGENT(loc); }
 "interact" { return Parser::make_INTERACT(loc); }
 "for"      { return Parser::make_FOR(loc); }
 "position" { return Parser::make_POSITION(loc); }
 "pfor"     { return Parser::make_PFOR(loc); }
 
-{DNUM}  { return Parser::make_INT(loc); }
-{HNUM}  { return Parser::make_INT(loc); }
-{FLOAT} { return Parser::make_FLOAT(loc); }
+true  { return Parser::make_BOOL(true, loc); }
+false { return Parser::make_BOOL(false, loc); }
+
+{DNUM} {
+  // TODO: Overflow check
+  return Parser::make_INT(std::stol(yytext, nullptr, 10), loc);
+}
+{HNUM} {
+  // TODO: Overflow check
+  return Parser::make_INT(std::stol(yytext, nullptr, 16), loc);
+}
+{FLOAT} {
+  return Parser::make_FLOAT(std::stod(yytext, nullptr), loc);
+}
+
 {ID}    { return Parser::make_IDENTIFIER(yytext, loc); }
 
 "+" { return Parser::make_ADD(loc); }
@@ -78,13 +98,13 @@ ID [a-zA-Z_][a-zA-Z0-9_]*
 "//".* { /* ignore */ }
 
 "/*" { BEGIN(ST_COMMENT); }
-<ST_COMMENT>[^*\n]+    { /* ignore */ }
-<ST_COMMENT>"*"+[^/\n] { /* ignore */ }
-<ST_COMMENT>\n         { /* ignore */ }
-<ST_COMMENT>"*/"       { BEGIN(INITIAL); }
+<ST_COMMENT>[^*\n]+
+<ST_COMMENT>"*"+[^/\n]
+<ST_COMMENT>\n+        { loc.lines(yyleng); }
+<ST_COMMENT>"*/"       { loc.step(); BEGIN(INITIAL); }
 
-[ \t\r]+ { /* ignore */ }
-\n { /* ignore */ }
+[ \t\r]+ { loc.step(); }
+\n+ { loc.lines(yyleng); }
 
 <<EOF>> { return Parser::make_END(loc); }
 

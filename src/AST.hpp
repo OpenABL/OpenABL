@@ -14,6 +14,33 @@ struct Node {
   Node(Location loc) : loc{loc} {}
 };
 
+struct Literal : public Node {
+  Literal(Location loc) : Node{loc} {}
+};
+
+using LiteralPtr = std::unique_ptr<Literal>;
+
+struct BoolLiteral : public Literal {
+  bool value;
+
+  BoolLiteral(bool value, Location loc)
+    : Literal{loc}, value{value} {}
+};
+
+struct IntLiteral : public Literal {
+  long value;
+
+  IntLiteral(long value, Location loc)
+    : Literal{loc}, value{value} {}
+};
+
+struct FloatLiteral : public Literal {
+  double value;
+
+  FloatLiteral(double value, Location loc)
+    : Literal{loc}, value{value} {}
+};
+
 struct Expression : public Node {
   Expression(Location loc) : Node{loc} {}
 };
@@ -120,14 +147,16 @@ using DeclarationList = std::vector<DeclarationPtr>;
 using DeclarationListPtr = std::unique_ptr<DeclarationList>;
 
 struct FunctionDeclaration : public Declaration {
+  bool isInteract;
   TypePtr returnType;
   std::string name;
   ParamListPtr params;
   StatementListPtr stmts;
 
-  FunctionDeclaration(Type *returnType, std::string name,
+  FunctionDeclaration(bool isInteract, Type *returnType, std::string name,
                       ParamList *params, StatementList *stmts, Location loc)
-    : Declaration{loc}, returnType{returnType}, name{name}, params{params}, stmts{stmts} {}
+    : Declaration{loc}, isInteract{isInteract}, returnType{returnType},
+      name{name}, params{params}, stmts{stmts} {}
 };
 
 struct AgentMember : public Node {
@@ -149,6 +178,15 @@ struct AgentDeclaration : public Declaration {
 
   AgentDeclaration(std::string name, AgentMemberList *members, Location loc)
     : Declaration{loc}, name{name}, members{members} {}
+};
+
+struct ConstDeclaration : public Declaration {
+  TypePtr type;
+  std::string name;
+  LiteralPtr value;
+
+  ConstDeclaration(Type *type, std::string name, Literal *value, Location loc)
+    : Declaration{loc}, type{type}, name{name}, value{value} {}
 };
 
 /* AST root node */
