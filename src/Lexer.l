@@ -89,3 +89,11 @@ ID [a-zA-Z_][a-zA-Z0-9_]*
 <<EOF>> { return Parser::make_END(loc); }
 
 %%
+
+namespace OpenABL {
+
+void ParserContext::initLexer() {
+  yyin = file;
+}
+
+}

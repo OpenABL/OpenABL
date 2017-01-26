@@ -1,0 +1,46 @@
+agent Point {
+  position vec2 pos;
+}
+
+float k_rep = 0.001;
+float k_att = 0.001;
+float r = 5;
+float ro = 0.01;
+float W = 50;
+
+interact sep_aggr(Point in -> out, Point other) {
+  float loc_dist = dist(in.pos, other.pos);
+  float sep_dist = loc_dist - radius; // r or ro?
+  float2 diff = float2(0.0, 0.0);
+  if (sep_dist < radius) {
+    float k = sep_dist > 0.0 ? ka : -kr;
+    diff = k * sep_dist * (in.pos - other.pos) / radius;
+  }
+  out.pos += diff;
+}
+
+eval inCircle(Point b1){
+  // TODO
+}
+
+main() {
+  Point points[1024];
+
+  // initialization (sequential)
+  for (Point p : points) {
+    p.pos = //
+  }
+
+  // simulation (parallel)
+  for_timestep (int time_step = 0 : 100) {
+    for_each_agent (Point in -> out : points) {
+      Point tmp = in;
+      for (Point nx : near(in, 10)) {
+        sep_aggr(in -> tmp, nx);
+      }
+      out = tmp;
+    }
+  }
+   
+  eval(inCircle, points)
+}

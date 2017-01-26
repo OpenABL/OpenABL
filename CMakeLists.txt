@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(OpenABL)
 
 set(OpenABL_SOURCES
+		src/ParserContext.cpp
 		src/main.cpp)
 
 find_package(BISON)
