@@ -11,10 +11,14 @@ using Location = OpenABL::location;
 struct Type;
 using TypePtr = std::unique_ptr<Type>;
 
+struct Visitor;
+
 struct Node {
   Location loc;
 
   Node(Location loc) : loc{loc} {}
+
+  virtual void accept(Visitor &) = 0;
 };
 
 struct Expression : public Node {
@@ -27,6 +31,8 @@ using ExpressionListPtr = std::unique_ptr<ExpressionList>;
 
 struct Literal : public Expression {
   Literal(Location loc) : Expression{loc} {}
+
+  void accept(Visitor &);
 };
 
 using LiteralPtr = std::unique_ptr<Literal>;
@@ -57,6 +63,25 @@ struct VarExpression : public Expression {
 
   VarExpression(std::string name, Location loc)
     : Expression{loc}, name{name} {}
+
+  void accept(Visitor &);
+};
+
+enum class UnaryOp {
+  MINUS,
+  PLUS,
+  LOGICAL_NOT,
+  BITWISE_NOT,
+};
+
+struct UnaryOpExpression : public Expression {
+  UnaryOp op;
+  ExpressionPtr expr;
+
+  UnaryOpExpression(UnaryOp op, Expression *expr, Location loc)
+    : Expression{loc}, op{op}, expr{expr} {}
+
+  void accept(Visitor &);
 };
 
 enum class BinaryOp {
@@ -88,6 +113,8 @@ struct BinaryOpExpression : public Expression {
 
   BinaryOpExpression(BinaryOp op, Expression *left, Expression *right, Location loc)
     : Expression{loc}, op{op}, left{left}, right{right} {}
+
+  void accept(Visitor &);
 };
 
 struct AssignOpExpression : public Expression {
@@ -97,21 +124,8 @@ struct AssignOpExpression : public Expression {
 
   AssignOpExpression(BinaryOp op, Expression *left, Expression *right, Location loc)
     : Expression{loc}, op{op}, left{left}, right{right} {}
-};
 
-enum class UnaryOp {
-  MINUS,
-  PLUS,
-  LOGICAL_NOT,
-  BITWISE_NOT,
-};
-
-struct UnaryOpExpression : public Expression {
-  UnaryOp op;
-  ExpressionPtr expr;
-
-  UnaryOpExpression(UnaryOp op, Expression *expr, Location loc)
-    : Expression{loc}, op{op}, expr{expr} {}
+  void accept(Visitor &);
 };
 
 struct AssignExpression : public Expression {
@@ -120,6 +134,8 @@ struct AssignExpression : public Expression {
 
   AssignExpression(Expression *left, Expression *right, Location loc)
     : Expression{loc}, left{left}, right{right} {}
+
+  void accept(Visitor &);
 };
 
 struct Arg : public Node {
@@ -128,6 +144,8 @@ struct Arg : public Node {
 
   Arg(Expression *expr, Expression *outExpr, Location loc)
     : Node{loc}, expr{expr}, outExpr{outExpr} {}
+
+  void accept(Visitor &);
 };
 
 using ArgPtr = std::unique_ptr<Arg>;
@@ -140,6 +158,8 @@ struct CallExpression : public Expression {
 
   CallExpression(std::string name, ArgList *args, Location loc)
     : Expression{loc}, name{name}, args{args} {}
+
+  void accept(Visitor &);
 };
 
 struct MemberAccessExpression : public Expression {
@@ -148,6 +168,8 @@ struct MemberAccessExpression : public Expression {
 
   MemberAccessExpression(Expression *expr, std::string member, Location loc)
     : Expression{loc}, expr{expr}, member{member} {}
+
+  void accept(Visitor &);
 };
 
 struct TernaryExpression : public Expression {
@@ -157,6 +179,8 @@ struct TernaryExpression : public Expression {
 
   TernaryExpression(Expression *condExpr, Expression *ifExpr, Expression *elseExpr, Location loc)
     : Expression{loc}, condExpr{condExpr}, ifExpr{ifExpr}, elseExpr{elseExpr} {}
+
+  void accept(Visitor &);
 };
 
 struct Statement : public Node {
@@ -172,6 +196,8 @@ struct ExpressionStatement : public Statement {
 
   ExpressionStatement(Expression *expr, Location loc)
     : Statement{loc}, expr{expr} {}
+
+  void accept(Visitor &);
 };
 
 struct BlockStatement : public Statement {
@@ -179,6 +205,8 @@ struct BlockStatement : public Statement {
 
   BlockStatement(StatementList *stmts, Location loc)
     : Statement{loc}, stmts{stmts} {}
+
+  void accept(Visitor &);
 };
 
 struct VarDeclarationStatement : public Statement {
@@ -188,6 +216,8 @@ struct VarDeclarationStatement : public Statement {
 
   VarDeclarationStatement(Type *type, std::string name, Expression *initializer, Location loc)
     : Statement{loc}, type{type}, name{name}, initializer{initializer} {}
+
+  void accept(Visitor &);
 };
 
 struct IfStatement : public Statement {
@@ -197,6 +227,8 @@ struct IfStatement : public Statement {
 
   IfStatement(Expression *condExpr, Statement *ifStmt, Statement *elseStmt, Location loc)
     : Statement{loc}, condExpr{condExpr}, ifStmt{ifStmt}, elseStmt{elseStmt} {}
+
+  void accept(Visitor &);
 };
 
 struct ForStatement : public Statement {
@@ -211,6 +243,8 @@ struct ForStatement : public Statement {
                Expression *expr, Statement *stmt, Location loc)
     : Statement{loc}, isParallel{isParallel}, type{type},
       var{var}, outVar{outVar}, expr{expr}, stmt{stmt} {}
+
+  void accept(Visitor &);
 };
 
 struct Type : public Node {
@@ -218,6 +252,8 @@ struct Type : public Node {
 
   Type(std::string name, Location loc)
     : Node{loc}, name{name} {}
+
+  void accept(Visitor &);
 };
 
 struct Param : public Node {
@@ -228,6 +264,8 @@ struct Param : public Node {
 
   Param(Type *type, std::string name, std::string outName, Location loc)
     : Node{loc}, type{type}, name{name}, outName{outName} {}
+
+  void accept(Visitor &);
 };
 
 using ParamPtr = std::unique_ptr<Param>;
@@ -254,6 +292,8 @@ struct FunctionDeclaration : public Declaration {
                       ParamList *params, StatementList *stmts, Location loc)
     : Declaration{loc}, isInteract{isInteract}, returnType{returnType},
       name{name}, params{params}, stmts{stmts} {}
+
+  void accept(Visitor &);
 };
 
 struct AgentMember : public Node {
@@ -263,6 +303,8 @@ struct AgentMember : public Node {
 
   AgentMember(bool isPosition, Type *type, std::string name, Location loc)
     : Node{loc}, isPosition{isPosition}, type{type}, name{name} {}
+
+  void accept(Visitor &);
 };
 
 using AgentMemberPtr = std::unique_ptr<AgentMember>;
@@ -275,6 +317,8 @@ struct AgentDeclaration : public Declaration {
 
   AgentDeclaration(std::string name, AgentMemberList *members, Location loc)
     : Declaration{loc}, name{name}, members{members} {}
+
+  void accept(Visitor &);
 };
 
 struct ConstDeclaration : public Declaration {
@@ -284,14 +328,18 @@ struct ConstDeclaration : public Declaration {
 
   ConstDeclaration(Type *type, std::string name, Literal *value, Location loc)
     : Declaration{loc}, type{type}, name{name}, value{value} {}
+
+  void accept(Visitor &);
 };
 
 /* AST root node */
 struct Script : public Node {
-  DeclarationListPtr declarations;
+  DeclarationListPtr decls;
 
-  Script(DeclarationList *declarations, Location loc)
-    : Node{loc}, declarations{declarations} {}
+  Script(DeclarationList *decls, Location loc)
+    : Node{loc}, decls{decls} {}
+
+  void accept(Visitor &);
 };
 
 }
