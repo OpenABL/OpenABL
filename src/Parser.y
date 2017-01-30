@@ -1,5 +1,6 @@
 %skeleton "lalr1.cc"
 %locations
+%expect 0
 %define api.token.constructor
 %define api.value.type variant
 %define api.namespace {OpenABL}
@@ -28,9 +29,11 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 %}
 
 %token
-  END
+  END 0 "end of file"
 
   AGENT
+  ELSE
+  IF
   INTERACT
   FOR
   POSITION
@@ -47,8 +50,10 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   SHIFT_LEFT
   SHIFT_RIGHT
   NOT
+  BITWISE_NOT
   QM
   DOT
+  DOTDOT
   COMMA
   COLON
   SEMI
@@ -84,9 +89,12 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 ;
 
 /* Precedence following C */
+%left DOT
+%right NOT BITWISE_NOT
 %left MUL DIV MOD
 %left ADD SUB
 %left SHIFT_LEFT SHIFT_RIGHT
+%nonassoc DOTDOT /* TODO: What is the right precedence for ranges? */
 %left SMALLER SMALLER_EQUALS GREATER GREATER_EQUALS
 %left EQUALS NOT_EQUALS
 %left BITWISE_AND
@@ -94,8 +102,12 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 %left BITWISE_OR
 %left LOGICAL_AND
 %left LOGICAL_OR
-/* TODO: Ternary */
+%right QM COLON
 %left ASSIGN ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN BITWISE_AND_ASSIGN BITWISE_XOR_ASSIGN BITWISE_OR_ASSIGN SHIFT_LEFT_ASSIGN SHIFT_RIGHT_ASSIGN
+
+/* Handling dangling else */
+%left NO_ELSE
+%left ELSE
 
 %type <std::string> IDENTIFIER;
 %type <bool> BOOL;
@@ -108,7 +120,9 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 %type <OpenABL::AST::AgentMember *> agent_member;
 %type <OpenABL::AST::AgentMemberList *> agent_member_list;
 %type <OpenABL::AST::Param *> param;
-%type <OpenABL::AST::ParamList *> param_list;
+%type <OpenABL::AST::ParamList *> param_list non_empty_param_list;
+%type <OpenABL::AST::Arg *> arg;
+%type <OpenABL::AST::ArgList *> arg_list non_empty_arg_list;
 %type <OpenABL::AST::StatementList *> statement_list;
 %type <OpenABL::AST::Declaration *> declaration func_decl agent_decl const_decl;
 %type <OpenABL::AST::DeclarationList *> declaration_list;
@@ -139,13 +153,17 @@ agent_member: opt_position type IDENTIFIER SEMI { $$ = new AgentMember($1, $2, $
 
 func_decl: type IDENTIFIER LPAREN param_list RPAREN LBRACE statement_list RBRACE
              { $$ = new FunctionDeclaration(false, $1, $2, $4, $7, @$); }
-         | INTERACT type IDENTIFIER LPAREN param_list RPAREN LBRACE statement_list RBRACE
-             { $$ = new FunctionDeclaration(true, $2, $3, $5, $8, @$); };
+         | INTERACT IDENTIFIER LPAREN param_list RPAREN LBRACE statement_list RBRACE
+             { $$ = new FunctionDeclaration(true, nullptr, $2, $4, $7, @$); };
 
 param_list: %empty { $$ = new ParamList(); }
-          | param_list param { $1->emplace_back($2); $$ = $1; };
+          | non_empty_param_list;
 
-param: type IDENTIFIER { $$ = new Param($1, $2, @$); };
+non_empty_param_list: param { $$ = new ParamList(); $$->emplace_back($1); }
+                    | non_empty_param_list COMMA param { $1->emplace_back($3); $$ = $1; };
+
+param: type IDENTIFIER { $$ = new Param($1, $2, "", @$); }
+     | type IDENTIFIER ARROW IDENTIFIER { $$ = new Param($1, $2, $4, @$); };
 
 const_decl: type IDENTIFIER ASSIGN literal SEMI
               { $$ = new ConstDeclaration($1, $2, $4, @$); };
@@ -160,10 +178,42 @@ statement_list: %empty { $$ = new StatementList(); }
               | statement_list statement { $1->emplace_back($2); $$ = $1; };
 
 statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
+         | LBRACE statement_list RBRACE { $$ = new BlockStatement($2, @$); }
+         | type IDENTIFIER SEMI
+             { $$ = new VarDeclarationStatement($1, $2, nullptr, @$); }
+         | type IDENTIFIER ASSIGN expression SEMI
+             { $$ = new VarDeclarationStatement($1, $2, $4, @$); }
+         | IF LPAREN expression RPAREN statement %prec NO_ELSE
+             { $$ = new IfStatement($3, $5, nullptr, @$); }
+         | IF LPAREN expression RPAREN statement ELSE statement
+             { $$ = new IfStatement($3, $5, $7, @$); }
+         | FOR LPAREN type IDENTIFIER COLON expression RPAREN statement
+             { $$ = new ForStatement(false, $3, $4, "", $6, $8, @$); }
+         | PFOR LPAREN type IDENTIFIER ARROW IDENTIFIER COLON expression RPAREN statement
+             { $$ = new ForStatement(true, $3, $4, $6, $8, $10, @$); }
          ;
 
+arg: expression { $$ = new Arg($1, nullptr, @$); }
+   | expression ARROW expression { $$ = new Arg($1, $3, @$); };
+
+arg_list: %empty { $$ = new ArgList(); }
+        | non_empty_arg_list;
+
+non_empty_arg_list: arg { $$ = new ArgList(); $$->emplace_back($1); }
+                  | non_empty_arg_list COMMA arg { $1->emplace_back($3); $$ = $1; };
+
 expression: IDENTIFIER { $$ = new VarExpression($1, @$); }
+          | literal { $$ = $1; }
           | LPAREN expression RPAREN { $$ = $2; }
+          | IDENTIFIER LPAREN arg_list RPAREN { $$ = new CallExpression($1, $3, @$); }
+          | expression DOT IDENTIFIER { $$ = new MemberAccessExpression($1, $3, @$); }
+          | expression QM expression COLON expression
+              { $$ = new TernaryExpression($1, $3, $5, @$); }
+    
+          | NOT expression           { $$ = new UnaryOpExpression(UnaryOp::LOGICAL_NOT, $2, @$); }
+          | BITWISE_NOT expression   { $$ = new UnaryOpExpression(UnaryOp::BITWISE_NOT, $2, @$); }
+          | ADD expression %prec NOT { $$ = new UnaryOpExpression(UnaryOp::PLUS, $2, @$); }
+          | SUB expression %prec NOT { $$ = new UnaryOpExpression(UnaryOp::MINUS, $2, @$); }
 
           | expression ADD expression
               { $$ = new BinaryOpExpression(BinaryOp::ADD, $1, $3, @$); }
@@ -201,6 +251,8 @@ expression: IDENTIFIER { $$ = new VarExpression($1, @$); }
               { $$ = new BinaryOpExpression(BinaryOp::LOGICAL_AND, $1, $3, @$); }
           | expression LOGICAL_OR expression
               { $$ = new BinaryOpExpression(BinaryOp::LOGICAL_OR, $1, $3, @$); }
+          | expression DOTDOT expression
+              { $$ = new BinaryOpExpression(BinaryOp::RANGE, $1, $3, @$); }
 
           | expression ASSIGN expression
               { $$ = new AssignExpression($1, $3, @$); }

@@ -30,6 +30,8 @@ loc.step();
 %}
 
 "agent"    { return Parser::make_AGENT(loc); }
+"else"     { return Parser::make_ELSE(loc); }
+"if"       { return Parser::make_IF(loc); }
 "interact" { return Parser::make_INTERACT(loc); }
 "for"      { return Parser::make_FOR(loc); }
 "position" { return Parser::make_POSITION(loc); }
@@ -62,6 +64,7 @@ false { return Parser::make_BOOL(false, loc); }
 "|" { return Parser::make_BITWISE_OR(loc); }
 "=" { return Parser::make_ASSIGN(loc); }
 "!" { return Parser::make_NOT(loc); }
+"~" { return Parser::make_BITWISE_NOT(loc); }
 "?" { return Parser::make_QM(loc); }
 "." { return Parser::make_DOT(loc); }
 "," { return Parser::make_COMMA(loc); }
@@ -75,6 +78,7 @@ false { return Parser::make_BOOL(false, loc); }
 "]" { return Parser::make_RBRACKET(loc); }
 "{" { return Parser::make_LBRACE(loc); }
 "}" { return Parser::make_RBRACE(loc); }
+".." { return Parser::make_DOTDOT(loc); }
 "->" { return Parser::make_ARROW(loc); }
 "==" { return Parser::make_EQUALS(loc); }
 "!=" { return Parser::make_NOT_EQUALS(loc); }

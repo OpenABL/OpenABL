@@ -8,14 +8,25 @@ namespace AST {
 
 using Location = OpenABL::location;
 
+struct Type;
+using TypePtr = std::unique_ptr<Type>;
+
 struct Node {
   Location loc;
 
   Node(Location loc) : loc{loc} {}
 };
 
-struct Literal : public Node {
-  Literal(Location loc) : Node{loc} {}
+struct Expression : public Node {
+  Expression(Location loc) : Node{loc} {}
+};
+
+using ExpressionPtr = std::unique_ptr<Expression>;
+using ExpressionList = std::vector<ExpressionPtr>;
+using ExpressionListPtr = std::unique_ptr<ExpressionList>;
+
+struct Literal : public Expression {
+  Literal(Location loc) : Expression{loc} {}
 };
 
 using LiteralPtr = std::unique_ptr<Literal>;
@@ -40,12 +51,6 @@ struct FloatLiteral : public Literal {
   FloatLiteral(double value, Location loc)
     : Literal{loc}, value{value} {}
 };
-
-struct Expression : public Node {
-  Expression(Location loc) : Node{loc} {}
-};
-
-using ExpressionPtr = std::unique_ptr<Expression>;
 
 struct VarExpression : public Expression {
   std::string name;
@@ -73,6 +78,7 @@ enum class BinaryOp {
   GREATER_EQUALS,
   LOGICAL_AND,
   LOGICAL_OR,
+  RANGE,
 };
 
 struct BinaryOpExpression : public Expression {
@@ -93,12 +99,64 @@ struct AssignOpExpression : public Expression {
     : Expression{loc}, op{op}, left{left}, right{right} {}
 };
 
+enum class UnaryOp {
+  MINUS,
+  PLUS,
+  LOGICAL_NOT,
+  BITWISE_NOT,
+};
+
+struct UnaryOpExpression : public Expression {
+  UnaryOp op;
+  ExpressionPtr expr;
+
+  UnaryOpExpression(UnaryOp op, Expression *expr, Location loc)
+    : Expression{loc}, op{op}, expr{expr} {}
+};
+
 struct AssignExpression : public Expression {
   ExpressionPtr left;
   ExpressionPtr right;
 
   AssignExpression(Expression *left, Expression *right, Location loc)
     : Expression{loc}, left{left}, right{right} {}
+};
+
+struct Arg : public Node {
+  ExpressionPtr expr;
+  ExpressionPtr outExpr;
+
+  Arg(Expression *expr, Expression *outExpr, Location loc)
+    : Node{loc}, expr{expr}, outExpr{outExpr} {}
+};
+
+using ArgPtr = std::unique_ptr<Arg>;
+using ArgList = std::vector<ArgPtr>;
+using ArgListPtr = std::unique_ptr<ArgList>;
+
+struct CallExpression : public Expression {
+  std::string name;
+  ArgListPtr args;
+
+  CallExpression(std::string name, ArgList *args, Location loc)
+    : Expression{loc}, name{name}, args{args} {}
+};
+
+struct MemberAccessExpression : public Expression {
+  ExpressionPtr expr;
+  std::string member;
+
+  MemberAccessExpression(Expression *expr, std::string member, Location loc)
+    : Expression{loc}, expr{expr}, member{member} {}
+};
+
+struct TernaryExpression : public Expression {
+  ExpressionPtr condExpr;
+  ExpressionPtr ifExpr;
+  ExpressionPtr elseExpr;
+
+  TernaryExpression(Expression *condExpr, Expression *ifExpr, Expression *elseExpr, Location loc)
+    : Expression{loc}, condExpr{condExpr}, ifExpr{ifExpr}, elseExpr{elseExpr} {}
 };
 
 struct Statement : public Node {
@@ -116,6 +174,45 @@ struct ExpressionStatement : public Statement {
     : Statement{loc}, expr{expr} {}
 };
 
+struct BlockStatement : public Statement {
+  StatementListPtr stmts;
+
+  BlockStatement(StatementList *stmts, Location loc)
+    : Statement{loc}, stmts{stmts} {}
+};
+
+struct VarDeclarationStatement : public Statement {
+  TypePtr type;
+  std::string name;
+  ExpressionPtr initializer;
+
+  VarDeclarationStatement(Type *type, std::string name, Expression *initializer, Location loc)
+    : Statement{loc}, type{type}, name{name}, initializer{initializer} {}
+};
+
+struct IfStatement : public Statement {
+  ExpressionPtr condExpr;
+  StatementPtr ifStmt;
+  StatementPtr elseStmt;
+
+  IfStatement(Expression *condExpr, Statement *ifStmt, Statement *elseStmt, Location loc)
+    : Statement{loc}, condExpr{condExpr}, ifStmt{ifStmt}, elseStmt{elseStmt} {}
+};
+
+struct ForStatement : public Statement {
+  bool isParallel;
+  TypePtr type;
+  std::string var;
+  std::string outVar; // TODO std::optional
+  ExpressionPtr expr;
+  StatementPtr stmt;
+
+  ForStatement(bool isParallel, Type *type, std::string var, std::string ourVar,
+               Expression *expr, Statement *stmt, Location loc)
+    : Statement{loc}, isParallel{isParallel}, type{type},
+      var{var}, outVar{outVar}, expr{expr}, stmt{stmt} {}
+};
+
 struct Type : public Node {
   std::string name;
 
@@ -123,14 +220,14 @@ struct Type : public Node {
     : Node{loc}, name{name} {}
 };
 
-using TypePtr = std::unique_ptr<Type>;
-
 struct Param : public Node {
   TypePtr type;
   std::string name;
+  // TODO std::optional would be nice here. Import compat header?
+  std::string outName;
 
-  Param(Type *type, std::string name, Location loc)
-    : Node{loc}, type{type}, name{name} {}
+  Param(Type *type, std::string name, std::string outName, Location loc)
+    : Node{loc}, type{type}, name{name}, outName{outName} {}
 };
 
 using ParamPtr = std::unique_ptr<Param>;

@@ -19,17 +19,17 @@ interact sep_aggr(Point in -> out, Point other) {
   out.pos += diff;
 }
 
-main() {
-  Point points[1024];
+void main() {
+  //Point points[1024]; // TODO Would be better to isolate the type?
 
   // initialization (sequential)
   for (Point p : points) {
-    p.pos = //
+    p.pos = float2(0, 0);
   }
 
   // simulation (parallel)
-  for_timestep (int time_step = 0 : 100) {
-    for_each_agent (Point in -> out : points) {
+  for (int time_step : 0 .. 100) { // TODO We have a float/range lexing conflict here
+    pfor (Point in -> out : points) {
       Point tmp = in;
       for (Point nx : near(in, 10)) {
         sep_aggr(in -> tmp, nx);
