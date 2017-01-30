@@ -4,6 +4,7 @@ project(OpenABL)
 set(OpenABL_SOURCES
 		src/ParserContext.cpp
         src/AST.cpp
+		src/AnalysisVisitor.cpp
 		src/main.cpp)
 
 find_package(BISON)

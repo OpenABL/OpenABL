@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include "Scope.hpp"
 #include "location.hh"
 
 namespace OpenABL {
@@ -20,6 +21,18 @@ struct Node {
 
   virtual void accept(Visitor &) = 0;
 };
+
+struct Var : public Node {
+  std::string name;
+  VarId id;
+
+  Var(std::string name, Location loc)
+    : Node{loc}, name{name} {}
+
+  void accept(Visitor &);
+};
+
+using VarPtr = std::unique_ptr<Var>;
 
 struct Expression : public Node {
   Expression(Location loc) : Node{loc} {}
@@ -59,10 +72,10 @@ struct FloatLiteral : public Literal {
 };
 
 struct VarExpression : public Expression {
-  std::string name;
+  VarPtr var;
 
-  VarExpression(std::string name, Location loc)
-    : Expression{loc}, name{name} {}
+  VarExpression(Var *var, Location loc)
+    : Expression{loc}, var{var} {}
 
   void accept(Visitor &);
 };
@@ -211,11 +224,11 @@ struct BlockStatement : public Statement {
 
 struct VarDeclarationStatement : public Statement {
   TypePtr type;
-  std::string name;
+  VarPtr var;
   ExpressionPtr initializer;
 
-  VarDeclarationStatement(Type *type, std::string name, Expression *initializer, Location loc)
-    : Statement{loc}, type{type}, name{name}, initializer{initializer} {}
+  VarDeclarationStatement(Type *type, Var *var, Expression *initializer, Location loc)
+    : Statement{loc}, type{type}, var{var}, initializer{initializer} {}
 
   void accept(Visitor &);
 };
@@ -234,12 +247,12 @@ struct IfStatement : public Statement {
 struct ForStatement : public Statement {
   bool isParallel;
   TypePtr type;
-  std::string var;
-  std::string outVar; // TODO std::optional
+  VarPtr var;
+  VarPtr outVar;
   ExpressionPtr expr;
   StatementPtr stmt;
 
-  ForStatement(bool isParallel, Type *type, std::string var, std::string ourVar,
+  ForStatement(bool isParallel, Type *type, Var *var, Var *outVar,
                Expression *expr, Statement *stmt, Location loc)
     : Statement{loc}, isParallel{isParallel}, type{type},
       var{var}, outVar{outVar}, expr{expr}, stmt{stmt} {}
@@ -258,12 +271,11 @@ struct Type : public Node {
 
 struct Param : public Node {
   TypePtr type;
-  std::string name;
-  // TODO std::optional would be nice here. Import compat header?
-  std::string outName;
+  VarPtr var;
+  VarPtr outVar;
 
-  Param(Type *type, std::string name, std::string outName, Location loc)
-    : Node{loc}, type{type}, name{name}, outName{outName} {}
+  Param(Type *type, Var *var, Var *outVar, Location loc)
+    : Node{loc}, type{type}, var{var}, outVar{outVar} {}
 
   void accept(Visitor &);
 };

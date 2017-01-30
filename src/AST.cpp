@@ -4,6 +4,11 @@
 namespace OpenABL {
 namespace AST {
 
+void Var::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  visitor.leave(*this);
+}
+
 void Literal::accept(Visitor &visitor) {
   visitor.enter(*this);
   visitor.leave(*this);
@@ -99,7 +104,9 @@ void IfStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
   condExpr->accept(visitor);
   ifStmt->accept(visitor);
-  elseStmt->accept(visitor);
+  if (elseStmt) {
+    elseStmt->accept(visitor);
+  }
   visitor.leave(*this);
 }
 
@@ -124,7 +131,9 @@ void Param::accept(Visitor &visitor) {
 
 void FunctionDeclaration::accept(Visitor &visitor) {
   visitor.enter(*this);
-  returnType->accept(visitor);
+  if (returnType) {
+    returnType->accept(visitor);
+  }
   for (ParamPtr &param : *params) {
     param->accept(visitor);
   }

@@ -115,6 +115,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 %type <double> FLOAT;
 
 %type <bool> opt_position;
+%type <OpenABL::AST::Var *> var;
 %type <OpenABL::AST::Literal *> literal;
 %type <OpenABL::AST::Type *> type;
 %type <OpenABL::AST::AgentMember *> agent_member;
@@ -136,9 +137,10 @@ start: declaration_list { ctx.script = new Script($1, @$); }
 declaration_list: %empty { $$ = new DeclarationList(); }
                 | declaration_list declaration { $1->emplace_back($2); $$ = $1; };
 
-declaration: agent_decl
-           | func_decl
-           | const_decl;
+declaration: agent_decl { $$ = $1; }
+           | func_decl { $$ = $1; }
+           | const_decl { $$ = $1; }
+           ;
 
 agent_decl: AGENT IDENTIFIER LBRACE agent_member_list RBRACE
               { $$ = new AgentDeclaration($2, $4, @$); };
@@ -162,8 +164,10 @@ param_list: %empty { $$ = new ParamList(); }
 non_empty_param_list: param { $$ = new ParamList(); $$->emplace_back($1); }
                     | non_empty_param_list COMMA param { $1->emplace_back($3); $$ = $1; };
 
-param: type IDENTIFIER { $$ = new Param($1, $2, "", @$); }
-     | type IDENTIFIER ARROW IDENTIFIER { $$ = new Param($1, $2, $4, @$); };
+var: IDENTIFIER { $$ = new Var($1, @$); }
+
+param: type var { $$ = new Param($1, $2, nullptr, @$); }
+     | type var ARROW var { $$ = new Param($1, $2, $4, @$); };
 
 const_decl: type IDENTIFIER ASSIGN literal SEMI
               { $$ = new ConstDeclaration($1, $2, $4, @$); };
@@ -179,17 +183,17 @@ statement_list: %empty { $$ = new StatementList(); }
 
 statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
          | LBRACE statement_list RBRACE { $$ = new BlockStatement($2, @$); }
-         | type IDENTIFIER SEMI
+         | type var SEMI
              { $$ = new VarDeclarationStatement($1, $2, nullptr, @$); }
-         | type IDENTIFIER ASSIGN expression SEMI
+         | type var ASSIGN expression SEMI
              { $$ = new VarDeclarationStatement($1, $2, $4, @$); }
          | IF LPAREN expression RPAREN statement %prec NO_ELSE
              { $$ = new IfStatement($3, $5, nullptr, @$); }
          | IF LPAREN expression RPAREN statement ELSE statement
              { $$ = new IfStatement($3, $5, $7, @$); }
-         | FOR LPAREN type IDENTIFIER COLON expression RPAREN statement
-             { $$ = new ForStatement(false, $3, $4, "", $6, $8, @$); }
-         | PFOR LPAREN type IDENTIFIER ARROW IDENTIFIER COLON expression RPAREN statement
+         | FOR LPAREN type var COLON expression RPAREN statement
+             { $$ = new ForStatement(false, $3, $4, nullptr, $6, $8, @$); }
+         | PFOR LPAREN type var ARROW var COLON expression RPAREN statement
              { $$ = new ForStatement(true, $3, $4, $6, $8, $10, @$); }
          ;
 
@@ -202,7 +206,7 @@ arg_list: %empty { $$ = new ArgList(); }
 non_empty_arg_list: arg { $$ = new ArgList(); $$->emplace_back($1); }
                   | non_empty_arg_list COMMA arg { $1->emplace_back($3); $$ = $1; };
 
-expression: IDENTIFIER { $$ = new VarExpression($1, @$); }
+expression: var { $$ = new VarExpression($1, @$); }
           | literal { $$ = $1; }
           | LPAREN expression RPAREN { $$ = $2; }
           | IDENTIFIER LPAREN arg_list RPAREN { $$ = new CallExpression($1, $3, @$); }

@@ -1,5 +1,6 @@
 #include <iostream>
 #include "ParserContext.hpp"
+#include "AnalysisVisitor.hpp"
 
 int main(int argc, char **argv) {
   if (argc != 2) {
@@ -15,7 +16,13 @@ int main(int argc, char **argv) {
   }
 
   OpenABL::ParserContext ctx(file);
-  ctx.parse();
+  if (!ctx.parse()) {
+    return 1;
+  }
+
+  OpenABL::AST::Script &script = *ctx.script;
+  OpenABL::AnalysisVisitor visitor;
+  script.accept(visitor);
 
   fclose(file);
   return 0;
