@@ -5,6 +5,17 @@ namespace OpenABL {
 // TODO move?
 uint32_t VarId::max_id;
 
+VarId AnalysisVisitor::declareVar(std::string name) {
+  auto it = varMap.find(name);
+  if (it != varMap.end()) {
+    std::cout << "Cannot redeclare " << name << std::endl;
+  }
+
+  VarId id = VarId::make();
+  varMap.insert({ name, id });
+  return id;
+}
+
 void AnalysisVisitor::enter(AST::VarExpression &expr) {
   AST::Var &var = *expr.var;
   auto it = varMap.find(var.name);
@@ -17,14 +28,14 @@ void AnalysisVisitor::enter(AST::VarExpression &expr) {
 }
 
 void AnalysisVisitor::enter(AST::VarDeclarationStatement &decl) {
-  AST::Var &var = *decl.var;
-  auto it = varMap.find(var.name);
-  if (it != varMap.end()) {
-    std::cout << "Cannot redeclare " << var.name << std::endl;
-  }
+  decl.var->id = declareVar(decl.var->name);
+}
 
-  var.id = VarId::make();
-  varMap.insert({ var.name, var.id });
+void AnalysisVisitor::enter(AST::Param &param) {
+  param.var->id = declareVar(param.var->name);
+  if (param.outVar) {
+    param.outVar->id = declareVar(param.outVar->name);
+  }
 }
 
 }

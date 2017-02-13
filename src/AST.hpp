@@ -5,6 +5,9 @@
 #include "location.hh"
 
 namespace OpenABL {
+
+struct Printer;
+
 namespace AST {
 
 using Location = OpenABL::location;
@@ -20,6 +23,7 @@ struct Node {
   Node(Location loc) : loc{loc} {}
 
   virtual void accept(Visitor &) = 0;
+  virtual void print(Printer &) = 0;
 };
 
 struct Var : public Node {
@@ -30,6 +34,7 @@ struct Var : public Node {
     : Node{loc}, name{name} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 using VarPtr = std::unique_ptr<Var>;
@@ -46,6 +51,7 @@ struct Literal : public Expression {
   Literal(Location loc) : Expression{loc} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 using LiteralPtr = std::unique_ptr<Literal>;
@@ -78,6 +84,7 @@ struct VarExpression : public Expression {
     : Expression{loc}, var{var} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 enum class UnaryOp {
@@ -87,6 +94,15 @@ enum class UnaryOp {
   BITWISE_NOT,
 };
 
+static inline const char *getUnaryOpSigil(UnaryOp op) {
+  switch (op) {
+    case UnaryOp::MINUS:       return "-";
+    case UnaryOp::PLUS:        return "+";
+    case UnaryOp::LOGICAL_NOT: return "!";
+    case UnaryOp::BITWISE_NOT: return "~";
+  }
+}
+
 struct UnaryOpExpression : public Expression {
   UnaryOp op;
   ExpressionPtr expr;
@@ -95,6 +111,7 @@ struct UnaryOpExpression : public Expression {
     : Expression{loc}, op{op}, expr{expr} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 enum class BinaryOp {
@@ -119,6 +136,30 @@ enum class BinaryOp {
   RANGE,
 };
 
+static inline const char *getBinaryOpSigil(BinaryOp op) {
+  switch (op) {
+    case BinaryOp::ADD:            return "+";
+    case BinaryOp::SUB:            return "-";
+    case BinaryOp::MUL:            return "*";
+    case BinaryOp::DIV:            return "/";
+    case BinaryOp::MOD:            return "%";
+    case BinaryOp::BITWISE_AND:    return "&";
+    case BinaryOp::BITWISE_XOR:    return "^";
+    case BinaryOp::BITWISE_OR:     return "|";
+    case BinaryOp::SHIFT_LEFT:     return "<<";
+    case BinaryOp::SHIFT_RIGHT:    return ">>";
+    case BinaryOp::EQUALS:         return "==";
+    case BinaryOp::NOT_EQUALS:     return "!=";
+    case BinaryOp::SMALLER:        return "<";
+    case BinaryOp::SMALLER_EQUALS: return "<=";
+    case BinaryOp::GREATER:        return ">";
+    case BinaryOp::GREATER_EQUALS: return ">=";
+    case BinaryOp::LOGICAL_AND:    return "&&";
+    case BinaryOp::LOGICAL_OR:     return "||";
+    case BinaryOp::RANGE:          return "..";
+  }
+}
+
 struct BinaryOpExpression : public Expression {
   BinaryOp op;
   ExpressionPtr left;
@@ -128,6 +169,7 @@ struct BinaryOpExpression : public Expression {
     : Expression{loc}, op{op}, left{left}, right{right} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 struct AssignOpExpression : public Expression {
@@ -139,6 +181,7 @@ struct AssignOpExpression : public Expression {
     : Expression{loc}, op{op}, left{left}, right{right} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 struct AssignExpression : public Expression {
@@ -149,6 +192,7 @@ struct AssignExpression : public Expression {
     : Expression{loc}, left{left}, right{right} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 struct Arg : public Node {
@@ -159,6 +203,7 @@ struct Arg : public Node {
     : Node{loc}, expr{expr}, outExpr{outExpr} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 using ArgPtr = std::unique_ptr<Arg>;
@@ -173,6 +218,7 @@ struct CallExpression : public Expression {
     : Expression{loc}, name{name}, args{args} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 struct MemberAccessExpression : public Expression {
@@ -183,6 +229,7 @@ struct MemberAccessExpression : public Expression {
     : Expression{loc}, expr{expr}, member{member} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 struct TernaryExpression : public Expression {
@@ -194,6 +241,7 @@ struct TernaryExpression : public Expression {
     : Expression{loc}, condExpr{condExpr}, ifExpr{ifExpr}, elseExpr{elseExpr} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 struct Statement : public Node {
@@ -211,6 +259,7 @@ struct ExpressionStatement : public Statement {
     : Statement{loc}, expr{expr} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 struct BlockStatement : public Statement {
@@ -220,6 +269,7 @@ struct BlockStatement : public Statement {
     : Statement{loc}, stmts{stmts} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 struct VarDeclarationStatement : public Statement {
@@ -231,6 +281,7 @@ struct VarDeclarationStatement : public Statement {
     : Statement{loc}, type{type}, var{var}, initializer{initializer} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 struct IfStatement : public Statement {
@@ -242,31 +293,60 @@ struct IfStatement : public Statement {
     : Statement{loc}, condExpr{condExpr}, ifStmt{ifStmt}, elseStmt{elseStmt} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 struct ForStatement : public Statement {
-  bool isParallel;
+  TypePtr type;
+  VarPtr var;
+  ExpressionPtr expr;
+  StatementPtr stmt;
+
+  ForStatement(Type *type, Var *var, Expression *expr, Statement *stmt, Location loc)
+    : Statement{loc}, type{type}, var{var}, expr{expr}, stmt{stmt} {}
+
+  void accept(Visitor &);
+  void print(Printer &);
+};
+
+struct ParallelForStatement : public Statement {
   TypePtr type;
   VarPtr var;
   VarPtr outVar;
   ExpressionPtr expr;
   StatementPtr stmt;
 
-  ForStatement(bool isParallel, Type *type, Var *var, Var *outVar,
+  ParallelForStatement(Type *type, Var *var, Var *outVar,
                Expression *expr, Statement *stmt, Location loc)
-    : Statement{loc}, isParallel{isParallel}, type{type},
-      var{var}, outVar{outVar}, expr{expr}, stmt{stmt} {}
+    : Statement{loc}, type{type}, var{var}, outVar{outVar},
+      expr{expr}, stmt{stmt} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 struct Type : public Node {
+  Type(Location loc) : Node{loc} {}
+};
+
+struct SimpleType : public Type {
   std::string name;
 
-  Type(std::string name, Location loc)
-    : Node{loc}, name{name} {}
+  SimpleType(std::string name, Location loc)
+    : Type{loc}, name{name} {}
 
   void accept(Visitor &);
+  void print(Printer &);
+};
+
+struct ArrayType : public Type {
+  TypePtr type;
+
+  ArrayType(Type *type, Location loc)
+    : Type{loc}, type{type} {}
+
+  void accept(Visitor &);
+  void print(Printer &);
 };
 
 struct Param : public Node {
@@ -278,6 +358,7 @@ struct Param : public Node {
     : Node{loc}, type{type}, var{var}, outVar{outVar} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 using ParamPtr = std::unique_ptr<Param>;
@@ -306,6 +387,7 @@ struct FunctionDeclaration : public Declaration {
       name{name}, params{params}, stmts{stmts} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 struct AgentMember : public Node {
@@ -317,6 +399,7 @@ struct AgentMember : public Node {
     : Node{loc}, isPosition{isPosition}, type{type}, name{name} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 using AgentMemberPtr = std::unique_ptr<AgentMember>;
@@ -331,6 +414,7 @@ struct AgentDeclaration : public Declaration {
     : Declaration{loc}, name{name}, members{members} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 struct ConstDeclaration : public Declaration {
@@ -342,6 +426,7 @@ struct ConstDeclaration : public Declaration {
     : Declaration{loc}, type{type}, name{name}, value{value} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 /* AST root node */
@@ -352,6 +437,7 @@ struct Script : public Node {
     : Node{loc}, decls{decls} {}
 
   void accept(Visitor &);
+  void print(Printer &);
 };
 
 }

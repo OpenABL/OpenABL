@@ -89,21 +89,21 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 ;
 
 /* Precedence following C */
-%left DOT
-%right NOT BITWISE_NOT
-%left MUL DIV MOD
-%left ADD SUB
-%left SHIFT_LEFT SHIFT_RIGHT
-%nonassoc DOTDOT /* TODO: What is the right precedence for ranges? */
-%left SMALLER SMALLER_EQUALS GREATER GREATER_EQUALS
-%left EQUALS NOT_EQUALS
-%left BITWISE_AND
-%left BITWISE_XOR
-%left BITWISE_OR
-%left LOGICAL_AND
-%left LOGICAL_OR
-%right QM COLON
 %left ASSIGN ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN BITWISE_AND_ASSIGN BITWISE_XOR_ASSIGN BITWISE_OR_ASSIGN SHIFT_LEFT_ASSIGN SHIFT_RIGHT_ASSIGN
+%right QM COLON
+%left LOGICAL_OR
+%left LOGICAL_AND
+%left BITWISE_OR
+%left BITWISE_XOR
+%left BITWISE_AND
+%left EQUALS NOT_EQUALS
+%left SMALLER SMALLER_EQUALS GREATER GREATER_EQUALS
+%nonassoc DOTDOT /* TODO: What is the right precedence for ranges? */
+%left SHIFT_LEFT SHIFT_RIGHT
+%left ADD SUB
+%left MUL DIV MOD
+%right NOT BITWISE_NOT
+%left DOT
 
 /* Handling dangling else */
 %left NO_ELSE
@@ -176,7 +176,8 @@ literal: BOOL { $$ = new BoolLiteral($1, @$); }
        | INT { $$ = new IntLiteral($1, @$); }
        | FLOAT { $$ = new FloatLiteral($1, @$); };
 
-type: IDENTIFIER { $$ = new Type($1, @$); };
+type: IDENTIFIER { $$ = new SimpleType($1, @$); }
+	| type LBRACKET RBRACKET { $$ = new ArrayType($1, @$); };
 
 statement_list: %empty { $$ = new StatementList(); }
               | statement_list statement { $1->emplace_back($2); $$ = $1; };
@@ -192,9 +193,9 @@ statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
          | IF LPAREN expression RPAREN statement ELSE statement
              { $$ = new IfStatement($3, $5, $7, @$); }
          | FOR LPAREN type var COLON expression RPAREN statement
-             { $$ = new ForStatement(false, $3, $4, nullptr, $6, $8, @$); }
+             { $$ = new ForStatement($3, $4, $6, $8, @$); }
          | PFOR LPAREN type var ARROW var COLON expression RPAREN statement
-             { $$ = new ForStatement(true, $3, $4, $6, $8, $10, @$); }
+             { $$ = new ParallelForStatement($3, $4, $6, $8, $10, @$); }
          ;
 
 arg: expression { $$ = new Arg($1, nullptr, @$); }

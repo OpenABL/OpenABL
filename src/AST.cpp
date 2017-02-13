@@ -1,5 +1,6 @@
 #include "AST.hpp"
 #include "ASTVisitor.hpp"
+#include "Printer.hpp"
 
 namespace OpenABL {
 namespace AST {
@@ -16,6 +17,7 @@ void Literal::accept(Visitor &visitor) {
 
 void VarExpression::accept(Visitor &visitor) {
   visitor.enter(*this);
+  var->accept(visitor);
   visitor.leave(*this);
 }
 
@@ -94,6 +96,7 @@ void BlockStatement::accept(Visitor &visitor) {
 void VarDeclarationStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
   type->accept(visitor);
+  var->accept(visitor);
   if (initializer) {
     initializer->accept(visitor);
   }
@@ -113,19 +116,40 @@ void IfStatement::accept(Visitor &visitor) {
 void ForStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
   type->accept(visitor);
+  var->accept(visitor);
   expr->accept(visitor);
   stmt->accept(visitor);
   visitor.leave(*this);
 }
 
-void Type::accept(Visitor &visitor) {
+void ParallelForStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
+  type->accept(visitor);
+  var->accept(visitor);
+  outVar->accept(visitor);
+  expr->accept(visitor);
+  stmt->accept(visitor);
+  visitor.leave(*this);
+}
+
+void SimpleType::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  visitor.leave(*this);
+}
+
+void ArrayType::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  type->accept(visitor);
   visitor.leave(*this);
 }
 
 void Param::accept(Visitor &visitor) {
   visitor.enter(*this);
   type->accept(visitor);
+  var->accept(visitor);
+  if (outVar) {
+    outVar->accept(visitor);
+  }
   visitor.leave(*this);
 }
 
@@ -171,6 +195,32 @@ void Script::accept(Visitor &visitor) {
   }
   visitor.leave(*this);
 }
+
+void Var::print(Printer &printer) { printer.print(*this); }
+void Literal::print(Printer &printer) { printer.print(*this); }
+void VarExpression::print(Printer &printer) { printer.print(*this); }
+void UnaryOpExpression::print(Printer &printer) { printer.print(*this); }
+void BinaryOpExpression::print(Printer &printer) { printer.print(*this); }
+void AssignOpExpression::print(Printer &printer) { printer.print(*this); }
+void AssignExpression::print(Printer &printer) { printer.print(*this); }
+void Arg::print(Printer &printer) { printer.print(*this); }
+void CallExpression::print(Printer &printer) { printer.print(*this); }
+void MemberAccessExpression::print(Printer &printer) { printer.print(*this); }
+void TernaryExpression::print(Printer &printer) { printer.print(*this); }
+void ExpressionStatement::print(Printer &printer) { printer.print(*this); }
+void BlockStatement::print(Printer &printer) { printer.print(*this); }
+void VarDeclarationStatement::print(Printer &printer) { printer.print(*this); }
+void IfStatement::print(Printer &printer) { printer.print(*this); }
+void ForStatement::print(Printer &printer) { printer.print(*this); }
+void ParallelForStatement::print(Printer &printer) { printer.print(*this); }
+void SimpleType::print(Printer &printer) { printer.print(*this); }
+void ArrayType::print(Printer &printer) { printer.print(*this); }
+void Param::print(Printer &printer) { printer.print(*this); }
+void FunctionDeclaration::print(Printer &printer) { printer.print(*this); }
+void AgentMember::print(Printer &printer) { printer.print(*this); }
+void AgentDeclaration::print(Printer &printer) { printer.print(*this); }
+void ConstDeclaration::print(Printer &printer) { printer.print(*this); }
+void Script::print(Printer &printer) { printer.print(*this); }
 
 }
 }

@@ -20,7 +20,7 @@ interact sep_aggr(Point in -> out, Point other) {
 }
 
 void main() {
-  //Point points[1024]; // TODO Would be better to isolate the type?
+  Point[] points = init_somehow(); // TODO
 
   // initialization (sequential)
   for (Point p : points) {

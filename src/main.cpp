@@ -1,6 +1,7 @@
 #include <iostream>
 #include "ParserContext.hpp"
 #include "AnalysisVisitor.hpp"
+#include "backend/CBackend.hpp"
 
 int main(int argc, char **argv) {
   if (argc != 2) {
@@ -23,6 +24,10 @@ int main(int argc, char **argv) {
   OpenABL::AST::Script &script = *ctx.script;
   OpenABL::AnalysisVisitor visitor;
   script.accept(visitor);
+
+  OpenABL::CPrinter printer;
+  printer.print(script);
+  std::cout << "Printed:\n" << printer.extractStr() << std::endl;
 
   fclose(file);
   return 0;
