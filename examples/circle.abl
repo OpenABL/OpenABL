@@ -2,21 +2,27 @@ agent Point {
   position vec2 pos;
 }
 
+// Repulsive force parameter
 float k_rep = 0.001;
+// Attractive force parameter
 float k_att = 0.001;
+// Radius of agent (radius of repulsion)
 float r = 5;
-float ro = 0.01;
+// Width/height of environment
 float W = 50;
+// Density of agents
+float rho = 0.01;
 
 interact sep_aggr(Point in -> out, Point other) {
-  float loc_dist = dist(in.pos, other.pos);
-  float sep_dist = loc_dist - radius; // r or ro?
-  float2 diff = float2(0.0, 0.0);
-  if (sep_dist < radius) {
-    float k = sep_dist > 0.0 ? ka : -kr;
-    diff = k * sep_dist * (in.pos - other.pos) / radius;
+  float pos_dist = dist(in.pos, other.pos);
+  float sep_dist = pos_dist - r;
+  float2 force = float2(0.0, 0.0);
+  if (sep_dist < r) {
+    float k = sep_dist > 0.0 ? k_att : -k_rep;
+	// r or pos_dist here?
+    force = k * sep_dist * (in.pos - other.pos) / r;
   }
-  out.pos += diff;
+  out.pos += force;
 }
 
 void main() {
@@ -31,7 +37,7 @@ void main() {
   for (int time_step : 0 .. 100) { // TODO We have a float/range lexing conflict here
     pfor (Point in -> out : points) {
       Point tmp = in;
-      for (Point nx : near(in, 10)) {
+      for (Point nx : near(in, 2*r)) {
         sep_aggr(in -> tmp, nx);
       }
       out = tmp;

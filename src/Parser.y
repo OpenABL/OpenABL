@@ -169,7 +169,7 @@ var: IDENTIFIER { $$ = new Var($1, @$); }
 param: type var { $$ = new Param($1, $2, nullptr, @$); }
      | type var ARROW var { $$ = new Param($1, $2, $4, @$); };
 
-const_decl: type IDENTIFIER ASSIGN literal SEMI
+const_decl: type var ASSIGN literal SEMI
               { $$ = new ConstDeclaration($1, $2, $4, @$); };
 
 literal: BOOL { $$ = new BoolLiteral($1, @$); }

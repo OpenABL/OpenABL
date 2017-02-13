@@ -156,7 +156,7 @@ void CPrinter::print(AST::AgentDeclaration &decl) {
         << " {" << indent << *decl.members << outdent << nl << "};";
 }
 void CPrinter::print(AST::ConstDeclaration &decl) {
-  *this << *decl.type << " " << decl.name << " = " << *decl.value << ";";
+  *this << *decl.type << " " << *decl.var << " = " << *decl.value << ";";
 }
 void CPrinter::print(AST::Script &script) {
   for (const AST::DeclarationPtr &decl : *script.decls) {

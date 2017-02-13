@@ -184,6 +184,7 @@ void AgentDeclaration::accept(Visitor &visitor) {
 void ConstDeclaration::accept(Visitor &visitor) {
   visitor.enter(*this);
   type->accept(visitor);
+  var->accept(visitor);
   value->accept(visitor);
   visitor.leave(*this);
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "Scope.hpp"
+#include "Analysis.hpp"
 #include "location.hh"
 
 namespace OpenABL {
@@ -40,7 +40,9 @@ struct Var : public Node {
 using VarPtr = std::unique_ptr<Var>;
 
 struct Expression : public Node {
-  Expression(Location loc) : Node{loc} {}
+  Expression(Location loc)
+    : Node{loc}, type{OpenABL::Type::INVALID} {}
+  OpenABL::Type type;
 };
 
 using ExpressionPtr = std::unique_ptr<Expression>;
@@ -419,11 +421,11 @@ struct AgentDeclaration : public Declaration {
 
 struct ConstDeclaration : public Declaration {
   TypePtr type;
-  std::string name;
+  VarPtr var;
   LiteralPtr value;
 
-  ConstDeclaration(Type *type, std::string name, Literal *value, Location loc)
-    : Declaration{loc}, type{type}, name{name}, value{value} {}
+  ConstDeclaration(Type *type, Var *var, Literal *value, Location loc)
+    : Declaration{loc}, type{type}, var{var}, value{value} {}
 
   void accept(Visitor &);
   void print(Printer &);
