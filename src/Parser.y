@@ -36,6 +36,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   IF
   INTERACT
   FOR
+  NEW
   POSITION
   PFOR
 
@@ -85,6 +86,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   BOOL
   INT
   FLOAT
+  STRING
   IDENTIFIER
 ;
 
@@ -109,7 +111,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 %left NO_ELSE
 %left ELSE
 
-%type <std::string> IDENTIFIER;
+%type <std::string> IDENTIFIER STRING;
 %type <bool> BOOL;
 %type <long> INT;
 %type <double> FLOAT;
@@ -159,7 +161,7 @@ func_decl: type IDENTIFIER LPAREN param_list RPAREN LBRACE statement_list RBRACE
              { $$ = new FunctionDeclaration(true, nullptr, $2, $4, $7, @$); };
 
 param_list: %empty { $$ = new ParamList(); }
-          | non_empty_param_list;
+          | non_empty_param_list { $$ = $1; };
 
 non_empty_param_list: param { $$ = new ParamList(); $$->emplace_back($1); }
                     | non_empty_param_list COMMA param { $1->emplace_back($3); $$ = $1; };
@@ -174,10 +176,12 @@ const_decl: type var ASSIGN literal SEMI
 
 literal: BOOL { $$ = new BoolLiteral($1, @$); }
        | INT { $$ = new IntLiteral($1, @$); }
-       | FLOAT { $$ = new FloatLiteral($1, @$); };
+       | FLOAT { $$ = new FloatLiteral($1, @$); }
+       | STRING { $$ = new StringLiteral($1, @$); }
+       ;
 
 type: IDENTIFIER { $$ = new SimpleType($1, @$); }
-	| type LBRACKET RBRACKET { $$ = new ArrayType($1, @$); };
+    | type LBRACKET RBRACKET { $$ = new ArrayType($1, @$); };
 
 statement_list: %empty { $$ = new StatementList(); }
               | statement_list statement { $1->emplace_back($2); $$ = $1; };
@@ -202,7 +206,7 @@ arg: expression { $$ = new Arg($1, nullptr, @$); }
    | expression ARROW expression { $$ = new Arg($1, $3, @$); };
 
 arg_list: %empty { $$ = new ArgList(); }
-        | non_empty_arg_list;
+        | non_empty_arg_list { $$ = $1; };
 
 non_empty_arg_list: arg { $$ = new ArgList(); $$->emplace_back($1); }
                   | non_empty_arg_list COMMA arg { $1->emplace_back($3); $$ = $1; };
@@ -214,6 +218,7 @@ expression: var { $$ = new VarExpression($1, @$); }
           | expression DOT IDENTIFIER { $$ = new MemberAccessExpression($1, $3, @$); }
           | expression QM expression COLON expression
               { $$ = new TernaryExpression($1, $3, $5, @$); }
+          | NEW type LBRACKET expression RBRACKET { $$ = new NewArrayExpression($2, $4, @$); }
     
           | NOT expression           { $$ = new UnaryOpExpression(UnaryOp::LOGICAL_NOT, $2, @$); }
           | BITWISE_NOT expression   { $$ = new UnaryOpExpression(UnaryOp::BITWISE_NOT, $2, @$); }

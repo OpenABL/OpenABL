@@ -14,6 +14,22 @@ static OpenABL::location loc;
 /* Run each time a pattern matches */
 #define YY_USER_ACTION loc.columns (yyleng);
 
+static std::string parseString(const char *str, size_t len) {
+  std::string result;
+  result.reserve(len - 2);
+  for (size_t i = 1; i < len - 1; i++) {
+    char c = str[i];
+    if (c == '\\') {
+      char n = str[++i];
+      // TODO validate n
+      result.push_back(n);
+    } else {
+      result.push_back(c);
+    }
+  }
+  return result;
+}
+
 %}
 
 DNUM [0-9]+
@@ -34,6 +50,7 @@ loc.step();
 "if"       { return Parser::make_IF(loc); }
 "interact" { return Parser::make_INTERACT(loc); }
 "for"      { return Parser::make_FOR(loc); }
+"new"      { return Parser::make_NEW(loc); }
 "position" { return Parser::make_POSITION(loc); }
 "pfor"     { return Parser::make_PFOR(loc); }
 
@@ -50,6 +67,10 @@ false { return Parser::make_BOOL(false, loc); }
 }
 {FLOAT} {
   return Parser::make_FLOAT(std::stod(yytext, nullptr), loc);
+}
+
+\"(([^"]|\\.)*)\" {
+  return Parser::make_STRING(parseString(yytext, yyleng), loc);
 }
 
 {ID}    { return Parser::make_IDENTIFIER(yytext, loc); }

@@ -19,6 +19,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void enter(AST::CallExpression &);
   void enter(AST::MemberAccessExpression &);
   void enter(AST::TernaryExpression &);
+  void enter(AST::NewArrayExpression &);
   void enter(AST::ExpressionStatement &);
   void enter(AST::BlockStatement &);
   void enter(AST::VarDeclarationStatement &);
@@ -44,6 +45,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void leave(AST::CallExpression &);
   void leave(AST::MemberAccessExpression &);
   void leave(AST::TernaryExpression &);
+  void leave(AST::NewArrayExpression &);
   void leave(AST::ExpressionStatement &);
   void leave(AST::BlockStatement &);
   void leave(AST::VarDeclarationStatement &);
@@ -76,6 +78,8 @@ private:
 
   // Declared agents by name
   std::map<std::string, AST::AgentDeclaration *> agents;
+  // Declared functions by name
+  std::map<std::string, AST::FunctionDeclaration *> funcs;
 };
 
 }

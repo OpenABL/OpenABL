@@ -8,7 +8,7 @@
 namespace OpenABL {
 
 struct Printer {
-  Printer() : str{}, indentLevel{0} {}
+  Printer() : str{}, indentLevel{0}, nextAnonLabel{0} {}
 
   std::string extractStr() {
     return str.str();
@@ -25,6 +25,7 @@ struct Printer {
   virtual void print(AST::CallExpression &) = 0;
   virtual void print(AST::MemberAccessExpression &) = 0;
   virtual void print(AST::TernaryExpression &) = 0;
+  virtual void print(AST::NewArrayExpression &) = 0;
   virtual void print(AST::ExpressionStatement &) = 0;
   virtual void print(AST::BlockStatement &) = 0;
   virtual void print(AST::VarDeclarationStatement &) = 0;
@@ -76,9 +77,14 @@ struct Printer {
     str << a; return *this;
   }
 
+  std::string makeAnonLabel() {
+    return "_var" + std::to_string(nextAnonLabel++);
+  }
+
 private:
   std::stringstream str;
   uint32_t indentLevel;
+  uint32_t nextAnonLabel;
 };
 
 }

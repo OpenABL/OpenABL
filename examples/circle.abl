@@ -27,7 +27,7 @@ interact sep_aggr(Point in -> out, Point other) {
 
 void main() {
   // Determine population size and allocate agents
-  int A_pop = (int) (W*W * rho);
+  int A_pop = int(W*W * rho);
   Point[] points = new Point[A_pop];
 
   // initialization (sequential)

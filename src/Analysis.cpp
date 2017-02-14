@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Analysis.hpp"
+#include "AST.hpp"
 
 namespace OpenABL {
 
@@ -12,19 +13,27 @@ static const char *getTypeIdStr(Type::TypeId t) {
     case Type::BOOL: return "bool";
     case Type::INT32: return "int";
     case Type::FLOAT32: return "float";
-    case Type::VEC2: return "vec2";
-    case Type::VEC3: return "vec3";
-    case Type::AGENT: return "???"; // TODO
+    case Type::STRING: return "string";
+    case Type::VEC2: return "float2";
+    case Type::VEC3: return "float3";
+    case Type::AGENT: return NULL;
     case Type::ARRAY: return NULL;
   }
 }
 
-std::ostream &operator<<(std::ostream &s, Type t) {
+static void printType(std::ostream &s, Type t) {
   if (t.isArray()) {
-    s << getTypeIdStr(t.getBaseTypeId()) << "[]";
+    printType(s, t.getBaseType());
+    s << "[]";
+  } else if (t.isAgent()) {
+    s << t.getAgentDecl()->name;
   } else {
     s << getTypeIdStr(t.getTypeId());
   }
+}
+
+std::ostream &operator<<(std::ostream &s, const Type &t) {
+  printType(s, t);
   return s;
 }
 

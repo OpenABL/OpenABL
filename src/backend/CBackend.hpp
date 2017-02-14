@@ -18,6 +18,7 @@ struct CPrinter : public Printer {
   void print(AST::CallExpression &);
   void print(AST::MemberAccessExpression &);
   void print(AST::TernaryExpression &);
+  void print(AST::NewArrayExpression &);
   void print(AST::ExpressionStatement &);
   void print(AST::BlockStatement &);
   void print(AST::VarDeclarationStatement &);
@@ -46,6 +47,18 @@ std::string CBackend::astToCode(AST::Script &script) {
   return printer.extractStr();
 }
 
+static void printStringLiteral(Printer &p, const std::string &str) {
+  p << '"';
+  for (char c : str) {
+    if (c == '"' || c == '\\') {
+      p << '\\' << c;
+    } else {
+      p << c;
+    }
+  }
+  p << '"';
+}
+
 void CPrinter::print(AST::Var &var) {
   *this << var.name;
 }
@@ -56,6 +69,8 @@ void CPrinter::print(AST::Literal &lit) {
     *this << flit->value;
   } else if (AST::BoolLiteral *blit = dynamic_cast<AST::BoolLiteral *>(&lit)) {
     *this << blit->value;
+  } else if (AST::StringLiteral *slit = dynamic_cast<AST::StringLiteral *>(&lit)) {
+    printStringLiteral(*this, slit->value);
   } else {
     assert(0);
   }
@@ -124,6 +139,9 @@ void CPrinter::print(AST::MemberAccessExpression &expr) {
 void CPrinter::print(AST::TernaryExpression &expr) {
   *this << "(" << *expr.condExpr << " ? " << *expr.ifExpr << " : " << *expr.elseExpr << ")";
 }
+void CPrinter::print(AST::NewArrayExpression &expr) {
+  *this << "calloc(sizeof(" << *expr.elemType << "), " << *expr.sizeExpr << ")";
+}
 void CPrinter::print(AST::ExpressionStatement &stmt) {
   *this << *stmt.expr << ";";
 }
@@ -140,11 +158,22 @@ void CPrinter::print(AST::VarDeclarationStatement &stmt) {
 void CPrinter::print(AST::IfStatement &stmt) {
   *this << "if (" << *stmt.condExpr << ") " << *stmt.ifStmt;
 }
-void CPrinter::print(AST::ForStatement &) {
-  // TODO
+void CPrinter::print(AST::ForStatement &stmt) {
+  // TODO special loops (ranges, near)
+  // TODO type printing is broken
+  std::string eLabel = makeAnonLabel();
+  std::string iLabel = makeAnonLabel();
+  *this << stmt.expr->type << " " << eLabel << " = " << *stmt.expr << ";" << nl
+        << "for (size_t " << iLabel << " = 0; "
+        << iLabel << " < " << eLabel << "->len; "
+        << iLabel << "++) {"
+        << indent << nl << *stmt.type << " " << *stmt.var
+        << " = " << eLabel << "[" << iLabel << "]" << ";" << nl
+        << *stmt.stmt << outdent << nl << "}";
 }
-void CPrinter::print(AST::ParallelForStatement &) {
+void CPrinter::print(AST::ParallelForStatement &stmt) {
   // TODO
+  *this << "#pragma omp parallel for" << nl << "// TODO " << *stmt.stmt;
 }
 void CPrinter::print(AST::SimpleType &type) {
   *this << type.name;

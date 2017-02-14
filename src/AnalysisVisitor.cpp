@@ -12,9 +12,11 @@ Type AnalysisVisitor::resolveAstType(AST::Type &type) {
       return { Type::INT32 };
     } else if (t->name == "float") {
       return { Type::FLOAT32 };
-    } else if (t->name == "vec2") {
+    } else if (t->name == "string") {
+      return { Type::STRING };
+    } else if (t->name == "float2") {
       return { Type::VEC2 };
-    } else if (t->name == "vec3") {
+    } else if (t->name == "float3") {
       return { Type::VEC3 };
     } else {
       auto it = agents.find(t->name);
@@ -31,7 +33,7 @@ Type AnalysisVisitor::resolveAstType(AST::Type &type) {
       return { Type::INVALID };
     }
 
-    return { Type::ARRAY, baseType.getTypeId() };
+    return { Type::ARRAY, baseType };
   } else {
     assert(0);
   }
@@ -68,33 +70,39 @@ void AnalysisVisitor::enter(AST::Arg &) {};
 void AnalysisVisitor::enter(AST::CallExpression &) {};
 void AnalysisVisitor::enter(AST::MemberAccessExpression &) {};
 void AnalysisVisitor::enter(AST::TernaryExpression &) {};
+void AnalysisVisitor::enter(AST::NewArrayExpression &) {};
 void AnalysisVisitor::enter(AST::ExpressionStatement &) {};
 void AnalysisVisitor::enter(AST::IfStatement &) {};
-void AnalysisVisitor::enter(AST::SimpleType &) {};
-void AnalysisVisitor::enter(AST::ArrayType &) {};
 void AnalysisVisitor::enter(AST::AgentMember &) {};
 void AnalysisVisitor::enter(AST::Script &) {};
 void AnalysisVisitor::enter(AST::VarExpression &) {};
+void AnalysisVisitor::enter(AST::ConstDeclaration &) {};
+void AnalysisVisitor::enter(AST::VarDeclarationStatement &) {};
+void AnalysisVisitor::enter(AST::Param &) {};
 void AnalysisVisitor::leave(AST::Var &) {};
 void AnalysisVisitor::leave(AST::UnaryOpExpression &) {};
 void AnalysisVisitor::leave(AST::AssignOpExpression &) {};
 void AnalysisVisitor::leave(AST::AssignExpression &) {};
 void AnalysisVisitor::leave(AST::Arg &) {};
-void AnalysisVisitor::leave(AST::CallExpression &) {};
 void AnalysisVisitor::leave(AST::TernaryExpression &) {};
 void AnalysisVisitor::leave(AST::ExpressionStatement &) {};
-void AnalysisVisitor::leave(AST::VarDeclarationStatement &) {};
 void AnalysisVisitor::leave(AST::IfStatement &) {};
 void AnalysisVisitor::leave(AST::SimpleType &) {};
 void AnalysisVisitor::leave(AST::ArrayType &) {};
-void AnalysisVisitor::leave(AST::Param &) {};
 void AnalysisVisitor::leave(AST::AgentMember &) {};
 void AnalysisVisitor::leave(AST::AgentDeclaration &) {};
-void AnalysisVisitor::leave(AST::ConstDeclaration &) {};
 void AnalysisVisitor::leave(AST::Script &) {};
 
-void AnalysisVisitor::enter(AST::FunctionDeclaration &) {
+void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
   pushVarScope();
+
+  auto it = funcs.find(decl.name);
+  if (it != funcs.end()) {
+    std::cout << "Redeclaration of function named \"" << decl.name << "\"" << std::endl;
+    return;
+  }
+
+  funcs.insert({ decl.name, &decl });
 };
 void AnalysisVisitor::leave(AST::FunctionDeclaration &) {
   popVarScope();
@@ -106,27 +114,39 @@ void AnalysisVisitor::leave(AST::BlockStatement &) {
   popVarScope();
 };
 
-void AnalysisVisitor::enter(AST::ConstDeclaration &decl) {
-  Type type = resolveAstType(*decl.type);
-  decl.var->id = declareVar(decl.var->name, type);
+void AnalysisVisitor::enter(AST::SimpleType &type) {
+  type.resolved = resolveAstType(type);
+};
+void AnalysisVisitor::enter(AST::ArrayType &type) {
+  type.resolved = resolveAstType(type);
 };
 
-void AnalysisVisitor::enter(AST::VarDeclarationStatement &decl) {
-  decl.var->id = declareVar(decl.var->name, resolveAstType(*decl.type));
-}
+void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
+  decl.var->id = declareVar(decl.var->name, decl.type->resolved);
+};
+void AnalysisVisitor::leave(AST::VarDeclarationStatement &decl) {
+  decl.var->id = declareVar(decl.var->name, decl.type->resolved);
+  if (decl.initializer) {
+    Type declType = decl.type->resolved;
+    Type initType = decl.initializer->type;
+    if (declType != initType) {
+      std::cout << "Trying to assign value of type " << initType
+                << " to variable of type " << declType << std::endl;
+    }
+  }
+};
 
-void AnalysisVisitor::enter(AST::Param &param) {
-  Type type = resolveAstType(*param.type);
-  param.var->id = declareVar(param.var->name, type);
+void AnalysisVisitor::leave(AST::Param &param) {
+  param.var->id = declareVar(param.var->name, param.type->resolved);
   if (param.outVar) {
-    param.outVar->id = declareVar(param.outVar->name, type);
+    param.outVar->id = declareVar(param.outVar->name, param.type->resolved);
   }
 }
 
 void AnalysisVisitor::enter(AST::ForStatement &stmt) {
   pushVarScope();
 
-  Type type = resolveAstType(*stmt.type);
+  Type type = resolveAstType(*stmt.type); // Not resolved yet
   stmt.var->id = declareVar(stmt.var->name, type);
 };
 void AnalysisVisitor::leave(AST::ForStatement &) {
@@ -136,7 +156,7 @@ void AnalysisVisitor::leave(AST::ForStatement &) {
 void AnalysisVisitor::enter(AST::ParallelForStatement &stmt) {
   pushVarScope();
 
-  Type type = resolveAstType(*stmt.type);
+  Type type = resolveAstType(*stmt.type); // Not resolved yet
   stmt.var->id = declareVar(stmt.var->name, type);
   stmt.outVar->id = declareVar(stmt.outVar->name, type);
 };
@@ -173,6 +193,8 @@ void AnalysisVisitor::leave(AST::Literal &lit) {
     lit.type = { Type::FLOAT32 };
   } else if (AST::BoolLiteral *blit = dynamic_cast<AST::BoolLiteral *>(&lit)) {
     lit.type = { Type::BOOL };
+  } else if (AST::StringLiteral *slit = dynamic_cast<AST::StringLiteral *>(&lit)) {
+    lit.type = { Type::STRING };
   } else {
     assert(0);
   }
@@ -253,6 +275,16 @@ void AnalysisVisitor::leave(AST::BinaryOpExpression &expr) {
   }
 };
 
+void AnalysisVisitor::leave(AST::NewArrayExpression &expr) {
+  Type elemType = expr.elemType->resolved;
+  if (elemType.isArray()) {
+    std::cout << "Cannot instantiate nested array type" << std::endl;
+    return;
+  }
+
+  expr.type = { Type::ARRAY, elemType };
+};
+
 static AST::AgentMember *findAgentMember(AST::AgentDeclaration &decl, const std::string &name) {
   for (AST::AgentMemberPtr &member : *decl.members) {
     if (member->name == name) {
@@ -273,9 +305,17 @@ void AnalysisVisitor::leave(AST::MemberAccessExpression &expr) {
       return;
     }
 
-    expr.type = resolveAstType(*member->type);
+    expr.type = member->type->resolved;
   } else {
     std::cout << "Can only access members on agent or vector type" << std::endl;
+    return;
+  }
+};
+
+void AnalysisVisitor::leave(AST::CallExpression &expr) {
+  auto it = funcs.find(expr.name);
+  if (it == funcs.end()) {
+    std::cout << "Call to unknown function \"" << expr.name << "\"" << std::endl;
     return;
   }
 };

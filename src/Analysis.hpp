@@ -36,18 +36,25 @@ struct Type {
     BOOL,
     INT32,
     FLOAT32,
+    STRING,
     VEC2,
     VEC3,
     AGENT,
     ARRAY,
   };
 
+  Type() : type{INVALID} {}
   Type(TypeId type)
-    : type{type} { assert(type != AGENT && type != ARRAY); }
+    : type{type}
+  { assert(type != AGENT && type != ARRAY); }
+
   Type(TypeId type, AST::AgentDeclaration *agent)
-    : type{type}, agent{agent} { assert(type == AGENT); }
-  Type(TypeId type, TypeId baseType)
-    : type{type}, baseType{baseType} { assert(type == ARRAY); }
+    : type{type}, agent{agent}
+  { assert(type == AGENT); }
+
+  Type(TypeId type, const Type &base)
+    : type{type}, baseType{base.type}, agent{base.agent}
+  { assert(type == ARRAY); }
 
   bool operator==(const Type &other) const {
     if (type != other.type) {
@@ -67,10 +74,16 @@ struct Type {
   }
 
   TypeId getTypeId() const { return type; }
-  TypeId getBaseTypeId() const {
+
+  Type getBaseType() const {
     assert(isArray());
-    return baseType;
+    if (baseType == AGENT) {
+      return { AGENT, agent };
+    } else {
+      return { baseType };
+    }
   }
+
   AST::AgentDeclaration *getAgentDecl() const {
     assert(isAgent());
     return agent;
@@ -93,7 +106,7 @@ private:
   AST::AgentDeclaration *agent;
 };
 
-std::ostream &operator<<(std::ostream &, Type);
+std::ostream &operator<<(std::ostream &, const Type &);
 
 struct ScopeEntry {
   Type type;

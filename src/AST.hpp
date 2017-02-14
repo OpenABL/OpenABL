@@ -40,9 +40,10 @@ struct Var : public Node {
 using VarPtr = std::unique_ptr<Var>;
 
 struct Expression : public Node {
-  Expression(Location loc)
-    : Node{loc}, type{OpenABL::Type::INVALID} {}
   OpenABL::Type type;
+
+  Expression(Location loc)
+    : Node{loc} {}
 };
 
 using ExpressionPtr = std::unique_ptr<Expression>;
@@ -76,6 +77,13 @@ struct FloatLiteral : public Literal {
   double value;
 
   FloatLiteral(double value, Location loc)
+    : Literal{loc}, value{value} {}
+};
+
+struct StringLiteral : public Literal {
+  std::string value;
+
+  StringLiteral(std::string value, Location loc)
     : Literal{loc}, value{value} {}
 };
 
@@ -246,6 +254,17 @@ struct TernaryExpression : public Expression {
   void print(Printer &);
 };
 
+struct NewArrayExpression : public Expression {
+  TypePtr elemType;
+  ExpressionPtr sizeExpr;
+
+  NewArrayExpression(Type *elemType, Expression *sizeExpr, Location loc)
+    : Expression{loc}, elemType{elemType}, sizeExpr{sizeExpr} {}
+
+  void accept(Visitor &);
+  void print(Printer &);
+};
+
 struct Statement : public Node {
   Statement(Location loc) : Node{loc} {}
 };
@@ -328,6 +347,8 @@ struct ParallelForStatement : public Statement {
 };
 
 struct Type : public Node {
+  OpenABL::Type resolved;
+
   Type(Location loc) : Node{loc} {}
 };
 

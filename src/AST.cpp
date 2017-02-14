@@ -79,6 +79,13 @@ void TernaryExpression::accept(Visitor &visitor) {
   visitor.leave(*this);
 }
 
+void NewArrayExpression::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  elemType->accept(visitor);
+  sizeExpr->accept(visitor);
+  visitor.leave(*this);
+}
+
 void ExpressionStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
   expr->accept(visitor);
@@ -208,6 +215,7 @@ void Arg::print(Printer &printer) { printer.print(*this); }
 void CallExpression::print(Printer &printer) { printer.print(*this); }
 void MemberAccessExpression::print(Printer &printer) { printer.print(*this); }
 void TernaryExpression::print(Printer &printer) { printer.print(*this); }
+void NewArrayExpression::print(Printer &printer) { printer.print(*this); }
 void ExpressionStatement::print(Printer &printer) { printer.print(*this); }
 void BlockStatement::print(Printer &printer) { printer.print(*this); }
 void VarDeclarationStatement::print(Printer &printer) { printer.print(*this); }
