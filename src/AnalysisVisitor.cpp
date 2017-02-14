@@ -17,8 +17,12 @@ Type AnalysisVisitor::resolveAstType(AST::Type &type) {
     } else if (t->name == "vec3") {
       return { Type::VEC3 };
     } else {
-      // TODO check existence
-      return { Type::AGENT };
+      auto it = agents.find(t->name);
+      if (it == agents.end()) {
+        std::cout << "Unknown type \"" << t->name << "\"" << std::endl;
+        return { Type::INVALID };
+      }
+      return { Type::AGENT, it->second };
     }
   } else if (AST::ArrayType *t = dynamic_cast<AST::ArrayType *>(&type)) {
     Type baseType = resolveAstType(*t->type);
@@ -69,17 +73,14 @@ void AnalysisVisitor::enter(AST::IfStatement &) {};
 void AnalysisVisitor::enter(AST::SimpleType &) {};
 void AnalysisVisitor::enter(AST::ArrayType &) {};
 void AnalysisVisitor::enter(AST::AgentMember &) {};
-void AnalysisVisitor::enter(AST::AgentDeclaration &) {};
 void AnalysisVisitor::enter(AST::Script &) {};
 void AnalysisVisitor::enter(AST::VarExpression &) {};
 void AnalysisVisitor::leave(AST::Var &) {};
-void AnalysisVisitor::leave(AST::Literal &) {};
 void AnalysisVisitor::leave(AST::UnaryOpExpression &) {};
 void AnalysisVisitor::leave(AST::AssignOpExpression &) {};
 void AnalysisVisitor::leave(AST::AssignExpression &) {};
 void AnalysisVisitor::leave(AST::Arg &) {};
 void AnalysisVisitor::leave(AST::CallExpression &) {};
-void AnalysisVisitor::leave(AST::MemberAccessExpression &) {};
 void AnalysisVisitor::leave(AST::TernaryExpression &) {};
 void AnalysisVisitor::leave(AST::ExpressionStatement &) {};
 void AnalysisVisitor::leave(AST::VarDeclarationStatement &) {};
@@ -143,6 +144,16 @@ void AnalysisVisitor::leave(AST::ParallelForStatement &) {
   popVarScope();
 };
 
+void AnalysisVisitor::enter(AST::AgentDeclaration &decl) {
+  auto it = agents.find(decl.name);
+  if (it != agents.end()) {
+    std::cout << "Redefinition of agent " << decl.name << std::endl;
+    return;
+  }
+
+  agents.insert({ decl.name, &decl });
+};
+
 void AnalysisVisitor::leave(AST::VarExpression &expr) {
   AST::Var &var = *expr.var;
   auto it = varMap.find(var.name);
@@ -155,31 +166,80 @@ void AnalysisVisitor::leave(AST::VarExpression &expr) {
   expr.type = scope.get(var.id).type;
 }
 
+void AnalysisVisitor::leave(AST::Literal &lit) {
+  if (AST::IntLiteral *ilit = dynamic_cast<AST::IntLiteral *>(&lit)) {
+    lit.type = { Type::INT32 };
+  } else if (AST::FloatLiteral *flit = dynamic_cast<AST::FloatLiteral *>(&lit)) {
+    lit.type = { Type::FLOAT32 };
+  } else if (AST::BoolLiteral *blit = dynamic_cast<AST::BoolLiteral *>(&lit)) {
+    lit.type = { Type::BOOL };
+  } else {
+    assert(0);
+  }
+};
+
+static bool promoteToFloat(Type l, Type r) {
+  return (l.isFloat() && r.isInt()) || (r.isFloat() && l.isInt());
+}
+
 static Type getBinaryOpType(AST::BinaryOp op, Type l, Type r) {
   switch (op) {
     case AST::BinaryOp::ADD:
     case AST::BinaryOp::SUB:
+      if (!l.isNumOrVec() || !r.isNumOrVec()) {
+        return { Type::INVALID };
+      }
+      if (l != r) {
+        if (promoteToFloat(l, r)) {
+          return { Type::FLOAT32 };
+        } else {
+          return { Type::INVALID };
+        }
+      }
+      return l;
     case AST::BinaryOp::MUL:
     case AST::BinaryOp::DIV:
+      if (!l.isNumOrVec() || !r.isNumOrVec()) {
+        return { Type::INVALID };
+      }
+      if (l.isVec() && r.isVec()) {
+        return { Type::INVALID };
+      }
+      if (l.isVec()) {
+        return l;
+      }
+      if (r.isVec()) {
+        if (op == AST::BinaryOp::DIV) {
+          return { Type::INVALID };
+        }
+        return r;
+      }
       if (l != r) {
-        // Int to float promotion
-        if (l.isFloat() && r.isInt()) {
-          r = l;
-        } else if (r.isFloat() && l.isInt()) {
-          l = r;
+        if (promoteToFloat(l, r)) {
+          return { Type::FLOAT32 };
         } else {
-          std::cout << "Type mismatch (" << l << " "
-                    << getBinaryOpSigil(op) << " " << r << ")" << std::endl;
           return { Type::INVALID };
         }
       }
       return l;
     case AST::BinaryOp::MOD:
       if (!l.isInt() || !r.isInt()) {
-        std::cout << "Modulus requires integer operands" << std::endl;
         return { Type::INVALID };
       }
       return { Type::INT32 };
+    case AST::BinaryOp::SMALLER:
+    case AST::BinaryOp::SMALLER_EQUALS:
+    case AST::BinaryOp::GREATER:
+    case AST::BinaryOp::GREATER_EQUALS:
+      if (!l.isNum() || !r.isNum()) {
+        return { Type::INVALID };
+      }
+      return { Type:: BOOL };
+    case AST::BinaryOp::RANGE:
+      if (!l.isInt() || !r.isInt()) {
+        return { Type::INVALID };
+      }
+      return { Type::ARRAY, Type::INT32 };
     default:
       return { Type::INVALID };
   }
@@ -187,6 +247,37 @@ static Type getBinaryOpType(AST::BinaryOp op, Type l, Type r) {
 
 void AnalysisVisitor::leave(AST::BinaryOpExpression &expr) {
   expr.type = getBinaryOpType(expr.op, expr.left->type, expr.right->type);
+  if (expr.type.isInvalid()) {
+    std::cout << "Type mismatch (" << expr.left->type << " "
+              << getBinaryOpSigil(expr.op) << " " << expr.right->type << ")" << std::endl;
+  }
+};
+
+static AST::AgentMember *findAgentMember(AST::AgentDeclaration &decl, const std::string &name) {
+  for (AST::AgentMemberPtr &member : *decl.members) {
+    if (member->name == name) {
+      return &*member;
+    }
+  }
+  return nullptr;
+}
+
+void AnalysisVisitor::leave(AST::MemberAccessExpression &expr) {
+  Type type = expr.expr->type;
+  if (type.isVec()) {
+  } else if (type.isAgent()) {
+    AST::AgentDeclaration *agent = type.getAgentDecl();
+    AST::AgentMember *member = findAgentMember(*agent, expr.member);
+    if (!member) {
+      std::cout << "Agent has no member \"" << expr.member << "\"" << std::endl;
+      return;
+    }
+
+    expr.type = resolveAstType(*member->type);
+  } else {
+    std::cout << "Can only access members on agent or vector type" << std::endl;
+    return;
+  }
 };
 
 }

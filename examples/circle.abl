@@ -16,7 +16,7 @@ float rho = 0.01;
 interact sep_aggr(Point in -> out, Point other) {
   float pos_dist = dist(in.pos, other.pos);
   float sep_dist = pos_dist - r;
-  float2 force = float2(0.0, 0.0);
+  vec2 force = vec2(0.0, 0.0);
   if (sep_dist < r) {
     float k = sep_dist > 0.0 ? k_att : -k_rep;
 	// r or pos_dist here?

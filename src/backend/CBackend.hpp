@@ -67,6 +67,31 @@ void CPrinter::print(AST::UnaryOpExpression &expr) {
   *this << "(" << AST::getUnaryOpSigil(expr.op) << *expr.expr << ")";
 }
 void CPrinter::print(AST::BinaryOpExpression &expr) {
+  Type l = expr.left->type;
+  Type r = expr.right->type;
+  if (l.isVec() || r.isVec()) {
+    Type v = l.isVec() ? l : r;
+    *this << (v.getTypeId() == Type::VEC2 ? "vec2_" : "vec3_");
+    switch (expr.op) {
+      case AST::BinaryOp::ADD: *this << "add"; break;
+      case AST::BinaryOp::SUB: *this << "sub"; break;
+      case AST::BinaryOp::DIV: *this << "div_scalar"; break;
+      case AST::BinaryOp::MUL:
+        *this << "mul_scalar";
+        if (r.isVec()) {
+          // Normalize to right multiplication
+          // TODO Move into analysis
+          *this << "(" << *expr.right << ", " << *expr.left << ")";
+          return;
+        }
+        break;
+      default:
+        assert(0);
+    }
+    *this << "(" << *expr.left << ", " << *expr.right << ")";
+    return;
+  }
+
   *this << "(" << *expr.left << " " << AST::getBinaryOpSigil(expr.op)
         << " " << *expr.right << ")";
 }

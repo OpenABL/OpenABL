@@ -73,6 +73,9 @@ private:
   std::stack<VarMap> varMapStack;
   // Information about *all* variables, indexed by unique VarId's
   Scope scope;
+
+  // Declared agents by name
+  std::map<std::string, AST::AgentDeclaration *> agents;
 };
 
 }
