@@ -1,5 +1,5 @@
 agent Point {
-  position vec2 pos;
+  position float2 pos;
 }
 
 // Repulsive force parameter
@@ -16,7 +16,7 @@ float rho = 0.01;
 interact sep_aggr(Point in -> out, Point other) {
   float pos_dist = dist(in.pos, other.pos);
   float sep_dist = pos_dist - r;
-  vec2 force = vec2(0.0, 0.0);
+  float2 force = float2(0.0, 0.0);
   if (sep_dist < r) {
     float k = sep_dist > 0.0 ? k_att : -k_rep;
 	// r or pos_dist here?
@@ -26,7 +26,9 @@ interact sep_aggr(Point in -> out, Point other) {
 }
 
 void main() {
-  Point[] points = init_somehow(); // TODO
+  // Determine population size and allocate agents
+  int A_pop = (int) (W*W * rho);
+  Point[] points = new Point[A_pop];
 
   // initialization (sequential)
   for (Point p : points) {
@@ -43,4 +45,6 @@ void main() {
       out = tmp;
     }
   }
+
+  save(points, "points.out");
 }

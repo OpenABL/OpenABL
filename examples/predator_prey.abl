@@ -1,0 +1,41 @@
+agent Predator {
+  position float3 pos;
+  float3 dir;
+}
+agent Prey {
+  position float3 pos;
+  float3 dir;
+}
+
+interact escape(Prey old -> new, Predator other) {
+  // TODO
+}
+interact follow(Predator old -> new, Prey other) {
+  // TODO
+}
+
+main() {
+  Prey[] preys = load("prey.in");
+  Predator[] predators = load("predator.in");
+
+  for (int time_step : 0 .. 100) {
+    pfor (Prey old -> new : preys) {
+      Prey tmp = old;
+      for (Predator nx : near(old, 7)) { // TODO need to specify the type?
+        escape(old -> tmp, nx);
+      }
+      new = tmp;
+    }
+
+    pfor (Predator old -> new : predators) {
+      Predator tmp = old;
+      for (Prey nx : near(old, 7)) { // TODO need to specify the type?
+        follow(old -> tmp, nx);
+      }
+      new = tmp;
+    }  
+  }
+
+  save(prey, "prey.out");
+  save(predator, "predator.out");
+}

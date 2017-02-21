@@ -1,0 +1,34 @@
+agent Boid {
+  position float3 pos;
+  float3 dir;
+}
+
+interact separation(Boid old -> new, Boid other) {
+  // TODO
+}
+interact alignment(Boid old -> new, Boid other) {
+  // TODO
+}
+interact cohesion(Boid old -> new, Boid other) {
+  // TODO
+}
+
+main() {
+  Boid[] boids = load("boids.in");
+
+  for (int time_step : 0 .. 100) {
+    pfro (Boid old -> new : boids) {
+      Boid tmp = old;
+      for (Agent nx : near(old, 5)) {
+        separation(old -> tmp, nx);
+        alignment(old -> tmp, nx);
+      }
+      for (Agent nx : near(old, 7)) {
+        cohesion(old -> tmp, nx);
+      }
+      new = tmp;
+    }
+  }
+
+  save(boids, "boids.out");
+}
