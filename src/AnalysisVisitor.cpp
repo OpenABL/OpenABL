@@ -1,4 +1,5 @@
 #include "AnalysisVisitor.hpp"
+#include "ErrorHandling.hpp"
 
 namespace OpenABL {
 
@@ -31,7 +32,7 @@ Type AnalysisVisitor::resolveAstType(AST::Type &type) {
       // Agent type
       auto it = agents.find(t->name);
       if (it == agents.end()) {
-        std::cout << "Unknown type \"" << t->name << "\"" << std::endl;
+        err << "Unknown type \"" << t->name << "\"" << type.loc;
         return { Type::INVALID };
       }
       return { Type::AGENT, it->second };
@@ -39,7 +40,7 @@ Type AnalysisVisitor::resolveAstType(AST::Type &type) {
   } else if (AST::ArrayType *t = dynamic_cast<AST::ArrayType *>(&type)) {
     Type baseType = resolveAstType(*t->type);
     if (baseType.isArray()) {
-      std::cout << "Arrays may only be nested to one level" << std::endl;
+      err << "Arrays may only be nested to one level" << type.loc;
       return { Type::INVALID };
     }
 
@@ -53,6 +54,8 @@ VarId AnalysisVisitor::declareVar(std::string name, Type type) {
   auto it = varMap.find(name);
   if (it != varMap.end()) {
     std::cout << "Cannot redeclare " << name << std::endl;
+    // TODO migrate to errstream
+    // TODO We need more specific location information for identifiers
   }
 
   VarId id = VarId::make();
@@ -108,7 +111,7 @@ void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
 
   auto it = funcs.find(decl.name);
   if (it != funcs.end()) {
-    std::cout << "Redeclaration of function named \"" << decl.name << "\"" << std::endl;
+    err << "Redeclaration of function named \"" << decl.name << "\"" << decl.loc;
     return;
   }
 
@@ -140,8 +143,8 @@ void AnalysisVisitor::leave(AST::VarDeclarationStatement &decl) {
     Type declType = decl.type->resolved;
     Type initType = decl.initializer->type;
     if (declType != initType) {
-      std::cout << "Trying to assign value of type " << initType
-                << " to variable of type " << declType << std::endl;
+      err << "Trying to assign value of type " << initType
+          << " to variable of type " << declType << decl.initializer->loc;
     }
   }
 };
@@ -177,7 +180,7 @@ void AnalysisVisitor::leave(AST::ParallelForStatement &) {
 void AnalysisVisitor::enter(AST::AgentDeclaration &decl) {
   auto it = agents.find(decl.name);
   if (it != agents.end()) {
-    std::cout << "Redefinition of agent " << decl.name << std::endl;
+    err << "Redefinition of agent " << decl.name << decl.loc;
     return;
   }
 
@@ -188,7 +191,7 @@ void AnalysisVisitor::leave(AST::VarExpression &expr) {
   AST::Var &var = *expr.var;
   auto it = varMap.find(var.name);
   if (it == varMap.end()) {
-    std::cout << "Use of undeclared variable " << var.name << std::endl;
+    err << "Use of undeclared variable " << var.name << expr.loc;
     return;
   }
 
@@ -280,15 +283,15 @@ static Type getBinaryOpType(AST::BinaryOp op, Type l, Type r) {
 void AnalysisVisitor::leave(AST::BinaryOpExpression &expr) {
   expr.type = getBinaryOpType(expr.op, expr.left->type, expr.right->type);
   if (expr.type.isInvalid()) {
-    std::cout << "Type mismatch (" << expr.left->type << " "
-              << getBinaryOpSigil(expr.op) << " " << expr.right->type << ")" << std::endl;
+    err << "Type mismatch (" << expr.left->type << " "
+        << getBinaryOpSigil(expr.op) << " " << expr.right->type << ")" << expr.loc;
   }
 };
 
 void AnalysisVisitor::leave(AST::NewArrayExpression &expr) {
   Type elemType = expr.elemType->resolved;
   if (elemType.isArray()) {
-    std::cout << "Cannot instantiate nested array type" << std::endl;
+    err << "Cannot instantiate nested array type" << expr.elemType->loc;
     return;
   }
 
@@ -307,17 +310,18 @@ static AST::AgentMember *findAgentMember(AST::AgentDeclaration &decl, const std:
 void AnalysisVisitor::leave(AST::MemberAccessExpression &expr) {
   Type type = expr.expr->type;
   if (type.isVec()) {
+    // TODO
   } else if (type.isAgent()) {
     AST::AgentDeclaration *agent = type.getAgentDecl();
     AST::AgentMember *member = findAgentMember(*agent, expr.member);
     if (!member) {
-      std::cout << "Agent has no member \"" << expr.member << "\"" << std::endl;
+      err << "Agent has no member \"" << expr.member << "\"" << expr.loc;
       return;
     }
 
     expr.type = member->type->resolved;
   } else {
-    std::cout << "Can only access members on agent or vector type" << std::endl;
+    err << "Can only access members on agent or vector type" << expr.loc;
     return;
   }
 };
@@ -333,7 +337,7 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
 
   auto it = funcs.find(expr.name);
   if (it == funcs.end()) {
-    std::cout << "Call to unknown function \"" << expr.name << "\"" << std::endl;
+    err << "Call to unknown function \"" << expr.name << "\"" << expr.loc;
     return;
   }
 };

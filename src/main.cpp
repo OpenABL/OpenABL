@@ -22,7 +22,12 @@ int main(int argc, char **argv) {
   }
 
   OpenABL::AST::Script &script = *ctx.script;
-  OpenABL::AnalysisVisitor visitor;
+
+  OpenABL::ErrorStream err([](const OpenABL::Error &err) {
+    std::cout << err.msg << " on line " << err.loc.begin.line << std::endl;
+  });
+
+  OpenABL::AnalysisVisitor visitor(err);
   script.accept(visitor);
 
   OpenABL::CPrinter printer;

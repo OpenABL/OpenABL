@@ -4,10 +4,14 @@
 #include <stack>
 #include "ASTVisitor.hpp"
 #include "Analysis.hpp"
+#include "ErrorHandling.hpp"
 
 namespace OpenABL {
 
 struct AnalysisVisitor : public AST::Visitor {
+  AnalysisVisitor(ErrorStream &err)
+    : err{err} {}
+
   void enter(AST::Var &);
   void enter(AST::Literal &);
   void enter(AST::VarExpression &);
@@ -80,6 +84,8 @@ private:
   std::map<std::string, AST::AgentDeclaration *> agents;
   // Declared functions by name
   std::map<std::string, AST::FunctionDeclaration *> funcs;
+
+  ErrorStream &err;
 };
 
 }
