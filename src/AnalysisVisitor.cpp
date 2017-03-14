@@ -93,11 +93,9 @@ void AnalysisVisitor::enter(AST::ConstDeclaration &) {};
 void AnalysisVisitor::enter(AST::VarDeclarationStatement &) {};
 void AnalysisVisitor::enter(AST::Param &) {};
 void AnalysisVisitor::leave(AST::Var &) {};
-void AnalysisVisitor::leave(AST::UnaryOpExpression &) {};
 void AnalysisVisitor::leave(AST::AssignOpExpression &) {};
 void AnalysisVisitor::leave(AST::AssignExpression &) {};
 void AnalysisVisitor::leave(AST::Arg &) {};
-void AnalysisVisitor::leave(AST::TernaryExpression &) {};
 void AnalysisVisitor::leave(AST::ExpressionStatement &) {};
 void AnalysisVisitor::leave(AST::IfStatement &) {};
 void AnalysisVisitor::leave(AST::SimpleType &) {};
@@ -280,12 +278,54 @@ static Type getBinaryOpType(AST::BinaryOp op, Type l, Type r) {
   }
 }
 
+static Type getUnaryOpType(AST::UnaryOp op, Type t) {
+  switch (op) {
+    case AST::UnaryOp::PLUS:
+    case AST::UnaryOp::MINUS:
+      if (!t.isNumOrVec()) {
+        return { Type::INVALID };
+      }
+      return t;
+    case AST::UnaryOp::LOGICAL_NOT:
+      if (t != Type::BOOL) {
+        return { Type::INVALID };
+      }
+      return t;
+    case AST::UnaryOp::BITWISE_NOT:
+      if (t != Type::INT32) {
+        return { Type::INVALID };
+      }
+      return t;
+  }
+}
+
 void AnalysisVisitor::leave(AST::BinaryOpExpression &expr) {
   expr.type = getBinaryOpType(expr.op, expr.left->type, expr.right->type);
   if (expr.type.isInvalid()) {
     err << "Type mismatch (" << expr.left->type << " "
         << getBinaryOpSigil(expr.op) << " " << expr.right->type << ")" << expr.loc;
   }
+};
+
+void AnalysisVisitor::leave(AST::UnaryOpExpression &expr) {
+  expr.type = getUnaryOpType(expr.op, expr.expr->type);
+  if (expr.type.isInvalid()) {
+    err << "Type mismatch: Applying unary operator \"" << getUnaryOpSigil(expr.op)
+        << "\" to " << expr.expr->type << expr.loc;
+  }
+};
+
+void AnalysisVisitor::leave(AST::TernaryExpression &expr) {
+  Type ifType = expr.ifExpr->type;
+  Type elseType = expr.elseExpr->type;
+  if (ifType != elseType) {
+    // TODO type promotion
+    err << "Branches of ternary operator have divergent types "
+        << ifType << " and " << elseType << expr.loc;
+    return;
+  }
+
+  expr.type = ifType;
 };
 
 void AnalysisVisitor::leave(AST::NewArrayExpression &expr) {
