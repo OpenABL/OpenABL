@@ -15,6 +15,33 @@ static void printStringLiteral(Printer &p, const std::string &str) {
   p << '"';
 }
 
+static void printType(Printer &s, Type type) {
+  if (type.isArray()) {
+    s << "dyn_array*";
+  } else if (type.isAgent()) {
+    s << type.getAgentDecl()->name << '*';
+  } else {
+    s << type;
+  }
+}
+
+static CPrinter &operator<<(CPrinter &s, Type type) {
+  printType(s, type);
+  return s;
+}
+
+static void printStorageType(Printer &s, Type type) {
+  if (type.isArray()) {
+    s << "dyn_array";
+  } else {
+    s << type;
+  }
+}
+
+static bool typeRequiresStorage(Type type) {
+  return type.isArray() || type.isAgent();
+}
+
 void CPrinter::print(AST::Var &var) {
   *this << var.name;
 }
@@ -96,7 +123,9 @@ void CPrinter::print(AST::TernaryExpression &expr) {
   *this << "(" << *expr.condExpr << " ? " << *expr.ifExpr << " : " << *expr.elseExpr << ")";
 }
 void CPrinter::print(AST::NewArrayExpression &expr) {
-  *this << "calloc(sizeof(" << *expr.elemType << "), " << *expr.sizeExpr << ")";
+  *this << "DYN_ARRAY_CREATE_FIXED(";
+  printStorageType(*this, expr.elemType->resolved);
+  *this << ", " << *expr.sizeExpr << ")";
 }
 void CPrinter::print(AST::ExpressionStatement &stmt) {
   *this << *stmt.expr << ";";
@@ -105,26 +134,42 @@ void CPrinter::print(AST::BlockStatement &stmt) {
   *this << "{" << indent << *stmt.stmts << outdent << nl << "}";
 }
 void CPrinter::print(AST::VarDeclarationStatement &stmt) {
-  *this << *stmt.type << " " << *stmt.var;
-  if (stmt.initializer) {
-    *this << " = " << *stmt.initializer;
+  Type type = stmt.type->resolved;
+  if (typeRequiresStorage(type)) {
+    // Type requires a separate variable for storage.
+    // This makes access to it consistent lateron
+    std::string sLabel = makeAnonLabel();
+    printStorageType(*this, type);
+    *this << " " << sLabel;
+    if (stmt.initializer) {
+      *this << " = " << *stmt.initializer;
+    }
+    *this << ";" << nl;
+    *this << type << " " << *stmt.var << " = &" << sLabel << ";";
+  } else {
+    *this << *stmt.type << " " << *stmt.var;
+    if (stmt.initializer) {
+      *this << " = " << *stmt.initializer;
+    }
+    *this << ";";
   }
-  *this << ";";
 }
 void CPrinter::print(AST::IfStatement &stmt) {
   *this << "if (" << *stmt.condExpr << ") " << *stmt.ifStmt;
 }
 void CPrinter::print(AST::ForStatement &stmt) {
   // TODO special loops (ranges, near)
-  // TODO type printing is broken
   std::string eLabel = makeAnonLabel();
   std::string iLabel = makeAnonLabel();
+
   *this << stmt.expr->type << " " << eLabel << " = " << *stmt.expr << ";" << nl
         << "for (size_t " << iLabel << " = 0; "
         << iLabel << " < " << eLabel << "->len; "
         << iLabel << "++) {"
         << indent << nl << *stmt.type << " " << *stmt.var
-        << " = " << eLabel << "[" << iLabel << "]" << ";" << nl
+        << " = DYN_ARRAY_GET(" << eLabel << ", ";
+  printStorageType(*this, stmt.type->resolved);
+  *this << ", " << iLabel << ");" << nl
         << *stmt.stmt << outdent << nl << "}";
 }
 void CPrinter::print(AST::ParallelForStatement &stmt) {
@@ -132,10 +177,10 @@ void CPrinter::print(AST::ParallelForStatement &stmt) {
   *this << "#pragma omp parallel for" << nl << "// TODO " << *stmt.stmt;
 }
 void CPrinter::print(AST::SimpleType &type) {
-  *this << type.name;
+  *this << type.resolved;
 }
 void CPrinter::print(AST::ArrayType &type) {
-  *this << *type.type << "*";
+  *this << type.resolved;
 }
 void CPrinter::print(AST::Param &param) {
   *this << *param.type << " " << *param.var;

@@ -2,23 +2,33 @@
 
 namespace OpenABL {
 
-Type AnalysisVisitor::resolveAstType(AST::Type &type) {
-  if (AST::SimpleType *t = dynamic_cast<AST::SimpleType *>(&type)) {
-    if (t->name == "void") {
+static Type tryResolveNameToSimpleType(const std::string &name) {
+    if (name == "void") {
       return { Type::VOID };
-    } else if (t->name == "bool") {
+    } else if (name == "bool") {
       return { Type::BOOL };
-    } else if (t->name == "int") {
+    } else if (name == "int") {
       return { Type::INT32 };
-    } else if (t->name == "float") {
+    } else if (name == "float") {
       return { Type::FLOAT32 };
-    } else if (t->name == "string") {
+    } else if (name == "string") {
       return { Type::STRING };
-    } else if (t->name == "float2") {
+    } else if (name == "float2") {
       return { Type::VEC2 };
-    } else if (t->name == "float3") {
+    } else if (name == "float3") {
       return { Type::VEC3 };
     } else {
+      return { Type::INVALID };
+    }
+}
+
+Type AnalysisVisitor::resolveAstType(AST::Type &type) {
+  if (AST::SimpleType *t = dynamic_cast<AST::SimpleType *>(&type)) {
+    Type st = tryResolveNameToSimpleType(t->name);
+    if (!st.isInvalid()) {
+      return st;
+    } else {
+      // Agent type
       auto it = agents.find(t->name);
       if (it == agents.end()) {
         std::cout << "Unknown type \"" << t->name << "\"" << std::endl;
@@ -313,6 +323,14 @@ void AnalysisVisitor::leave(AST::MemberAccessExpression &expr) {
 };
 
 void AnalysisVisitor::leave(AST::CallExpression &expr) {
+  Type t = tryResolveNameToSimpleType(expr.name);
+  if (!t.isInvalid()) {
+    // This is a type constructor / cast
+    // TODO: Represent this in the AST and handle it in the backend
+    expr.type = t;
+    return;
+  }
+
   auto it = funcs.find(expr.name);
   if (it == funcs.end()) {
     std::cout << "Call to unknown function \"" << expr.name << "\"" << std::endl;

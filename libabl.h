@@ -11,13 +11,13 @@ typedef struct {
 	size_t cap;
 } dyn_array;
 
-#define DYN_ARRAY_ALLOC_FIXED(elem_type, len) \
-	dyn_array_alloc_fixed(sizeof(elem_type), len)
+#define DYN_ARRAY_CREATE_FIXED(elem_type, len) \
+	dyn_array_create_fixed(sizeof(elem_type), len)
 
 #define DYN_ARRAY_GET(ary, elem_type, idx) \
 	(((elem_type *) (ary)->values)[idx])
 
-static inline dyn_array dyn_array_alloc_fixed(size_t elem_size, size_t len) {
+static inline dyn_array dyn_array_create_fixed(size_t elem_size, size_t len) {
 	return (dyn_array) {
 		.values = calloc(elem_size, len),
 		.len = len,
