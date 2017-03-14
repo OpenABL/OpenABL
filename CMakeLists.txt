@@ -6,7 +6,8 @@ set(OpenABL_SOURCES
         src/AST.cpp
 		src/Analysis.cpp
 		src/AnalysisVisitor.cpp
-		src/main.cpp)
+		src/main.cpp
+		src/backend/CPrinter.cpp)
 
 find_package(BISON)
 find_package(FLEX)
