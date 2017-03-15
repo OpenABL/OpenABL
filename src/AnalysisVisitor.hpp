@@ -10,7 +10,7 @@ namespace OpenABL {
 
 struct AnalysisVisitor : public AST::Visitor {
   AnalysisVisitor(ErrorStream &err)
-    : err{err} {}
+    : err(err) {}
 
   void enter(AST::Var &);
   void enter(AST::Literal &);
