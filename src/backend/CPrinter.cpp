@@ -157,7 +157,21 @@ void CPrinter::print(AST::VarDeclarationStatement &stmt) {
 void CPrinter::print(AST::IfStatement &stmt) {
   *this << "if (" << *stmt.condExpr << ") " << *stmt.ifStmt;
 }
+
+static void printRangeFor(CPrinter &p, AST::ForStatement &stmt) {
+  std::string eLabel = p.makeAnonLabel();
+  AST::BinaryOpExpression *range = stmt.getRangeExpr();
+  p << "for (int " << *stmt.var << " = " << *range->left
+    << ", " << eLabel << " = " << *range->right << "; "
+    << *stmt.var << " < " << eLabel << "; ++" << *stmt.var << ") " << *stmt.stmt;
+}
+
 void CPrinter::print(AST::ForStatement &stmt) {
+  if (stmt.isRange()) {
+    printRangeFor(*this, stmt);
+    return;
+  }
+
   // TODO special loops (ranges, near)
   std::string eLabel = makeAnonLabel();
   std::string iLabel = makeAnonLabel();

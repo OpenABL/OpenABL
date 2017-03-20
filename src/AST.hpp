@@ -111,6 +111,7 @@ static inline const char *getUnaryOpSigil(UnaryOp op) {
     case UnaryOp::LOGICAL_NOT: return "!";
     case UnaryOp::BITWISE_NOT: return "~";
   }
+  assert(0);
 }
 
 struct UnaryOpExpression : public Expression {
@@ -168,6 +169,7 @@ static inline const char *getBinaryOpSigil(BinaryOp op) {
     case BinaryOp::LOGICAL_OR:     return "||";
     case BinaryOp::RANGE:          return "..";
   }
+  assert(0);
 }
 
 struct BinaryOpExpression : public Expression {
@@ -318,16 +320,29 @@ struct IfStatement : public Statement {
 };
 
 struct ForStatement : public Statement {
+  enum class Kind {
+    NORMAL, // For loop over an array          for (Agent agent : agents)
+    RANGE,  // For loop over an integer range  for (int t : 0 .. t_max)
+    NEAR,   // For loop over nearby agents     for (Agent nx : near(agent, radius))
+  };
+
   TypePtr type;
   VarPtr var;
   ExpressionPtr expr;
   StatementPtr stmt;
+  Kind kind;
 
   ForStatement(Type *type, Var *var, Expression *expr, Statement *stmt, Location loc)
-    : Statement{loc}, type{type}, var{var}, expr{expr}, stmt{stmt} {}
+    : Statement{loc}, type{type}, var{var}, expr{expr}, stmt{stmt}, kind{Kind::NORMAL} {}
 
   void accept(Visitor &);
   void print(Printer &);
+
+  bool isRange() const { return kind == Kind::RANGE; }
+  BinaryOpExpression *getRangeExpr() const {
+    assert(isRange());
+    return dynamic_cast<BinaryOpExpression *>(&*expr);
+  }
 };
 
 struct ParallelForStatement : public Statement {

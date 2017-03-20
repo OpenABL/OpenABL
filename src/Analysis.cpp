@@ -16,8 +16,7 @@ static const char *getTypeIdStr(Type::TypeId t) {
     case Type::STRING: return "string";
     case Type::VEC2: return "float2";
     case Type::VEC3: return "float3";
-    case Type::AGENT: return NULL;
-    case Type::ARRAY: return NULL;
+    default: return nullptr;
   }
 }
 
@@ -26,7 +25,12 @@ static void printType(std::ostream &s, Type t) {
     printType(s, t.getBaseType());
     s << "[]";
   } else if (t.isAgent()) {
-    s << t.getAgentDecl()->name;
+    auto agent = t.getAgentDecl();
+    if (agent) {
+      s << agent->name;
+    } else {
+      s << "agent";
+    }
   } else {
     s << getTypeIdStr(t.getTypeId());
   }

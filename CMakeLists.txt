@@ -17,6 +17,10 @@ FLEX_TARGET(Lexer src/Lexer.l ${CMAKE_CURRENT_BINARY_DIR}/Lexer.cpp)
 ADD_FLEX_BISON_DEPENDENCY(Lexer Parser)
 
 set(CMAKE_CXX_STANDARD 11)
+if(CMAKE_COMPILER_IS_GNUCXX)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare")
+endif()
+
 include_directories(src/ ${CMAKE_CURRENT_BINARY_DIR})
 add_executable(OpenABL
 		${OpenABL_SOURCES}

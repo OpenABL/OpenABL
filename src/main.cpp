@@ -1,7 +1,19 @@
 #include <iostream>
 #include "ParserContext.hpp"
+#include "Analysis.hpp"
 #include "AnalysisVisitor.hpp"
 #include "backend/CBackend.hpp"
+
+namespace OpenABL {
+
+void registerBuiltinFunctions(BuiltinFunctions &funcs) {
+  funcs.add("dist", { Type::VEC2, Type::VEC2 }, Type::FLOAT32);
+  funcs.add("dist", { Type::VEC3, Type::VEC3 }, Type::FLOAT32);
+  funcs.add("near", { Type::AGENT, Type::FLOAT32 }, { Type::ARRAY, Type::AGENT });
+  funcs.add("save", { { Type::ARRAY, Type::AGENT }, Type::STRING }, Type::VOID);
+}
+
+}
 
 int main(int argc, char **argv) {
   if (argc != 2) {
@@ -27,7 +39,10 @@ int main(int argc, char **argv) {
     std::cout << err.msg << " on line " << err.loc.begin.line << std::endl;
   });
 
-  OpenABL::AnalysisVisitor visitor(err);
+  OpenABL::BuiltinFunctions funcs;
+  registerBuiltinFunctions(funcs);
+
+  OpenABL::AnalysisVisitor visitor(err, funcs);
   script.accept(visitor);
 
   OpenABL::CPrinter printer;

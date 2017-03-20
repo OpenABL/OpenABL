@@ -160,8 +160,30 @@ void AnalysisVisitor::enter(AST::ForStatement &stmt) {
   Type type = resolveAstType(*stmt.type); // Not resolved yet
   stmt.var->id = declareVar(stmt.var->name, type);
 };
-void AnalysisVisitor::leave(AST::ForStatement &) {
+void AnalysisVisitor::leave(AST::ForStatement &stmt) {
   popVarScope();
+
+  Type exprType = stmt.expr->type;
+  if (!exprType.isArray()) {
+    err << "Can only use for with array type, received " << exprType << stmt.expr->loc;
+    return;
+  }
+
+  Type declType = stmt.type->resolved;
+  if (!exprType.getBaseType().isCompatibleWith(declType)) {
+    err << "For expression type " << exprType
+        << " not compatible with declared " << declType << stmt.expr->loc;
+    return;
+  }
+
+  if (AST::BinaryOpExpression *op = dynamic_cast<AST::BinaryOpExpression *>(&*stmt.expr)) {
+    if (op->op == AST::BinaryOp::RANGE) {
+      stmt.kind = AST::ForStatement::Kind::RANGE;
+      return;
+    }
+  }
+
+  // TODO
 };
 
 void AnalysisVisitor::enter(AST::ParallelForStatement &stmt) {
@@ -198,13 +220,13 @@ void AnalysisVisitor::leave(AST::VarExpression &expr) {
 }
 
 void AnalysisVisitor::leave(AST::Literal &lit) {
-  if (AST::IntLiteral *ilit = dynamic_cast<AST::IntLiteral *>(&lit)) {
+  if (dynamic_cast<AST::IntLiteral *>(&lit)) {
     lit.type = { Type::INT32 };
-  } else if (AST::FloatLiteral *flit = dynamic_cast<AST::FloatLiteral *>(&lit)) {
+  } else if (dynamic_cast<AST::FloatLiteral *>(&lit)) {
     lit.type = { Type::FLOAT32 };
-  } else if (AST::BoolLiteral *blit = dynamic_cast<AST::BoolLiteral *>(&lit)) {
+  } else if (dynamic_cast<AST::BoolLiteral *>(&lit)) {
     lit.type = { Type::BOOL };
-  } else if (AST::StringLiteral *slit = dynamic_cast<AST::StringLiteral *>(&lit)) {
+  } else if (dynamic_cast<AST::StringLiteral *>(&lit)) {
     lit.type = { Type::STRING };
   } else {
     assert(0);
@@ -297,6 +319,7 @@ static Type getUnaryOpType(AST::UnaryOp op, Type t) {
       }
       return t;
   }
+  assert(0);
 }
 
 void AnalysisVisitor::leave(AST::BinaryOpExpression &expr) {
@@ -366,11 +389,41 @@ void AnalysisVisitor::leave(AST::MemberAccessExpression &expr) {
   }
 };
 
+static std::vector<Type> getArgTypes(AST::CallExpression &expr) {
+  std::vector<Type> types;
+  for (AST::ArgPtr &arg : *expr.args) {
+    types.push_back(arg->expr->type);
+    // TODO out types?
+  }
+  return types;
+}
+
 void AnalysisVisitor::leave(AST::CallExpression &expr) {
   Type t = tryResolveNameToSimpleType(expr.name);
   if (!t.isInvalid()) {
     // This is a type constructor / cast
     // TODO: Represent this in the AST and handle it in the backend
+    expr.type = t;
+    return;
+  }
+
+  BuiltinFunction *f = builtins.getByName(expr.name);
+  if (f) {
+    std::vector<Type> argTypes = getArgTypes(expr);
+    t = f->getReturnType(argTypes);
+    if (t.isInvalid()) {
+      bool first = true;
+      err << "Builtin function called with invalid arguments: " << expr.name << "(";
+      for (const Type &argType : argTypes) {
+        if (!first) err << ", ";
+        err << argType;
+        first = false;
+      }
+      err << ")" << expr.loc;
+      return;
+    }
+
+    // TODO Represent and handle
     expr.type = t;
     return;
   }

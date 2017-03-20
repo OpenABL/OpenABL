@@ -9,8 +9,8 @@
 namespace OpenABL {
 
 struct AnalysisVisitor : public AST::Visitor {
-  AnalysisVisitor(ErrorStream &err)
-    : err(err) {}
+  AnalysisVisitor(ErrorStream &err, BuiltinFunctions &builtins)
+    : builtins(builtins), err(err) {}
 
   void enter(AST::Var &);
   void enter(AST::Literal &);
@@ -84,7 +84,9 @@ private:
   std::map<std::string, AST::AgentDeclaration *> agents;
   // Declared functions by name
   std::map<std::string, AST::FunctionDeclaration *> funcs;
-
+  // Builtin functions
+  BuiltinFunctions &builtins;
+  // Stream for error reporting
   ErrorStream &err;
 };
 

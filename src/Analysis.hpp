@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <vector>
 #include <cassert>
 
 namespace OpenABL {
@@ -45,8 +46,8 @@ struct Type {
 
   Type() : type{INVALID} {}
   Type(TypeId type)
-    : type{type}
-  { assert(type != AGENT && type != ARRAY); }
+    : type{type}, agent{nullptr}
+  { assert(type != ARRAY); }
 
   Type(TypeId type, AST::AgentDeclaration *agent)
     : type{type}, agent{agent}
@@ -64,13 +65,21 @@ struct Type {
       case AGENT:
         return agent == other.agent;
       case ARRAY:
-        return baseType == other.baseType;
+        return getBaseType() == other.getBaseType();
       default:
         return true;
     }
   }
   bool operator!=(const Type &other) const {
     return !(*this == other);
+  }
+
+  bool isCompatibleWith(const Type &other) const {
+    return isCompatibleWith(other, false);
+  }
+
+  bool isPromotableTo(const Type &other) const {
+    return isCompatibleWith(other, true);
   }
 
   TypeId getTypeId() const { return type; }
@@ -99,6 +108,27 @@ struct Type {
   bool isFloat() const { return type == FLOAT32; }
 
 private:
+  bool isCompatibleWith(const Type &other, bool allowPromotion) const {
+    if (type != other.type) {
+      if (allowPromotion && type == INT32) {
+        // Integer to float promotion
+        return other.type == FLOAT32;
+      }
+      return false;
+    }
+
+    if (type == AGENT) {
+      // nullptr indicates "any agent type"
+      return agent == other.agent || other.agent == nullptr;
+    }
+
+    if (type == ARRAY) {
+      return getBaseType().isCompatibleWith(other.getBaseType(), false);
+    }
+
+    return true;
+  }
+
   TypeId type;
   // Base type for ARRAY type. We support simple arrays only, for now.
   TypeId baseType;
@@ -123,6 +153,56 @@ struct Scope {
 
 private:
   std::map<VarId, ScopeEntry> vars;
+};
+
+struct BuiltinFunction {
+  struct Signature {
+    bool isCompatibleWith(const std::vector<Type> &argTypes) const {
+      if (argTypes.size() != paramTypes.size()) {
+        return false;
+      }
+
+      for (size_t i = 0; i < argTypes.size(); i++) {
+        if (!argTypes[i].isCompatibleWith(paramTypes[i])) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    std::vector<Type> paramTypes;
+    Type returnType;
+  };
+
+  Type getReturnType(const std::vector<Type> &argTypes) const {
+    for (const Signature &sig : signatures) {
+      if (sig.isCompatibleWith(argTypes)) {
+        return sig.returnType;
+      }
+    }
+
+    return Type::INVALID;
+  }
+
+  std::string name;
+  std::vector<Signature> signatures;
+};
+
+struct BuiltinFunctions {
+  std::map<std::string, BuiltinFunction> funcs;
+
+  void add(const std::string &name, std::vector<Type> argTypes, Type returnType) {
+    funcs[name].signatures.push_back({ argTypes, returnType });
+  }
+
+  BuiltinFunction *getByName(const std::string &name) {
+    auto it = funcs.find(name);
+    if (it == funcs.end()) {
+      return nullptr;
+    }
+    return &it->second;
+  }
 };
 
 }
