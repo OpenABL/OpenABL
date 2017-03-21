@@ -15,7 +15,7 @@ typedef struct {
 	dyn_array_create_fixed(sizeof(elem_type), len)
 
 #define DYN_ARRAY_GET(ary, elem_type, idx) \
-	(((elem_type *) (ary)->values)[idx])
+	(&((elem_type *) (ary)->values)[idx])
 
 static inline dyn_array dyn_array_create_fixed(size_t elem_size, size_t len) {
 	return (dyn_array) {

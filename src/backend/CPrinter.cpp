@@ -64,38 +64,42 @@ void CPrinter::print(AST::VarExpression &expr) {
 void CPrinter::print(AST::UnaryOpExpression &expr) {
   *this << "(" << AST::getUnaryOpSigil(expr.op) << *expr.expr << ")";
 }
-void CPrinter::print(AST::BinaryOpExpression &expr) {
-  Type l = expr.left->type;
-  Type r = expr.right->type;
+static void printBinaryOp(CPrinter &p, AST::BinaryOp op,
+                          AST::Expression &left, AST::Expression &right) {
+  Type l = left.type;
+  Type r = right.type;
   if (l.isVec() || r.isVec()) {
     Type v = l.isVec() ? l : r;
-    *this << (v.getTypeId() == Type::VEC2 ? "float2_" : "float3_");
-    switch (expr.op) {
-      case AST::BinaryOp::ADD: *this << "add"; break;
-      case AST::BinaryOp::SUB: *this << "sub"; break;
-      case AST::BinaryOp::DIV: *this << "div_scalar"; break;
+    p << (v.getTypeId() == Type::VEC2 ? "float2_" : "float3_");
+    switch (op) {
+      case AST::BinaryOp::ADD: p << "add"; break;
+      case AST::BinaryOp::SUB: p << "sub"; break;
+      case AST::BinaryOp::DIV: p << "div_scalar"; break;
       case AST::BinaryOp::MUL:
-        *this << "mul_scalar";
+        p << "mul_scalar";
         if (r.isVec()) {
           // Normalize to right multiplication
           // TODO Move into analysis
-          *this << "(" << *expr.right << ", " << *expr.left << ")";
+          p << "(" << right << ", " << left << ")";
           return;
         }
         break;
       default:
         assert(0);
     }
-    *this << "(" << *expr.left << ", " << *expr.right << ")";
+    p << "(" << left << ", " << right << ")";
     return;
   }
 
-  *this << "(" << *expr.left << " " << AST::getBinaryOpSigil(expr.op)
-        << " " << *expr.right << ")";
+  p << "(" << left << " " << AST::getBinaryOpSigil(op) << " " << right << ")";
+}
+void CPrinter::print(AST::BinaryOpExpression &expr) {
+  printBinaryOp(*this, expr.op, *expr.left, *expr.right);
 }
 void CPrinter::print(AST::AssignOpExpression &expr) {
-  *this << "(" << *expr.left << " " << AST::getBinaryOpSigil(expr.op)
-        << "= " << *expr.right << ")";
+  *this << "(" << *expr.left << " = ";
+  printBinaryOp(*this, expr.op, *expr.left, *expr.right);
+  *this << ")";
 }
 void CPrinter::print(AST::AssignExpression &expr) {
   *this << "(" << *expr.left << " = " << *expr.right << ")";
@@ -117,7 +121,11 @@ void CPrinter::print(AST::CallExpression &expr) {
   *this << ")";
 }
 void CPrinter::print(AST::MemberAccessExpression &expr) {
-  *this << *expr.expr << "." << expr.member;
+  if (expr.expr->type.isAgent()) {
+    *this << *expr.expr << "->" << expr.member;
+  } else {
+    *this << *expr.expr << "." << expr.member;
+  }
 }
 void CPrinter::print(AST::TernaryExpression &expr) {
   *this << "(" << *expr.condExpr << " ? " << *expr.ifExpr << " : " << *expr.elseExpr << ")";
@@ -196,9 +204,13 @@ void CPrinter::print(AST::ParallelForStatement &stmt) {
         << iLabel << " < " << *stmt.expr << "->len; "
         << iLabel << "++) {" << indent << nl
         << *stmt.type << " " << *stmt.var
-        << " = DYN_ARRAY_GET(" << *stmt.expr << ", " << iLabel << ");" << nl
+        << " = DYN_ARRAY_GET(" << *stmt.expr << ", ";
+  printStorageType(*this, stmt.type->resolved);
+  *this << ", " << iLabel << ");" << nl
         << *stmt.type << " " << *stmt.outVar
-        << " = DYN_ARRAY_GET(double_buf, " << iLabel << ");" << nl
+        << " = DYN_ARRAY_GET(double_buf, ";
+  printStorageType(*this, stmt.type->resolved);
+  *this << ", " << iLabel << ");" << nl
         << *stmt.stmt << outdent << nl << "}" << nl
         << "{ dyn_array* tmp = " << *stmt.expr << "; "
         << *stmt.expr << " = double_buf; double_buf = tmp; }";
@@ -239,8 +251,9 @@ void CPrinter::print(AST::AgentMember &member) {
   *this << *member.type << " " << member.name << ";";
 }
 void CPrinter::print(AST::AgentDeclaration &decl) {
-  *this << "struct " << decl.name
-        << " {" << indent << *decl.members << outdent << nl << "};";
+  *this << "typedef struct {" << indent
+        << *decl.members << outdent << nl
+        << "} " << decl.name << ";";
 }
 void CPrinter::print(AST::ConstDeclaration &decl) {
   *this << *decl.type << " " << *decl.var << " = " << *decl.value << ";";

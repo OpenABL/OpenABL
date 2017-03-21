@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
   OpenABL::AST::Script &script = *ctx.script;
 
   OpenABL::ErrorStream err([](const OpenABL::Error &err) {
-    std::cout << err.msg << " on line " << err.loc.begin.line << std::endl;
+    std::cerr << err.msg << " on line " << err.loc.begin.line << std::endl;
   });
 
   OpenABL::BuiltinFunctions funcs;
@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 
   OpenABL::CPrinter printer;
   printer.print(script);
-  std::cout << "Printed:\n" << printer.extractStr() << std::endl;
+  std::cout << printer.extractStr() << std::endl;
 
   fclose(file);
   return 0;
