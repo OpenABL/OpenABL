@@ -17,16 +17,53 @@ void registerBuiltinFunctions(BuiltinFunctions &funcs) {
 
 }
 
+struct Options {
+  const char *fileName;
+  const char *backend;
+};
+
+static Options parseCliOptions(int argc, char **argv) {
+  Options options = {};
+  for (int i = 1; i < argc; i++) {
+    std::string arg = argv[i];
+    if (arg[0] == '-') {
+      if (i + 1 == argc) {
+        std::cerr << "Missing argument for option " << arg << std::endl;
+        return {};
+      }
+      if (arg == "-b" || arg == "--backend") {
+        options.backend = argv[++i];
+      }
+    } else {
+      if (options.fileName) {
+        std::cerr << "Expected exactly one file name" << std::endl;
+        return {};
+      }
+      options.fileName = argv[i];
+    }
+  }
+
+  if (!options.fileName) {
+    std::cerr << "Missing file name" << std::endl;
+    return {};
+  }
+
+  if (!options.backend) {
+    options.backend = "c";
+  }
+
+  return options;
+}
+
 int main(int argc, char **argv) {
-  if (argc != 2) {
-    std::cerr << "Missing filename argument." << std::endl;
+  Options options = parseCliOptions(argc, argv);
+  if (!options.fileName) {
     return 1;
   }
 
-  char *fileName = argv[1];
-  FILE *file = fopen(fileName, "r");
+  FILE *file = fopen(options.fileName, "r");
   if (!file) {
-    std::cerr << "File " << fileName << " could not be opened." << std::endl;
+    std::cerr << "File \"" << options.fileName << "\" could not be opened." << std::endl;
     return 1;
   }
 
