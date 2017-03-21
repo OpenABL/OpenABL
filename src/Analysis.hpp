@@ -174,7 +174,7 @@ struct FunctionSignature {
     }
 
     for (size_t i = 0; i < argTypes.size(); i++) {
-      if (!argTypes[i].isCompatibleWith(paramTypes[i])) {
+      if (!argTypes[i].isPromotableTo(paramTypes[i])) {
         return false;
       }
     }

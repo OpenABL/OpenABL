@@ -32,7 +32,7 @@ void main() {
 
   // initialization (sequential)
   for (Point p : points) {
-    p.pos = float2(0, 0);
+    p.pos = float2(random(0, W), random(0, W));
   }
 
   // simulation (parallel)

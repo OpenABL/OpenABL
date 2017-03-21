@@ -95,6 +95,12 @@ static inline float dist_float3(float3 a, float3 b) {
 }
 
 /*
+ * Random numbers
+ */
+
+float random_float(float min, float max);
+
+/*
  * Runtime type information
  */
 
