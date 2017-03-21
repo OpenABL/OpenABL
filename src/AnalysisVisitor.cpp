@@ -398,11 +398,49 @@ static std::vector<Type> getArgTypes(AST::CallExpression &expr) {
   return types;
 }
 
+static bool isTypeCtorValid(Type t, std::vector<Type> argTypes) {
+  size_t numArgs = argTypes.size();
+  switch (t.getTypeId()) {
+    case Type::VOID:
+      return false;
+    case Type::BOOL:
+    case Type::INT32:
+    case Type::FLOAT32:
+      return numArgs == 1; // TODO
+    case Type::STRING:
+      return numArgs == 1 && argTypes[0] == Type::STRING;
+    case Type::VEC2:
+      return numArgs == 2; // TODO
+    case Type::VEC3:
+      return numArgs == 3; // TODO
+    default:
+      assert(0);
+  }
+}
+
+static void printArgs(ErrorStream &err, const std::vector<Type> &argTypes) {
+  bool first = true;
+  err << "(";
+  for (const Type &argType : argTypes) {
+    if (!first) err << ", ";
+    err << argType;
+    first = false;
+  }
+  err << ")";
+}
+
 void AnalysisVisitor::leave(AST::CallExpression &expr) {
+  std::vector<Type> argTypes = getArgTypes(expr);
+
   Type t = tryResolveNameToSimpleType(expr.name);
   if (!t.isInvalid()) {
-    // This is a type constructor / cast
-    // TODO: Represent this in the AST and handle it in the backend
+    if (!isTypeCtorValid(t, argTypes)) {
+      err << "Type constructor called with invalid arguments: " << expr.name;
+      printArgs(err, argTypes);
+      err << expr.loc;
+      return;
+    }
+
     expr.kind = AST::CallExpression::Kind::CTOR;
     expr.type = t;
     return;
@@ -410,21 +448,14 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
 
   BuiltinFunction *f = builtins.getByName(expr.name);
   if (f) {
-    std::vector<Type> argTypes = getArgTypes(expr);
     const FunctionSignature *sig = f->getCompatibleSignature(argTypes);
     if (!sig) {
-      bool first = true;
-      err << "Builtin function called with invalid arguments: " << expr.name << "(";
-      for (const Type &argType : argTypes) {
-        if (!first) err << ", ";
-        err << argType;
-        first = false;
-      }
-      err << ")" << expr.loc;
+      err << "Builtin function called with invalid arguments: " << expr.name;
+      printArgs(err, argTypes);
+      err << expr.loc;
       return;
     }
 
-    // TODO Represent and handle
     expr.kind = AST::CallExpression::Kind::BUILTIN;
     expr.calledSig = *sig;
     expr.type = sig->returnType;
@@ -437,6 +468,7 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
     return;
   }
 
+  // TODO check sig, verify, handle
   expr.kind = AST::CallExpression::Kind::USER;
 };
 

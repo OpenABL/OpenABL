@@ -38,6 +38,9 @@ typedef struct {
 	float y;
 } float2;
 
+static inline float2 float2_create(float x, float y) {
+	return (float2) { x, y };
+}
 static inline float2 float2_add(float2 a, float2 b) {
 	return (float2) { a.x + b.x, a.y + b.y };
 }
@@ -61,6 +64,9 @@ typedef struct {
 	float z;
 } float3;
 
+static inline float3 float3_create(float x, float y, float z) {
+	return (float3) { x, y, z };
+}
 static inline float3 float3_add(float3 a, float3 b) {
 	return (float3) { a.x + b.x, a.y + b.y, a.z + b.z };
 }

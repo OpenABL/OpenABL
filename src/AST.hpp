@@ -243,6 +243,7 @@ struct CallExpression : public Expression {
   void print(Printer &);
 
   bool isBuiltin() const { return kind == Kind::BUILTIN; }
+  bool isCtor() const { return kind == Kind::CTOR; }
 };
 
 struct MemberAccessExpression : public Expression {

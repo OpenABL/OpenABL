@@ -110,20 +110,42 @@ void CPrinter::print(AST::Arg &arg) {
     *this << ", " << *arg.outExpr;
   }
 }
+
+static void printArgs(CPrinter &p, AST::CallExpression &expr) {
+  p << "(";
+  bool first = true;
+  for (const AST::ArgPtr &arg : *expr.args) {
+    if (!first) p << ", ";
+    first = false;
+    p << *arg;
+  }
+  p << ")";
+}
+static void printTypeCtor(CPrinter &p, AST::CallExpression &expr) {
+  Type t = expr.type;
+  if (t.isVec()) {
+    if (t.getTypeId() == Type::VEC2) {
+      p << "float2_create";
+    } else {
+      p << "float3_create";
+    }
+    printArgs(p, expr);
+  } else {
+    p << "(" << t << ") " << *(*expr.args)[0];
+  }
+}
 void CPrinter::print(AST::CallExpression &expr) {
+  if (expr.isCtor()) {
+    printTypeCtor(*this, expr);
+    return;
+  }
+
   if (expr.isBuiltin()) {
     *this << expr.calledSig.name;
   } else {
     *this << expr.name;
   }
-  *this << "(";
-  bool first = true;
-  for (const AST::ArgPtr &arg : *expr.args) {
-    if (!first) *this << ", ";
-    first = false;
-    *this << *arg;
-  }
-  *this << ")";
+  printArgs(*this, expr);
 }
 void CPrinter::print(AST::MemberAccessExpression &expr) {
   if (expr.expr->type.isAgent()) {
@@ -202,8 +224,9 @@ void CPrinter::print(AST::ForStatement &stmt) {
 void CPrinter::print(AST::ParallelForStatement &stmt) {
   std::string iLabel = makeAnonLabel();
 
-  *this << "if (!double_buf) double_buf = DYN_ARRAY_CREATE_FIXED("
-        << *stmt.type << ", " << *stmt.expr << "->len);" << "\n"
+  *this << "if (!double_buf) { double_buf_storage = DYN_ARRAY_CREATE_FIXED("
+        << *stmt.type << ", " << *stmt.expr << "->len); "
+        << "double_buf = &double_buf_storage; }" << "\n"
         << "#pragma omp parallel for" << nl
         << "for (size_t " << iLabel << " = 0; "
         << iLabel << " < " << *stmt.expr << "->len; "
@@ -248,7 +271,7 @@ void CPrinter::print(AST::FunctionDeclaration &decl) {
   *this << ") {" << indent << nl;
   if (decl.name == "main") {
     // TODO Make this more generic
-    *this << "dyn_array* double_buf = NULL;";
+    *this << "dyn_array double_buf_storage; dyn_array* double_buf = NULL;";
   }
   *this << *decl.stmts << outdent << nl << "}";
 }
