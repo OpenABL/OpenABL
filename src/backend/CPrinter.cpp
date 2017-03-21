@@ -118,14 +118,12 @@ void CPrinter::print(AST::Arg &arg) {
 }
 
 static void printArgs(CPrinter &p, AST::CallExpression &expr) {
-  p << "(";
   bool first = true;
   for (const AST::ArgPtr &arg : *expr.args) {
     if (!first) p << ", ";
     first = false;
     p << *arg;
   }
-  p << ")";
 }
 static void printTypeCtor(CPrinter &p, AST::CallExpression &expr) {
   Type t = expr.type;
@@ -135,23 +133,35 @@ static void printTypeCtor(CPrinter &p, AST::CallExpression &expr) {
     } else {
       p << "float3_create";
     }
+    p << "(";
     printArgs(p, expr);
+    p << ")";
   } else {
     p << "(" << t << ") " << *(*expr.args)[0];
   }
 }
+static void printBuiltin(CPrinter &p, AST::CallExpression &expr) {
+  const FunctionSignature &sig = expr.calledSig;
+  p << sig.name;
+  p << "(";
+  printArgs(p, expr);
+  if (sig.name == "save") {
+    // Pass runtime type information
+    AST::AgentDeclaration *agent = sig.paramTypes[0].getBaseType().getAgentDecl();
+    p << ", " << agent->name << "_info";
+  }
+  p << ")";
+}
 void CPrinter::print(AST::CallExpression &expr) {
   if (expr.isCtor()) {
     printTypeCtor(*this, expr);
-    return;
-  }
-
-  if (expr.isBuiltin()) {
-    *this << expr.calledSig.name;
+  } else if (expr.isBuiltin()) {
+    printBuiltin(*this, expr);
   } else {
-    *this << expr.name;
+    *this << expr.name << "(";
+    printArgs(*this, expr);
+    *this << ")";
   }
-  printArgs(*this, expr);
 }
 void CPrinter::print(AST::MemberAccessExpression &expr) {
   if (expr.expr->type.isAgent()) {
@@ -306,20 +316,42 @@ void CPrinter::print(AST::FunctionDeclaration &decl) {
     first = false;
     *this << *param;
   }
-  *this << ") {" << indent << nl;
+  *this << ") {" << indent;
   if (decl.name == "main") {
     // TODO Make this more generic
-    *this << "dyn_array double_buf_storage; dyn_array* double_buf = NULL;";
+    *this << nl << "dyn_array double_buf_storage; dyn_array* double_buf = NULL;";
   }
   *this << *decl.stmts << outdent << nl << "}";
 }
 void CPrinter::print(AST::AgentMember &member) {
   *this << *member.type << " " << member.name << ";";
 }
+
+static void printTypeIdentifier(CPrinter &p, Type type) {
+  switch (type.getTypeId()) {
+    case Type::BOOL: p << "TYPE_BOOL"; break;
+    case Type::INT32: p << "TYPE_INT"; break;
+    case Type::FLOAT32: p << "TYPE_FLOAT"; break;
+    case Type::STRING: p << "TYPE_STRING"; break;
+    case Type::VEC2: p << "TYPE_FLOAT2"; break;
+    case Type::VEC3: p << "TYPE_FLOAT3"; break;
+    default: assert(0);
+  }
+}
 void CPrinter::print(AST::AgentDeclaration &decl) {
   *this << "typedef struct {" << indent
         << *decl.members << outdent << nl
-        << "} " << decl.name << ";";
+        << "} " << decl.name << ";" << nl;
+
+  // Runtime type information
+  *this << "const type_info " << decl.name << "_info[] = {" << indent << nl;
+  for (AST::AgentMemberPtr &member : *decl.members) {
+    *this << "{ ";
+    printTypeIdentifier(*this, member->type->resolved);
+    *this << ", offsetof(" << decl.name << ", " << member->name
+          << "), \"" << member->name << "\" }," << nl;
+  }
+  *this << "{ TYPE_END, sizeof(" << decl.name << "), NULL }" << outdent << nl << "};" << nl;
 }
 void CPrinter::print(AST::ConstDeclaration &decl) {
   *this << *decl.type << " " << *decl.var << " = " << *decl.value << ";";

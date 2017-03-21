@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdlib.h>
 #include <math.h>
 
@@ -92,3 +93,25 @@ static inline float dist_float3(float3 a, float3 b) {
 	float3 d = float3_sub(a, b);
 	return sqrtf(d.x * d.x + d.y * d.y + d.z * d.z);
 }
+
+/*
+ * Runtime type information
+ */
+
+typedef enum {
+	TYPE_END,
+	TYPE_BOOL,
+	TYPE_INT,
+	TYPE_FLOAT,
+	TYPE_STRING,
+	TYPE_FLOAT2,
+	TYPE_FLOAT3,
+} type_id;
+
+typedef struct {
+	type_id type;
+	unsigned offset;
+	const char *name;
+} type_info;
+
+void save(dyn_array *arr, const char *path, const type_info *info);

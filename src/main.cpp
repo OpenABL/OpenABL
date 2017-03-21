@@ -99,6 +99,7 @@ int main(int argc, char **argv) {
   printer.print(script);
   OpenABL::writeToFile(options.outputDir + "/main.c", printer.extractStr());
   OpenABL::copyFile("asset/c/libabl.h", options.outputDir + "/libabl.h");
+  OpenABL::copyFile("asset/c/libabl.c", options.outputDir + "/libabl.c");
   OpenABL::copyFile("asset/c/build.sh", options.outputDir + "/build.sh");
   OpenABL::makeFileExecutable(options.outputDir + "/build.sh");
 
