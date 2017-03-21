@@ -107,6 +107,13 @@ struct Type {
   bool isInt() const { return type == INT32; }
   bool isFloat() const { return type == FLOAT32; }
 
+  bool isGenericAgent() const {
+    return type == AGENT && agent == nullptr;
+  }
+  bool isGenericAgentArray() const {
+    return type == ARRAY && baseType == AGENT && agent == nullptr;
+  }
+
 private:
   bool isCompatibleWith(const Type &other, bool allowPromotion) const {
     if (type != other.type) {
@@ -156,6 +163,11 @@ private:
 };
 
 struct FunctionSignature {
+  FunctionSignature()
+    : name(""), paramTypes(), returnType() {}
+  FunctionSignature(const std::string &name, const std::vector<Type> &paramTypes, Type returnType)
+    : name(name), paramTypes(paramTypes), returnType(returnType) {}
+
   bool isCompatibleWith(const std::vector<Type> &argTypes) const {
     if (argTypes.size() != paramTypes.size()) {
       return false;
@@ -168,6 +180,35 @@ struct FunctionSignature {
     }
 
     return true;
+  }
+
+  // Concrete signature with any generic agent types replaced
+  FunctionSignature getConcreteSignature(const std::vector<Type> &argTypes) const {
+    std::vector<Type> newParamTypes;
+    Type newReturnType;
+    Type agentType = Type::AGENT;
+    for (size_t i = 0; i < paramTypes.size(); i++) {
+      Type type = paramTypes[i];
+      if (type.isGenericAgent()) {
+        agentType = argTypes[i];
+        newParamTypes.push_back(argTypes[i]);
+      } else if (type.isGenericAgentArray()) {
+        agentType = argTypes[i].getBaseType();
+        newParamTypes.push_back({ Type::ARRAY, argTypes[i].getBaseType() });
+      } else {
+        newParamTypes.push_back(type);
+      }
+    }
+
+    if (returnType.isGenericAgent()) {
+      newReturnType = agentType;
+    } else if (returnType.isGenericAgentArray()) {
+      newReturnType = { Type::ARRAY, agentType };
+    } else {
+      newReturnType = returnType;
+    }
+
+    return { name, newParamTypes, newReturnType };
   }
 
   std::string name;
