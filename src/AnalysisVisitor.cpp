@@ -169,6 +169,14 @@ void AnalysisVisitor::leave(AST::ForStatement &stmt) {
     return;
   }
 
+  // TODO Make this compatible with type checking, then move down
+  if (AST::CallExpression *call = dynamic_cast<AST::CallExpression *>(&*stmt.expr)) {
+    if (call->name == "near") {
+      stmt.kind = AST::ForStatement::Kind::NEAR;
+      return;
+    }
+  }
+
   Type declType = stmt.type->resolved;
   if (!exprType.getBaseType().isCompatibleWith(declType)) {
     err << "For expression type " << exprType
@@ -176,6 +184,7 @@ void AnalysisVisitor::leave(AST::ForStatement &stmt) {
     return;
   }
 
+  // TODO enforce these are only used in for() loops
   if (AST::BinaryOpExpression *op = dynamic_cast<AST::BinaryOpExpression *>(&*stmt.expr)) {
     if (op->op == AST::BinaryOp::RANGE) {
       stmt.kind = AST::ForStatement::Kind::RANGE;
@@ -183,7 +192,7 @@ void AnalysisVisitor::leave(AST::ForStatement &stmt) {
     }
   }
 
-  // TODO
+  stmt.kind = AST::ForStatement::Kind::NORMAL;
 };
 
 void AnalysisVisitor::enter(AST::ParallelForStatement &stmt) {

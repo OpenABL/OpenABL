@@ -9,7 +9,7 @@ float k_att = 0.001;
 // Radius of agent (radius of repulsion)
 float r = 5;
 // Width/height of environment
-float W = 50;
+float W = 500;
 // Density of agents
 float rho = 0.01;
 
@@ -39,7 +39,7 @@ void main() {
   for (int time_step : 0 .. 100) { // TODO We have a float/range lexing conflict here
     pfor (Point in -> out : points) {
       Point tmp = in;
-      for (Point nx : near(in, 2*r)) {
+      for (Point nx : near(points, in, 2*r)) {
         sep_aggr(in -> tmp, nx);
       }
       out = tmp;

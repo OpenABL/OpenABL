@@ -102,7 +102,13 @@ void CPrinter::print(AST::AssignOpExpression &expr) {
   *this << ")";
 }
 void CPrinter::print(AST::AssignExpression &expr) {
-  *this << "(" << *expr.left << " = " << *expr.right << ")";
+  if (expr.right->type.isAgent()) {
+    // Agent assignments are interpreted as copies, not reference assignments
+    *this << "(*" << *expr.left << " = *" << *expr.right << ")";
+    // TODO This can't be used as a return value. Forbid expression use of assignments?
+  } else {
+    *this << "(" << *expr.left << " = " << *expr.right << ")";
+  }
 }
 void CPrinter::print(AST::Arg &arg) {
   *this << *arg.expr;
@@ -177,7 +183,12 @@ void CPrinter::print(AST::VarDeclarationStatement &stmt) {
     printStorageType(*this, type);
     *this << " " << sLabel;
     if (stmt.initializer) {
-      *this << " = " << *stmt.initializer;
+      *this << " = ";
+      if (stmt.initializer->type.isAgent()) {
+        // Agent assignments are interpreted as copies, not reference assignments
+        *this << "*";
+      }
+      *this << *stmt.initializer;
     }
     *this << ";" << nl;
     *this << type << " " << *stmt.var << " = &" << sLabel << ";";
@@ -195,15 +206,42 @@ void CPrinter::print(AST::IfStatement &stmt) {
 
 static void printRangeFor(CPrinter &p, AST::ForStatement &stmt) {
   std::string eLabel = p.makeAnonLabel();
-  AST::BinaryOpExpression *range = stmt.getRangeExpr();
-  p << "for (int " << *stmt.var << " = " << *range->left
-    << ", " << eLabel << " = " << *range->right << "; "
+  auto range = stmt.getRange();
+  p << "for (int " << *stmt.var << " = " << range.first
+    << ", " << eLabel << " = " << range.second << "; "
     << *stmt.var << " < " << eLabel << "; ++" << *stmt.var << ") " << *stmt.stmt;
 }
 
 void CPrinter::print(AST::ForStatement &stmt) {
   if (stmt.isRange()) {
     printRangeFor(*this, stmt);
+    return;
+  } else if (stmt.isNear()) {
+    AST::Expression &arrayExpr = stmt.getNearArray();
+    AST::Expression &agentExpr = stmt.getNearAgent();
+    AST::Expression &radiusExpr = stmt.getNearRadius();
+
+    AST::AgentDeclaration *agentDecl = stmt.type->resolved.getAgentDecl();
+    AST::AgentMember *posMember = agentDecl->getPositionMember();
+    const char *dist_fn = posMember->type->resolved == Type::VEC2
+      ? "dist_float2" : "dist_float3";
+
+    std::string eLabel = makeAnonLabel();
+    std::string iLabel = makeAnonLabel();
+
+    // For now: Print normal loop with radius check
+    *this << stmt.expr->type << " " << eLabel << " = " << arrayExpr << ";" << nl
+          << "for (size_t " << iLabel << " = 0; "
+          << iLabel << " < " << eLabel << "->len; "
+          << iLabel << "++) {"
+          << indent << nl << *stmt.type << " " << *stmt.var
+          << " = DYN_ARRAY_GET(" << eLabel << ", ";
+    printStorageType(*this, stmt.type->resolved);
+    *this << ", " << iLabel << ");" << nl
+          << "if (" << dist_fn << "(" << *stmt.var << "->" << posMember->name << ", "
+          << agentExpr << "->" << posMember->name << ") > " << radiusExpr
+          << ") continue;" << nl
+          << *stmt.stmt << outdent << nl << "}";
     return;
   }
 

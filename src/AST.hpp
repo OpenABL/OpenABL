@@ -354,10 +354,20 @@ struct ForStatement : public Statement {
   void print(Printer &);
 
   bool isRange() const { return kind == Kind::RANGE; }
-  BinaryOpExpression *getRangeExpr() const {
+  std::pair<Expression &, Expression &> getRange() const {
     assert(isRange());
-    return dynamic_cast<BinaryOpExpression *>(&*expr);
+    BinaryOpExpression *op = dynamic_cast<BinaryOpExpression *>(&*expr);
+    return { *op->left, *op->right };
   }
+
+  bool isNear() const { return kind == Kind::NEAR; }
+  CallExpression &getNearCall() const {
+    assert(isNear());
+    return *dynamic_cast<CallExpression *>(&*expr);
+  }
+  Expression &getNearArray() const { return *(*getNearCall().args)[0]->expr; }
+  Expression &getNearAgent() const { return *(*getNearCall().args)[1]->expr; }
+  Expression &getNearRadius() const { return *(*getNearCall().args)[2]->expr; }
 };
 
 struct ParallelForStatement : public Statement {
@@ -468,6 +478,15 @@ struct AgentDeclaration : public Declaration {
 
   void accept(Visitor &);
   void print(Printer &);
+
+  AgentMember *getPositionMember() const {
+    for (AgentMemberPtr &member : *members) {
+      if (member->isPosition) {
+        return &*member;
+      }
+    }
+    return nullptr;
+  }
 };
 
 struct ConstDeclaration : public Declaration {

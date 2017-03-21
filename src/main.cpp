@@ -9,7 +9,9 @@ namespace OpenABL {
 void registerBuiltinFunctions(BuiltinFunctions &funcs) {
   funcs.add("dist", "dist_float2", { Type::VEC2, Type::VEC2 }, Type::FLOAT32);
   funcs.add("dist", "dist_float3", { Type::VEC3, Type::VEC3 }, Type::FLOAT32);
-  funcs.add("near", "near", { Type::AGENT, Type::FLOAT32 }, { Type::ARRAY, Type::AGENT });
+  funcs.add("near", "near",
+      { { Type::ARRAY, Type::AGENT }, Type::AGENT, Type::FLOAT32 },
+      { Type::ARRAY, Type::AGENT });
   funcs.add("save", "save", { { Type::ARRAY, Type::AGENT }, Type::STRING }, Type::VOID);
 }
 
