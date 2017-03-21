@@ -223,14 +223,26 @@ using ArgList = std::vector<ArgPtr>;
 using ArgListPtr = std::unique_ptr<ArgList>;
 
 struct CallExpression : public Expression {
+  enum class Kind {
+    USER,    // Call to user function
+    BUILTIN, // Call to builtin function
+    CTOR,    // Call to type constructor / cast
+  };
+
   std::string name;
   ArgListPtr args;
 
+  // Populated during analysis
+  Kind kind;
+  FunctionSignature calledSig;
+
   CallExpression(std::string name, ArgList *args, Location loc)
-    : Expression{loc}, name{name}, args{args} {}
+    : Expression{loc}, name{name}, args{args}, kind{Kind::USER} {}
 
   void accept(Visitor &);
   void print(Printer &);
+
+  bool isBuiltin() const { return kind == Kind::BUILTIN; }
 };
 
 struct MemberAccessExpression : public Expression {
@@ -330,6 +342,8 @@ struct ForStatement : public Statement {
   VarPtr var;
   ExpressionPtr expr;
   StatementPtr stmt;
+
+  // Populated during analysis
   Kind kind;
 
   ForStatement(Type *type, Var *var, Expression *expr, Statement *stmt, Location loc)

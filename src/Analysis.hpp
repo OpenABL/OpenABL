@@ -155,45 +155,47 @@ private:
   std::map<VarId, ScopeEntry> vars;
 };
 
-struct BuiltinFunction {
-  struct Signature {
-    bool isCompatibleWith(const std::vector<Type> &argTypes) const {
-      if (argTypes.size() != paramTypes.size()) {
+struct FunctionSignature {
+  bool isCompatibleWith(const std::vector<Type> &argTypes) const {
+    if (argTypes.size() != paramTypes.size()) {
+      return false;
+    }
+
+    for (size_t i = 0; i < argTypes.size(); i++) {
+      if (!argTypes[i].isCompatibleWith(paramTypes[i])) {
         return false;
       }
-
-      for (size_t i = 0; i < argTypes.size(); i++) {
-        if (!argTypes[i].isCompatibleWith(paramTypes[i])) {
-          return false;
-        }
-      }
-
-      return true;
     }
 
-    std::vector<Type> paramTypes;
-    Type returnType;
-  };
-
-  Type getReturnType(const std::vector<Type> &argTypes) const {
-    for (const Signature &sig : signatures) {
-      if (sig.isCompatibleWith(argTypes)) {
-        return sig.returnType;
-      }
-    }
-
-    return Type::INVALID;
+    return true;
   }
 
   std::string name;
-  std::vector<Signature> signatures;
+  std::vector<Type> paramTypes;
+  Type returnType;
+};
+
+struct BuiltinFunction {
+  const FunctionSignature *getCompatibleSignature(const std::vector<Type> &argTypes) const {
+    for (const FunctionSignature &sig : signatures) {
+      if (sig.isCompatibleWith(argTypes)) {
+        return &sig;
+      }
+    }
+
+    return nullptr;
+  }
+
+  std::string name;
+  std::vector<FunctionSignature> signatures;
 };
 
 struct BuiltinFunctions {
   std::map<std::string, BuiltinFunction> funcs;
 
-  void add(const std::string &name, std::vector<Type> argTypes, Type returnType) {
-    funcs[name].signatures.push_back({ argTypes, returnType });
+  void add(const std::string &name, const std::string &sigName,
+           std::vector<Type> argTypes, Type returnType) {
+    funcs[name].signatures.push_back({ sigName, argTypes, returnType });
   }
 
   BuiltinFunction *getByName(const std::string &name) {

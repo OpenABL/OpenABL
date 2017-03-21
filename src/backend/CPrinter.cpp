@@ -111,7 +111,12 @@ void CPrinter::print(AST::Arg &arg) {
   }
 }
 void CPrinter::print(AST::CallExpression &expr) {
-  *this << expr.name << "(";
+  if (expr.isBuiltin()) {
+    *this << expr.calledSig.name;
+  } else {
+    *this << expr.name;
+  }
+  *this << "(";
   bool first = true;
   for (const AST::ArgPtr &arg : *expr.args) {
     if (!first) *this << ", ";

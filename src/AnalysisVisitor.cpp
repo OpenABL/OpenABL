@@ -403,6 +403,7 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
   if (!t.isInvalid()) {
     // This is a type constructor / cast
     // TODO: Represent this in the AST and handle it in the backend
+    expr.kind = AST::CallExpression::Kind::CTOR;
     expr.type = t;
     return;
   }
@@ -410,8 +411,8 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
   BuiltinFunction *f = builtins.getByName(expr.name);
   if (f) {
     std::vector<Type> argTypes = getArgTypes(expr);
-    t = f->getReturnType(argTypes);
-    if (t.isInvalid()) {
+    const FunctionSignature *sig = f->getCompatibleSignature(argTypes);
+    if (!sig) {
       bool first = true;
       err << "Builtin function called with invalid arguments: " << expr.name << "(";
       for (const Type &argType : argTypes) {
@@ -424,7 +425,9 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
     }
 
     // TODO Represent and handle
-    expr.type = t;
+    expr.kind = AST::CallExpression::Kind::BUILTIN;
+    expr.calledSig = *sig;
+    expr.type = sig->returnType;
     return;
   }
 
@@ -433,6 +436,8 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
     err << "Call to unknown function \"" << expr.name << "\"" << expr.loc;
     return;
   }
+
+  expr.kind = AST::CallExpression::Kind::USER;
 };
 
 }
