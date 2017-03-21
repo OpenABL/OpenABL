@@ -187,8 +187,21 @@ void CPrinter::print(AST::ForStatement &stmt) {
         << *stmt.stmt << outdent << nl << "}";
 }
 void CPrinter::print(AST::ParallelForStatement &stmt) {
-  // TODO
-  *this << "#pragma omp parallel for" << nl << "// TODO " << *stmt.stmt;
+  std::string iLabel = makeAnonLabel();
+
+  *this << "if (!double_buf) double_buf = DYN_ARRAY_CREATE_FIXED("
+        << *stmt.type << ", " << *stmt.expr << "->len);" << "\n"
+        << "#pragma omp parallel for" << nl
+        << "for (size_t " << iLabel << " = 0; "
+        << iLabel << " < " << *stmt.expr << "->len; "
+        << iLabel << "++) {" << indent << nl
+        << *stmt.type << " " << *stmt.var
+        << " = DYN_ARRAY_GET(" << *stmt.expr << ", " << iLabel << ");" << nl
+        << *stmt.type << " " << *stmt.outVar
+        << " = DYN_ARRAY_GET(double_buf, " << iLabel << ");" << nl
+        << *stmt.stmt << outdent << nl << "}" << nl
+        << "{ dyn_array* tmp = " << *stmt.expr << "; "
+        << *stmt.expr << " = double_buf; double_buf = tmp; }";
 }
 void CPrinter::print(AST::SimpleType &type) {
   *this << type.resolved;
@@ -215,7 +228,12 @@ void CPrinter::print(AST::FunctionDeclaration &decl) {
     first = false;
     *this << *param;
   }
-  *this << ") {" << indent << *decl.stmts << outdent << nl << "}";
+  *this << ") {" << indent << nl;
+  if (decl.name == "main") {
+    // TODO Make this more generic
+    *this << "dyn_array* double_buf = NULL;";
+  }
+  *this << *decl.stmts << outdent << nl << "}";
 }
 void CPrinter::print(AST::AgentMember &member) {
   *this << *member.type << " " << member.name << ";";
