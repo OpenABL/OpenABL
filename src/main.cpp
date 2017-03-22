@@ -28,6 +28,7 @@ std::map<std::string, std::unique_ptr<Backend>> getBackends() {
 }
 
 struct Options {
+  bool help;
   std::string fileName;
   std::string backend;
   std::string outputDir;
@@ -38,6 +39,11 @@ static Options parseCliOptions(int argc, char **argv) {
   Options options = {};
   for (int i = 1; i < argc; i++) {
     std::string arg = argv[i];
+    if (arg == "-h" || arg == "--help") {
+      options.help = true;
+      return options;
+    }
+
     if (i + 1 == argc) {
       std::cerr << "Missing argument for option \"" << arg << "\"" << std::endl;
       return {};
@@ -77,8 +83,24 @@ static Options parseCliOptions(int argc, char **argv) {
   return options;
 }
 
+void printHelp() {
+  std::cout << "Usage: ./OpenABL -i input.abl -o ./output-dir\n\n"
+               "Options:\n"
+               "  -A, --asset-dir    Asset directory (default: ./asset)\n"
+               "  -b, --backend      Backend (default: c)\n"
+               "  -h, --help         Display this help\n"
+               "  -i, --input        Input file\n"
+               "  -o, --output-dir   Output directory"
+            << std::endl;
+}
+
 int main(int argc, char **argv) {
   Options options = parseCliOptions(argc, argv);
+  if (options.help) {
+    printHelp();
+    return 0;
+  }
+
   if (options.fileName.empty()) {
     return 1;
   }
