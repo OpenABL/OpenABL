@@ -1,1 +1,1 @@
-gcc -O2 main.c libabl.c -lm -fopenmp
+gcc -O2 -std=c99 main.c libabl.c -lm -fopenmp
