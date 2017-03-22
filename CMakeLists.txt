@@ -10,7 +10,7 @@ set(OpenABL_SOURCES
     src/backend/CPrinter.cpp)
 
 find_package(BISON 3.0)
-find_package(FLEX)
+find_package(FLEX 2.5)
 
 BISON_TARGET(Parser src/Parser.y ${CMAKE_CURRENT_BINARY_DIR}/Parser.cpp)
 FLEX_TARGET(Lexer src/Lexer.l ${CMAKE_CURRENT_BINARY_DIR}/Lexer.cpp)
