@@ -10,13 +10,13 @@
 namespace OpenABL {
 
 struct CBackend : public Backend {
-  void generate(AST::Script &script, const std::string outputDir) {
+  void generate(AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
     CPrinter printer;
     printer.print(script);
     writeToFile(outputDir + "/main.c", printer.extractStr());
-    copyFile("asset/c/libabl.h", outputDir + "/libabl.h");
-    copyFile("asset/c/libabl.c", outputDir + "/libabl.c");
-    copyFile("asset/c/build.sh", outputDir + "/build.sh");
+    copyFile(assetDir + "/c/libabl.h", outputDir + "/libabl.h");
+    copyFile(assetDir + "/c/libabl.c", outputDir + "/libabl.c");
+    copyFile(assetDir + "/c/build.sh", outputDir + "/build.sh");
     makeFileExecutable(outputDir + "/build.sh");
   }
 };

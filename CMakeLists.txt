@@ -2,12 +2,12 @@ cmake_minimum_required(VERSION 3.1)
 project(OpenABL)
 
 set(OpenABL_SOURCES
-		src/ParserContext.cpp
-        src/AST.cpp
-		src/Analysis.cpp
-		src/AnalysisVisitor.cpp
-		src/main.cpp
-		src/backend/CPrinter.cpp)
+    src/ParserContext.cpp
+    src/AST.cpp
+    src/Analysis.cpp
+    src/AnalysisVisitor.cpp
+    src/main.cpp
+    src/backend/CPrinter.cpp)
 
 find_package(BISON 3.0)
 find_package(FLEX)
@@ -18,12 +18,16 @@ ADD_FLEX_BISON_DEPENDENCY(Lexer Parser)
 
 set(CMAKE_CXX_STANDARD 11)
 if(CMAKE_COMPILER_IS_GNUCXX)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare")
 endif()
+
+add_custom_target(copy-assets ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/asset ${CMAKE_BINARY_DIR}/asset)
 
 include_directories(src/ ${CMAKE_CURRENT_BINARY_DIR})
 add_executable(OpenABL
-		${OpenABL_SOURCES}
-		${BISON_Parser_OUTPUTS}
-		${FLEX_Lexer_OUTPUTS}
-		${OpenABL_SOURCES})
+    ${OpenABL_SOURCES}
+    ${BISON_Parser_OUTPUTS}
+    ${FLEX_Lexer_OUTPUTS}
+    ${OpenABL_SOURCES})

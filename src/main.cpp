@@ -31,6 +31,7 @@ struct Options {
   std::string fileName;
   std::string backend;
   std::string outputDir;
+  std::string assetDir;
 };
 
 static Options parseCliOptions(int argc, char **argv) {
@@ -47,6 +48,8 @@ static Options parseCliOptions(int argc, char **argv) {
       options.fileName = argv[++i];
     } else if (arg == "-o" || arg == "--output-dir") {
       options.outputDir = argv[++i];
+    } else if (arg == "-A" || arg == "--asset-dir") {
+      options.assetDir = argv[++i];
     } else {
       std::cerr << "Unknown option \"" << arg << "\"" << std::endl;
       return {};
@@ -65,6 +68,10 @@ static Options parseCliOptions(int argc, char **argv) {
 
   if (options.backend.empty()) {
     options.backend = "c";
+  }
+
+  if (options.assetDir.empty()) {
+    options.assetDir = "./asset";
   }
 
   return options;
@@ -94,6 +101,12 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  if (!OpenABL::directoryExists(options.assetDir)) {
+    std::cerr << "Asset directory \"" << options.assetDir << "\" does not exist "
+              << "(override with -A or --asset-dir)" << std::endl;
+    return 1;
+  }
+
   OpenABL::Backend &backend = *it->second;
 
   OpenABL::ParserContext ctx(file);
@@ -113,7 +126,7 @@ int main(int argc, char **argv) {
   OpenABL::AnalysisVisitor visitor(err, funcs);
   script.accept(visitor);
 
-  backend.generate(script, options.outputDir);
+  backend.generate(script, options.outputDir, options.assetDir);
 
   fclose(file);
   return 0;

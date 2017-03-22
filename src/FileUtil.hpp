@@ -6,10 +6,13 @@
 
 namespace OpenABL {
 
-static inline bool createDirectory(const std::string &name) {
+static inline bool directoryExists(const std::string &name) {
   struct stat info;
-  if (stat(name.c_str(), &info) == 0 && (info.st_mode & S_IFDIR)) {
-    // Directory exists
+  return stat(name.c_str(), &info) == 0 && (info.st_mode & S_IFDIR);
+}
+
+static inline bool createDirectory(const std::string &name) {
+  if (directoryExists(name)) {
     return true;
   }
 
