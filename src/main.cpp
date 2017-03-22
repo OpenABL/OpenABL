@@ -3,6 +3,8 @@
 #include "Analysis.hpp"
 #include "AnalysisVisitor.hpp"
 #include "FileUtil.hpp"
+
+#include "backend/Backend.hpp"
 #include "backend/CBackend.hpp"
 
 namespace OpenABL {
@@ -15,6 +17,12 @@ void registerBuiltinFunctions(BuiltinFunctions &funcs) {
       { { Type::ARRAY, Type::AGENT }, Type::AGENT, Type::FLOAT32 },
       { Type::ARRAY, Type::AGENT });
   funcs.add("save", "save", { { Type::ARRAY, Type::AGENT }, Type::STRING }, Type::VOID);
+}
+
+std::map<std::string, std::unique_ptr<Backend>> getBackends() {
+  std::map<std::string, std::unique_ptr<Backend>> backends;
+  backends["c"] = std::unique_ptr<Backend>(new CBackend);
+  return backends;
 }
 
 }
@@ -79,6 +87,15 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  auto backends = OpenABL::getBackends();
+  auto it = backends.find(options.backend);
+  if (it == backends.end()) {
+    std::cerr << "Unknown backend \"" << options.backend << "\"" << std::endl;
+    return 1;
+  }
+
+  OpenABL::Backend &backend = *it->second;
+
   OpenABL::ParserContext ctx(file);
   if (!ctx.parse()) {
     return 1;
@@ -96,13 +113,7 @@ int main(int argc, char **argv) {
   OpenABL::AnalysisVisitor visitor(err, funcs);
   script.accept(visitor);
 
-  OpenABL::CPrinter printer;
-  printer.print(script);
-  OpenABL::writeToFile(options.outputDir + "/main.c", printer.extractStr());
-  OpenABL::copyFile("asset/c/libabl.h", options.outputDir + "/libabl.h");
-  OpenABL::copyFile("asset/c/libabl.c", options.outputDir + "/libabl.c");
-  OpenABL::copyFile("asset/c/build.sh", options.outputDir + "/build.sh");
-  OpenABL::makeFileExecutable(options.outputDir + "/build.sh");
+  backend.generate(script, options.outputDir);
 
   fclose(file);
   return 0;
