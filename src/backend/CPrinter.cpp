@@ -272,8 +272,9 @@ void CPrinter::print(AST::ForStatement &stmt) {
 void CPrinter::print(AST::ParallelForStatement &stmt) {
   std::string iLabel = makeAnonLabel();
 
-  *this << "if (!double_buf) { double_buf_storage = DYN_ARRAY_CREATE_FIXED("
-        << *stmt.type << ", " << *stmt.expr << "->len); "
+  *this << "if (!double_buf) { double_buf_storage = DYN_ARRAY_CREATE_FIXED(";
+  printStorageType(*this, stmt.type->resolved);
+  *this << ", " << *stmt.expr << "->len); "
         << "double_buf = &double_buf_storage; }" << "\n"
         << "#pragma omp parallel for" << nl
         << "for (size_t " << iLabel << " = 0; "
@@ -290,6 +291,13 @@ void CPrinter::print(AST::ParallelForStatement &stmt) {
         << *stmt.stmt << outdent << nl << "}" << nl
         << "{ dyn_array* tmp = " << *stmt.expr << "; "
         << *stmt.expr << " = double_buf; double_buf = tmp; }";
+}
+void CPrinter::print(AST::ReturnStatement &stmt) {
+  if (stmt.expr) {
+    *this << "return " << *stmt.expr << ";";
+  } else {
+    *this << "return;";
+  }
 }
 void CPrinter::print(AST::SimpleType &type) {
   *this << type.resolved;
@@ -354,7 +362,7 @@ void CPrinter::print(AST::AgentDeclaration &decl) {
   *this << "{ TYPE_END, sizeof(" << decl.name << "), NULL }" << outdent << nl << "};" << nl;
 }
 void CPrinter::print(AST::ConstDeclaration &decl) {
-  *this << *decl.type << " " << *decl.var << " = " << *decl.value << ";";
+  *this << *decl.type << " " << *decl.var << " = " << *decl.expr << ";";
 }
 void CPrinter::print(AST::Script &script) {
   *this << "#include \"libabl.h\"" << nl << nl;

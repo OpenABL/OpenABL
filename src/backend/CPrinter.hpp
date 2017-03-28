@@ -24,6 +24,7 @@ struct CPrinter : public Printer {
   void print(AST::IfStatement &);
   void print(AST::ForStatement &);
   void print(AST::ParallelForStatement &);
+  void print(AST::ReturnStatement &);
   void print(AST::SimpleType &);
   void print(AST::ArrayType &);
   void print(AST::Param &);

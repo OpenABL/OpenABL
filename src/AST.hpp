@@ -386,6 +386,16 @@ struct ParallelForStatement : public Statement {
   void print(Printer &);
 };
 
+struct ReturnStatement : public Statement {
+  ExpressionPtr expr;
+
+  ReturnStatement(Expression *expr, Location loc)
+    : Statement{loc}, expr{expr} {}
+
+  void accept(Visitor &);
+  void print(Printer &);
+};
+
 struct Type : public Node {
   OpenABL::Type resolved;
 
@@ -492,10 +502,10 @@ struct AgentDeclaration : public Declaration {
 struct ConstDeclaration : public Declaration {
   TypePtr type;
   VarPtr var;
-  LiteralPtr value;
+  ExpressionPtr expr;
 
-  ConstDeclaration(Type *type, Var *var, Literal *value, Location loc)
-    : Declaration{loc}, type{type}, var{var}, value{value} {}
+  ConstDeclaration(Type *type, Var *var, Expression *expr, Location loc)
+    : Declaration{loc}, type{type}, var{var}, expr{expr} {}
 
   void accept(Visitor &);
   void print(Printer &);

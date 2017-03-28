@@ -139,6 +139,12 @@ void ParallelForStatement::accept(Visitor &visitor) {
   visitor.leave(*this);
 }
 
+void ReturnStatement::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  expr->accept(visitor);
+  visitor.leave(*this);
+}
+
 void SimpleType::accept(Visitor &visitor) {
   visitor.enter(*this);
   visitor.leave(*this);
@@ -192,7 +198,7 @@ void ConstDeclaration::accept(Visitor &visitor) {
   visitor.enter(*this);
   type->accept(visitor);
   var->accept(visitor);
-  value->accept(visitor);
+  expr->accept(visitor);
   visitor.leave(*this);
 }
 
@@ -222,6 +228,7 @@ void VarDeclarationStatement::print(Printer &printer) { printer.print(*this); }
 void IfStatement::print(Printer &printer) { printer.print(*this); }
 void ForStatement::print(Printer &printer) { printer.print(*this); }
 void ParallelForStatement::print(Printer &printer) { printer.print(*this); }
+void ReturnStatement::print(Printer &printer) { printer.print(*this); }
 void SimpleType::print(Printer &printer) { printer.print(*this); }
 void ArrayType::print(Printer &printer) { printer.print(*this); }
 void Param::print(Printer &printer) { printer.print(*this); }

@@ -39,6 +39,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   NEW
   POSITION
   PFOR
+  RETURN
 
   ADD
   SUB
@@ -171,7 +172,7 @@ var: IDENTIFIER { $$ = new Var($1, @$); }
 param: type var { $$ = new Param($1, $2, nullptr, @$); }
      | type var ARROW var { $$ = new Param($1, $2, $4, @$); };
 
-const_decl: type var ASSIGN literal SEMI
+const_decl: type var ASSIGN expression SEMI
               { $$ = new ConstDeclaration($1, $2, $4, @$); };
 
 literal: BOOL { $$ = new BoolLiteral($1, @$); }
@@ -200,6 +201,10 @@ statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
              { $$ = new ForStatement($3, $4, $6, $8, @$); }
          | PFOR LPAREN type var ARROW var COLON expression RPAREN statement
              { $$ = new ParallelForStatement($3, $4, $6, $8, $10, @$); }
+         | RETURN expression SEMI
+             { $$ = new ReturnStatement($2, @$); }
+         | RETURN SEMI
+             { $$ = new ReturnStatement(nullptr, @$); }
          ;
 
 arg: expression { $$ = new Arg($1, nullptr, @$); }

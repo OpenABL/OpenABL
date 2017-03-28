@@ -30,6 +30,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void enter(AST::IfStatement &);
   void enter(AST::ForStatement &);
   void enter(AST::ParallelForStatement &);
+  void enter(AST::ReturnStatement &);
   void enter(AST::SimpleType &);
   void enter(AST::ArrayType &);
   void enter(AST::Param &);
@@ -56,6 +57,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void leave(AST::IfStatement &);
   void leave(AST::ForStatement &);
   void leave(AST::ParallelForStatement &);
+  void leave(AST::ReturnStatement &);
   void leave(AST::SimpleType &);
   void leave(AST::ArrayType &);
   void leave(AST::Param &);
@@ -80,6 +82,8 @@ private:
   // Information about *all* variables, indexed by unique VarId's
   Scope scope;
 
+  // Current function
+  AST::FunctionDeclaration *currentFunc;
   // Declared agents by name
   std::map<std::string, AST::AgentDeclaration *> agents;
   // Declared functions by name

@@ -99,6 +99,7 @@ struct Type {
   }
 
   bool isInvalid() const { return type == INVALID; }
+  bool isVoid() const { return type == VOID; }
   bool isArray() const { return type == ARRAY; }
   bool isAgent() const { return type == AGENT; }
   bool isVec() const { return type == VEC2 || type == VEC3; }

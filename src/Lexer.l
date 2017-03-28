@@ -53,6 +53,7 @@ loc.step();
 "new"      { return Parser::make_NEW(loc); }
 "position" { return Parser::make_POSITION(loc); }
 "pfor"     { return Parser::make_PFOR(loc); }
+"return"   { return Parser::make_RETURN(loc); }
 
 true  { return Parser::make_BOOL(true, loc); }
 false { return Parser::make_BOOL(false, loc); }

@@ -32,6 +32,7 @@ struct Printer {
   virtual void print(AST::IfStatement &) = 0;
   virtual void print(AST::ForStatement &) = 0;
   virtual void print(AST::ParallelForStatement &) = 0;
+  virtual void print(AST::ReturnStatement &) = 0;
   virtual void print(AST::SimpleType &) = 0;
   virtual void print(AST::ArrayType &) = 0;
   virtual void print(AST::Param &) = 0;

@@ -82,16 +82,28 @@ static inline float3 float3_div_scalar(float3 a, float s) {
 }
 
 /*
- * Distances
+ * Lengths and distances
  */
 
+static inline float dot_float2(float2 a, float2 b) {
+	return a.x * b.x + a.y * b.y;
+}
+static inline float dot_float3(float3 a, float3 b) {
+	return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+static inline float length_float2(float2 v) {
+	return sqrtf(v.x * v.x + v.y * v.y);
+}
+static inline float length_float3(float3 v) {
+	return sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
 static inline float dist_float2(float2 a, float2 b) {
-	float2 d = float2_sub(a, b);
-	return sqrtf(d.x * d.x + d.y * d.y);
+	return length_float2(float2_sub(a, b));
 }
 static inline float dist_float3(float3 a, float3 b) {
-	float3 d = float3_sub(a, b);
-	return sqrtf(d.x * d.x + d.y * d.y + d.z * d.z);
+	return length_float3(float3_sub(a, b));
 }
 
 /*

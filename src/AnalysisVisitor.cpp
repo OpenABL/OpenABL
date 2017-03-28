@@ -86,6 +86,7 @@ void AnalysisVisitor::enter(AST::TernaryExpression &) {};
 void AnalysisVisitor::enter(AST::NewArrayExpression &) {};
 void AnalysisVisitor::enter(AST::ExpressionStatement &) {};
 void AnalysisVisitor::enter(AST::IfStatement &) {};
+void AnalysisVisitor::enter(AST::ReturnStatement &) {};
 void AnalysisVisitor::enter(AST::AgentMember &) {};
 void AnalysisVisitor::enter(AST::Script &) {};
 void AnalysisVisitor::enter(AST::VarExpression &) {};
@@ -114,6 +115,7 @@ void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
   }
 
   funcs.insert({ decl.name, &decl });
+  currentFunc = &decl;
 };
 void AnalysisVisitor::leave(AST::FunctionDeclaration &) {
   popVarScope();
@@ -132,15 +134,37 @@ void AnalysisVisitor::enter(AST::ArrayType &type) {
   type.resolved = resolveAstType(type);
 };
 
+bool isConstantExpression(const AST::Expression &expr) {
+  if (dynamic_cast<const AST::Literal *>(&expr)) {
+    return true;
+  } else if (dynamic_cast<const AST::UnaryOpExpression *>(&expr)) {
+    return true;
+  }
+  // TODO Other expressions
+  return false;
+}
+
 void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
   decl.var->id = declareVar(decl.var->name, decl.type->resolved);
+
+  if (!isConstantExpression(*decl.expr)) {
+    err << "Initializer of global constant must be a constant expression" << decl.expr->loc;
+    return;
+  }
+
+  Type declType = decl.type->resolved;
+  Type exprType = decl.expr->type;
+  if (!exprType.isPromotableTo(declType)) {
+    err << "Trying to assign value of type " << exprType
+        << " to global of type " << declType << decl.expr->loc;
+  }
 };
 void AnalysisVisitor::leave(AST::VarDeclarationStatement &decl) {
   decl.var->id = declareVar(decl.var->name, decl.type->resolved);
   if (decl.initializer) {
     Type declType = decl.type->resolved;
     Type initType = decl.initializer->type;
-    if (declType != initType) {
+    if (!initType.isPromotableTo(declType)) {
       err << "Trying to assign value of type " << initType
           << " to variable of type " << declType << decl.initializer->loc;
     }
@@ -201,6 +225,27 @@ void AnalysisVisitor::enter(AST::ParallelForStatement &stmt) {
 };
 void AnalysisVisitor::leave(AST::ParallelForStatement &) {
   popVarScope();
+};
+
+void AnalysisVisitor::leave(AST::ReturnStatement &stmt) {
+  Type returnType = currentFunc->returnType->resolved;
+  if (returnType.isVoid()) {
+    if (stmt.expr) {
+      err << "Cannot return value from void function" << stmt.expr->loc;
+      return;
+    }
+  } else {
+    if (!stmt.expr) {
+      err << "Return from non-void function must specify value" << stmt.loc;
+      return;
+    }
+
+    if (!stmt.expr->type.isPromotableTo(returnType)) {
+      err << "Trying to return " << stmt.expr->type
+          << " from function with return type " << returnType << stmt.expr->loc;
+      return;
+    }
+  }
 };
 
 void AnalysisVisitor::enter(AST::AgentDeclaration &decl) {
@@ -376,15 +421,31 @@ static AST::AgentMember *findAgentMember(AST::AgentDeclaration &decl, const std:
   return nullptr;
 }
 
+static bool isValidVecMember(Type type, const std::string &name) {
+  if (name == "x" || name == "y") {
+    return true;
+  }
+  if (type.getTypeId() == Type::VEC3 && name == "z") {
+    return true;
+  }
+  return false;
+}
+
 void AnalysisVisitor::leave(AST::MemberAccessExpression &expr) {
+  const std::string &name = expr.member;
   Type type = expr.expr->type;
   if (type.isVec()) {
-    // TODO
+    if (!isValidVecMember(type, name)) {
+      err << "Vector has no member \"" << name << "\"" << expr.loc;
+      return;
+    }
+
+    expr.type = Type::FLOAT32;
   } else if (type.isAgent()) {
     AST::AgentDeclaration *agent = type.getAgentDecl();
-    AST::AgentMember *member = findAgentMember(*agent, expr.member);
+    AST::AgentMember *member = findAgentMember(*agent, name);
     if (!member) {
-      err << "Agent has no member \"" << expr.member << "\"" << expr.loc;
+      err << "Agent has no member \"" << name << "\"" << expr.loc;
       return;
     }
 

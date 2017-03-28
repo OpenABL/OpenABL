@@ -1,32 +1,111 @@
 agent Boid {
   position float3 pos;
-  float3 dir;
+  float3 velocity;
 }
 
-interact separation(Boid old -> new, Boid other) {
-  // TODO
-}
-interact alignment(Boid old -> new, Boid other) {
-  // TODO
-}
-interact cohesion(Boid old -> new, Boid other) {
-  // TODO
+float min_pos = -0.5;
+float max_pos = +0.5;
+
+float interaction_radius = 0.1;
+float separation_radius = 0.005;
+
+float time_scale = 0.0005;
+float global_scale = 0.15;
+
+float steer_scale = 0.65;
+float collision_scale = 0.75;
+float match_scale = 1.25;
+
+// This function looks somewhat weird to me, but let's take it as-is
+float3 boundPosition(float3 pos) {
+    pos.x = pos.x < min_pos ? max_pos : pos.x;
+    pos.x = pos.x > max_pos ? min_pos : pos.x;
+
+    pos.y = pos.y < min_pos ? max_pos : pos.y;
+    pos.y = pos.y > max_pos ? min_pos : pos.y;
+
+    pos.z = pos.z < min_pos ? max_pos : pos.z;
+    pos.z = pos.z > max_pos ? min_pos : pos.z;
+
+    return pos;
 }
 
-main() {
-  Boid[] boids = load("boids.in");
+void main() {
+  //Boid[] boids = load("boids.in");
+
+  int num_boids = 5000;
+  Boid[] boids = new Boid[num_boids];
+  for (Boid boid : boids) {
+    // TODO This is ugly
+    boid.pos = float3(
+      random(min_pos, max_pos),
+      random(min_pos, max_pos),
+      random(min_pos, max_pos)
+    );
+    boid.velocity = float3(
+      random(0, 1),
+      random(0, 1),
+      random(0, 1)
+    );
+  }
 
   for (int time_step : 0 .. 100) {
-    pfro (Boid old -> new : boids) {
-      Boid tmp = old;
-      for (Agent nx : near(old, 5)) {
-        separation(old -> tmp, nx);
-        alignment(old -> tmp, nx);
+    pfor (Boid in -> out : boids) {
+      float3 global_velocity = float3(0, 0, 0);
+      float3 global_center = float3(0, 0, 0);
+      float3 collision_center = float3(0, 0, 0);
+      int interaction_count = 0;
+      int collision_count = 0;
+
+      for (Boid nx : near(boids, in, interaction_radius)) {
+        global_center += nx.pos;
+        global_velocity += nx.velocity;
+        interaction_count += 1;
+
+        float separation = dist(in.pos, nx.pos);
+        if (separation < separation_radius) {
+          collision_center += nx.pos;
+          collision_count += 1;
+        }
       }
-      for (Agent nx : near(old, 7)) {
-        cohesion(old -> tmp, nx);
+
+      float3 velocity_change = float3(0, 0, 0);
+
+      // Rule 1) Steer towards perceived center of flock
+      float3 steer_velocity = float3(0, 0, 0);
+      if (interaction_count > 0) {
+        global_center /= interaction_count;
+        steer_velocity = (global_center - in.pos) * steer_scale;
       }
-      new = tmp;
+      velocity_change += steer_velocity;
+
+      // Rule 2) Match neighbours speeds
+      float3 match_velocity = float3(0, 0, 0);
+      if (interaction_count > 0) {
+        global_velocity /= interaction_count;
+        match_velocity = global_velocity * match_scale;
+      }
+      velocity_change += match_velocity;
+
+      // Rule 3) Avoid close range neighbors
+      float3 avoid_velocity = float3(0, 0, 0);
+      if (collision_count > 0) {
+        collision_center /= collision_count;
+        avoid_velocity = (in.pos - collision_center) * collision_scale;
+      }
+      velocity_change += avoid_velocity;
+
+      float3 new_velocity = in.velocity + velocity_change * global_scale;
+      float new_velocity_scale = length(new_velocity);
+      if (new_velocity_scale > 1) {
+        new_velocity /= new_velocity_scale;
+      }
+
+      float3 new_pos = in.pos + new_velocity * time_scale;
+      new_pos = boundPosition(new_pos);
+
+      out.pos = new_pos;
+      out.velocity = new_velocity;
     }
   }
 
