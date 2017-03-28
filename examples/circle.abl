@@ -16,10 +16,10 @@ float rho = 0.01;
 interact sep_aggr(Point in -> out, Point other) {
   float pos_dist = dist(in.pos, other.pos);
   float sep_dist = pos_dist - r;
-  float2 force = float2(0.0, 0.0);
+  float2 force = float2(0.0);
   if (sep_dist < r) {
     float k = sep_dist > 0.0 ? k_att : -k_rep;
-	// r or pos_dist here?
+    // r or pos_dist here?
     force = k * sep_dist * (in.pos - other.pos) / r;
   }
   out.pos += force;
@@ -32,7 +32,7 @@ void main() {
 
   // initialization (sequential)
   for (Point p : points) {
-    p.pos = float2(random(0, W), random(0, W));
+    p.pos = random(float2(0), float2(W));
   }
 
   // simulation (parallel)

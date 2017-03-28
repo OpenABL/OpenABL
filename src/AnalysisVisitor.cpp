@@ -465,7 +465,16 @@ static std::vector<Type> getArgTypes(AST::CallExpression &expr) {
   return types;
 }
 
-static bool isTypeCtorValid(Type t, std::vector<Type> argTypes) {
+static bool areAllPromotableTo(const std::vector<Type> &types, Type type) {
+  for (Type t : types) {
+    if (!t.isPromotableTo(type)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+static bool isTypeCtorValid(Type t, const std::vector<Type> &argTypes) {
   size_t numArgs = argTypes.size();
   switch (t.getTypeId()) {
     case Type::VOID:
@@ -477,9 +486,15 @@ static bool isTypeCtorValid(Type t, std::vector<Type> argTypes) {
     case Type::STRING:
       return numArgs == 1 && argTypes[0] == Type::STRING;
     case Type::VEC2:
-      return numArgs == 2; // TODO
+      if (numArgs != 1 && numArgs != 2) {
+        return false;
+      }
+      return areAllPromotableTo(argTypes, Type::FLOAT32);
     case Type::VEC3:
-      return numArgs == 3; // TODO
+      if (numArgs != 1 && numArgs != 3) {
+        return false;
+      }
+      return areAllPromotableTo(argTypes, Type::FLOAT32);
     default:
       assert(0);
   }

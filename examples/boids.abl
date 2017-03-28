@@ -36,17 +36,8 @@ void main() {
   int num_boids = 5000;
   Boid[] boids = new Boid[num_boids];
   for (Boid boid : boids) {
-    // TODO This is ugly
-    boid.pos = float3(
-      random(min_pos, max_pos),
-      random(min_pos, max_pos),
-      random(min_pos, max_pos)
-    );
-    boid.velocity = float3(
-      random(0, 1),
-      random(0, 1),
-      random(0, 1)
-    );
+    boid.pos = random(float3(min_pos), float3(max_pos));
+    boid.velocity = random(float3(0), float3(1));
   }
 
   for (int time_step : 0 .. 100) {

@@ -128,10 +128,11 @@ static void printArgs(CPrinter &p, AST::CallExpression &expr) {
 static void printTypeCtor(CPrinter &p, AST::CallExpression &expr) {
   Type t = expr.type;
   if (t.isVec()) {
+    size_t numArgs = expr.args->size();
     if (t.getTypeId() == Type::VEC2) {
-      p << "float2_create";
+      p << (numArgs == 1 ? "float2_fill" : "float2_create");
     } else {
-      p << "float3_create";
+      p << (numArgs == 1 ? "float3_fill" : "float3_create");
     }
     p << "(";
     printArgs(p, expr);
