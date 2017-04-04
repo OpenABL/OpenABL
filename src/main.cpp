@@ -3,9 +3,7 @@
 #include "Analysis.hpp"
 #include "AnalysisVisitor.hpp"
 #include "FileUtil.hpp"
-
 #include "backend/Backend.hpp"
-#include "backend/CBackend.hpp"
 
 namespace OpenABL {
 
@@ -29,6 +27,7 @@ void registerBuiltinFunctions(BuiltinFunctions &funcs) {
 std::map<std::string, std::unique_ptr<Backend>> getBackends() {
   std::map<std::string, std::unique_ptr<Backend>> backends;
   backends["c"] = std::unique_ptr<Backend>(new CBackend);
+  backends["flamegpu"] = std::unique_ptr<Backend>(new FlameGPUBackend);
   return backends;
 }
 
