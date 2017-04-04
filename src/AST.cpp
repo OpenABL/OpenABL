@@ -143,16 +143,6 @@ void ForStatement::accept(Visitor &visitor) {
   visitor.leave(*this);
 }
 
-void ParallelForStatement::accept(Visitor &visitor) {
-  visitor.enter(*this);
-  type->accept(visitor);
-  var->accept(visitor);
-  outVar->accept(visitor);
-  expr->accept(visitor);
-  stmt->accept(visitor);
-  visitor.leave(*this);
-}
-
 void SimulateStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
   timestepsExpr->accept(visitor);
@@ -249,7 +239,6 @@ void BlockStatement::print(Printer &printer) { printer.print(*this); }
 void VarDeclarationStatement::print(Printer &printer) { printer.print(*this); }
 void IfStatement::print(Printer &printer) { printer.print(*this); }
 void ForStatement::print(Printer &printer) { printer.print(*this); }
-void ParallelForStatement::print(Printer &printer) { printer.print(*this); }
 void SimulateStatement::print(Printer &printer) { printer.print(*this); }
 void ReturnStatement::print(Printer &printer) { printer.print(*this); }
 void SimpleType::print(Printer &printer) { printer.print(*this); }

@@ -221,17 +221,6 @@ void AnalysisVisitor::leave(AST::ForStatement &stmt) {
   stmt.kind = AST::ForStatement::Kind::NORMAL;
 };
 
-void AnalysisVisitor::enter(AST::ParallelForStatement &stmt) {
-  pushVarScope();
-
-  Type type = resolveAstType(*stmt.type); // Not resolved yet
-  stmt.var->id = declareVar(stmt.var->name, type);
-  stmt.outVar->id = declareVar(stmt.outVar->name, type);
-};
-void AnalysisVisitor::leave(AST::ParallelForStatement &) {
-  popVarScope();
-};
-
 void AnalysisVisitor::leave(AST::SimulateStatement &stmt) {
   if (!stmt.timestepsExpr->type.isPromotableTo(Type::INT32)) {
     err << "Number of timesteps must be an integer, "

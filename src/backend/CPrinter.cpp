@@ -283,30 +283,6 @@ void CPrinter::print(AST::ForStatement &stmt) {
   *this << ", " << iLabel << ");" << nl
         << *stmt.stmt << outdent << nl << "}";
 }
-void CPrinter::print(AST::ParallelForStatement &stmt) {
-  std::string iLabel = makeAnonLabel();
-
-  // TODO Kill this, this is part of "simulate" now
-  *this << "if (!double_buf) { double_buf_storage = DYN_ARRAY_CREATE_FIXED(";
-  printStorageType(*this, stmt.type->resolved);
-  *this << ", " << *stmt.expr << "->len); "
-        << "double_buf = &double_buf_storage; }" << "\n"
-        << "#pragma omp parallel for" << nl
-        << "for (size_t " << iLabel << " = 0; "
-        << iLabel << " < " << *stmt.expr << "->len; "
-        << iLabel << "++) {" << indent << nl
-        << *stmt.type << " " << *stmt.var
-        << " = DYN_ARRAY_GET(" << *stmt.expr << ", ";
-  printStorageType(*this, stmt.type->resolved);
-  *this << ", " << iLabel << ");" << nl
-        << *stmt.type << " " << *stmt.outVar
-        << " = DYN_ARRAY_GET(double_buf, ";
-  printStorageType(*this, stmt.type->resolved);
-  *this << ", " << iLabel << ");" << nl
-        << *stmt.stmt << outdent << nl << "}" << nl
-        << "{ dyn_array* tmp = " << *stmt.expr << "; "
-        << *stmt.expr << " = double_buf; double_buf = tmp; }";
-}
 void CPrinter::print(AST::SimulateStatement &stmt) {
   std::string tLabel = makeAnonLabel();
   *this << "for (int " << tLabel << " = 0; "

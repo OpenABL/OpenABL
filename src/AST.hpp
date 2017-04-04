@@ -395,22 +395,6 @@ struct ForStatement : public Statement {
   Expression &getNearRadius() const { return *(*getNearCall().args)[1]->expr; }
 };
 
-struct ParallelForStatement : public Statement {
-  TypePtr type;
-  VarPtr var;
-  VarPtr outVar;
-  ExpressionPtr expr;
-  StatementPtr stmt;
-
-  ParallelForStatement(Type *type, Var *var, Var *outVar,
-               Expression *expr, Statement *stmt, Location loc)
-    : Statement{loc}, type{type}, var{var}, outVar{outVar},
-      expr{expr}, stmt{stmt} {}
-
-  void accept(Visitor &);
-  void print(Printer &);
-};
-
 struct FunctionDeclaration;
 
 struct SimulateStatement : public Statement {

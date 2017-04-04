@@ -38,7 +38,6 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   FOR
   NEW
   POSITION
-  PFOR
   RETURN
   SIMULATE
 
@@ -202,8 +201,6 @@ statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
              { $$ = new IfStatement($3, $5, $7, @$); }
          | FOR LPAREN type var COLON expression RPAREN statement
              { $$ = new ForStatement($3, $4, $6, $8, @$); }
-         | PFOR LPAREN type var ARROW var COLON expression RPAREN statement
-             { $$ = new ParallelForStatement($3, $4, $6, $8, $10, @$); }
          | RETURN expression SEMI
              { $$ = new ReturnStatement($2, @$); }
          | RETURN SEMI
