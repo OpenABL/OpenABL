@@ -79,6 +79,20 @@ void TernaryExpression::accept(Visitor &visitor) {
   visitor.leave(*this);
 }
 
+void MemberInitEntry::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  expr->accept(visitor);
+  visitor.leave(*this);
+}
+
+void AgentCreationExpression::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  for (MemberInitEntryPtr &member : *members) {
+    member->accept(visitor);
+  }
+  visitor.leave(*this);
+}
+
 void NewArrayExpression::accept(Visitor &visitor) {
   visitor.enter(*this);
   elemType->accept(visitor);
@@ -136,6 +150,12 @@ void ParallelForStatement::accept(Visitor &visitor) {
   outVar->accept(visitor);
   expr->accept(visitor);
   stmt->accept(visitor);
+  visitor.leave(*this);
+}
+
+void SimulateStatement::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  timestepsExpr->accept(visitor);
   visitor.leave(*this);
 }
 
@@ -221,6 +241,8 @@ void Arg::print(Printer &printer) { printer.print(*this); }
 void CallExpression::print(Printer &printer) { printer.print(*this); }
 void MemberAccessExpression::print(Printer &printer) { printer.print(*this); }
 void TernaryExpression::print(Printer &printer) { printer.print(*this); }
+void MemberInitEntry::print(Printer &printer) { printer.print(*this); }
+void AgentCreationExpression::print(Printer &printer) { printer.print(*this); }
 void NewArrayExpression::print(Printer &printer) { printer.print(*this); }
 void ExpressionStatement::print(Printer &printer) { printer.print(*this); }
 void BlockStatement::print(Printer &printer) { printer.print(*this); }
@@ -228,6 +250,7 @@ void VarDeclarationStatement::print(Printer &printer) { printer.print(*this); }
 void IfStatement::print(Printer &printer) { printer.print(*this); }
 void ForStatement::print(Printer &printer) { printer.print(*this); }
 void ParallelForStatement::print(Printer &printer) { printer.print(*this); }
+void SimulateStatement::print(Printer &printer) { printer.print(*this); }
 void ReturnStatement::print(Printer &printer) { printer.print(*this); }
 void SimpleType::print(Printer &printer) { printer.print(*this); }
 void ArrayType::print(Printer &printer) { printer.print(*this); }

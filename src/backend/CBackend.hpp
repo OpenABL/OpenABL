@@ -11,7 +11,7 @@ namespace OpenABL {
 
 struct CBackend : public Backend {
   void generate(AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
-    CPrinter printer;
+    CPrinter printer(script);
     printer.print(script);
     writeToFile(outputDir + "/main.c", printer.extractStr());
     copyFile(assetDir + "/c/libabl.h", outputDir + "/libabl.h");

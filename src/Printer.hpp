@@ -25,6 +25,8 @@ struct Printer {
   virtual void print(AST::CallExpression &) = 0;
   virtual void print(AST::MemberAccessExpression &) = 0;
   virtual void print(AST::TernaryExpression &) = 0;
+  virtual void print(AST::MemberInitEntry &) = 0;
+  virtual void print(AST::AgentCreationExpression &) = 0;
   virtual void print(AST::NewArrayExpression &) = 0;
   virtual void print(AST::ExpressionStatement &) = 0;
   virtual void print(AST::BlockStatement &) = 0;
@@ -32,6 +34,7 @@ struct Printer {
   virtual void print(AST::IfStatement &) = 0;
   virtual void print(AST::ForStatement &) = 0;
   virtual void print(AST::ParallelForStatement &) = 0;
+  virtual void print(AST::SimulateStatement &) = 0;
   virtual void print(AST::ReturnStatement &) = 0;
   virtual void print(AST::SimpleType &) = 0;
   virtual void print(AST::ArrayType &) = 0;

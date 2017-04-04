@@ -269,6 +269,32 @@ struct TernaryExpression : public Expression {
   void print(Printer &);
 };
 
+struct MemberInitEntry : public Node {
+  std::string name;
+  ExpressionPtr expr;
+
+  MemberInitEntry(std::string name, Expression *expr, Location loc)
+    : Node{loc}, name{name}, expr{expr} {}
+
+  void accept(Visitor &);
+  void print(Printer &);
+};
+
+using MemberInitEntryPtr = std::unique_ptr<MemberInitEntry>;
+using MemberInitList = std::vector<MemberInitEntryPtr>;
+using MemberInitListPtr = std::unique_ptr<MemberInitList>;
+
+struct AgentCreationExpression : public Expression {
+  std::string name;
+  MemberInitListPtr members;
+
+  AgentCreationExpression(std::string name, MemberInitList *members, Location loc)
+    : Expression{loc}, name{name}, members{members} {}
+
+  void accept(Visitor &);
+  void print(Printer &);
+};
+
 struct NewArrayExpression : public Expression {
   TypePtr elemType;
   ExpressionPtr sizeExpr;
@@ -365,9 +391,8 @@ struct ForStatement : public Statement {
     assert(isNear());
     return *dynamic_cast<CallExpression *>(&*expr);
   }
-  Expression &getNearArray() const { return *(*getNearCall().args)[0]->expr; }
-  Expression &getNearAgent() const { return *(*getNearCall().args)[1]->expr; }
-  Expression &getNearRadius() const { return *(*getNearCall().args)[2]->expr; }
+  Expression &getNearAgent() const { return *(*getNearCall().args)[0]->expr; }
+  Expression &getNearRadius() const { return *(*getNearCall().args)[1]->expr; }
 };
 
 struct ParallelForStatement : public Statement {
@@ -381,6 +406,21 @@ struct ParallelForStatement : public Statement {
                Expression *expr, Statement *stmt, Location loc)
     : Statement{loc}, type{type}, var{var}, outVar{outVar},
       expr{expr}, stmt{stmt} {}
+
+  void accept(Visitor &);
+  void print(Printer &);
+};
+
+struct FunctionDeclaration;
+
+struct SimulateStatement : public Statement {
+  ExpressionPtr timestepsExpr;
+  std::string stepFunc;
+
+  FunctionDeclaration *stepFuncDecl;
+
+  SimulateStatement(Expression *timestepsExpr, std::string stepFunc, Location loc)
+    : Statement{loc}, timestepsExpr{timestepsExpr}, stepFunc{stepFunc} {}
 
   void accept(Visitor &);
   void print(Printer &);
@@ -459,6 +499,8 @@ struct FunctionDeclaration : public Declaration {
     : Declaration{loc}, isInteract{isInteract}, returnType{returnType},
       name{name}, params{params}, stmts{stmts} {}
 
+  bool isMain() const { return name == "main"; }
+
   void accept(Visitor &);
   void print(Printer &);
 };
@@ -514,6 +556,10 @@ struct ConstDeclaration : public Declaration {
 /* AST root node */
 struct Script : public Node {
   DeclarationListPtr decls;
+
+  std::vector<AgentDeclaration *> agents;
+  std::vector<ConstDeclaration *> consts;
+  std::vector<FunctionDeclaration *> funcs;
 
   Script(DeclarationList *decls, Location loc)
     : Node{loc}, decls{decls} {}

@@ -143,13 +143,21 @@ static void printTypeCtor(CPrinter &p, AST::CallExpression &expr) {
 }
 static void printBuiltin(CPrinter &p, AST::CallExpression &expr) {
   const FunctionSignature &sig = expr.calledSig;
+  if (sig.name == "add") {
+    AST::AgentDeclaration *agent = sig.paramTypes[0].getAgentDecl();
+    p << "*DYN_ARRAY_PLACE(&agents.agents_" << agent->name
+      << ", " << agent->name << ") = " << *(*expr.args)[0];
+    return;
+  }
+
   p << sig.name;
   p << "(";
   printArgs(p, expr);
   if (sig.name == "save") {
     // Pass runtime type information
-    AST::AgentDeclaration *agent = sig.paramTypes[0].getBaseType().getAgentDecl();
-    p << ", " << agent->name << "_info";
+    // TODO Needs update for implicit agent list / multiple agent types
+    /*AST::AgentDeclaration *agent = sig.paramTypes[0].getBaseType().getAgentDecl();
+    p << ", " << agent->name << "_info";*/
   }
   p << ")";
 }
@@ -173,6 +181,13 @@ void CPrinter::print(AST::MemberAccessExpression &expr) {
 }
 void CPrinter::print(AST::TernaryExpression &expr) {
   *this << "(" << *expr.condExpr << " ? " << *expr.ifExpr << " : " << *expr.elseExpr << ")";
+}
+void CPrinter::print(AST::MemberInitEntry &entry) {
+  *this << "." << entry.name << " = " << *entry.expr << ",";
+}
+void CPrinter::print(AST::AgentCreationExpression &expr) {
+  *this << "(" << expr.name << ") {" << indent
+        << *expr.members << outdent << nl << "}";
 }
 void CPrinter::print(AST::NewArrayExpression &expr) {
   *this << "DYN_ARRAY_CREATE_FIXED(";
@@ -228,7 +243,6 @@ void CPrinter::print(AST::ForStatement &stmt) {
     printRangeFor(*this, stmt);
     return;
   } else if (stmt.isNear()) {
-    AST::Expression &arrayExpr = stmt.getNearArray();
     AST::Expression &agentExpr = stmt.getNearAgent();
     AST::Expression &radiusExpr = stmt.getNearRadius();
 
@@ -241,12 +255,11 @@ void CPrinter::print(AST::ForStatement &stmt) {
     std::string iLabel = makeAnonLabel();
 
     // For now: Print normal loop with radius check
-    *this << stmt.expr->type << " " << eLabel << " = " << arrayExpr << ";" << nl
-          << "for (size_t " << iLabel << " = 0; "
-          << iLabel << " < " << eLabel << "->len; "
+    *this << "for (size_t " << iLabel << " = 0; "
+          << iLabel << " < agents.agents_" << agentDecl->name << ".len; "
           << iLabel << "++) {"
           << indent << nl << *stmt.type << " " << *stmt.var
-          << " = DYN_ARRAY_GET(" << eLabel << ", ";
+          << " = DYN_ARRAY_GET(&agents.agents_" << agentDecl->name << ", ";
     printStorageType(*this, stmt.type->resolved);
     *this << ", " << iLabel << ");" << nl
           << "if (" << dist_fn << "(" << *stmt.var << "->" << posMember->name << ", "
@@ -256,7 +269,7 @@ void CPrinter::print(AST::ForStatement &stmt) {
     return;
   }
 
-  // TODO special loops (ranges, near)
+  // Normal range-based for loop
   std::string eLabel = makeAnonLabel();
   std::string iLabel = makeAnonLabel();
 
@@ -273,6 +286,7 @@ void CPrinter::print(AST::ForStatement &stmt) {
 void CPrinter::print(AST::ParallelForStatement &stmt) {
   std::string iLabel = makeAnonLabel();
 
+  // TODO Kill this, this is part of "simulate" now
   *this << "if (!double_buf) { double_buf_storage = DYN_ARRAY_CREATE_FIXED(";
   printStorageType(*this, stmt.type->resolved);
   *this << ", " << *stmt.expr << "->len); "
@@ -292,6 +306,48 @@ void CPrinter::print(AST::ParallelForStatement &stmt) {
         << *stmt.stmt << outdent << nl << "}" << nl
         << "{ dyn_array* tmp = " << *stmt.expr << "; "
         << *stmt.expr << " = double_buf; double_buf = tmp; }";
+}
+void CPrinter::print(AST::SimulateStatement &stmt) {
+  std::string tLabel = makeAnonLabel();
+  *this << "for (int " << tLabel << " = 0; "
+        << tLabel << " < " << *stmt.timestepsExpr << "; "
+        << tLabel << "++) {" << indent << nl;
+
+  AST::FunctionDeclaration *stepFunc = stmt.stepFuncDecl;
+  const AST::Param &param = *(*stepFunc->params)[0];
+  Type type = param.type->resolved;
+
+  std::ostringstream s;
+  s << "agents.agents_" << type;
+  std::string bufName = s.str();
+  s << "_dbuf";
+  std::string dbufName = s.str();
+
+  std::string iLabel = makeAnonLabel();
+  std::string inLabel = makeAnonLabel();
+  std::string outLabel = makeAnonLabel();
+
+  *this << "if (!" << dbufName << ".values) { "
+        << dbufName << " = DYN_ARRAY_CREATE_FIXED(" << type
+        << ", " << bufName << ".len); }" << nl
+        << "#pragma omp parallel for" << nl
+        << "for (size_t " << iLabel << " = 0; "
+        << iLabel << " < " << bufName << ".len; "
+        << iLabel << "++) {" << indent << nl
+        << type << " *" << inLabel
+        << " = DYN_ARRAY_GET(&" << bufName << ", " << type
+        << ", " << iLabel << ");" << nl
+        << type << " *" << outLabel
+        << " = DYN_ARRAY_GET(&" << dbufName << ", " << type
+        << ", " << iLabel << ");" << nl
+        << stmt.stepFunc << "(" << inLabel << ", "
+        << outLabel << ");" << outdent << nl << "}" << nl
+        << "dyn_array tmp = " << bufName << ";" << nl
+        << bufName << " = " << dbufName << ";" << nl
+        << dbufName << " = tmp;";
+
+  *this << outdent << nl << "}";
+  // TODO Cleanup memory
 }
 void CPrinter::print(AST::ReturnStatement &stmt) {
   if (stmt.expr) {
@@ -326,10 +382,6 @@ void CPrinter::print(AST::FunctionDeclaration &decl) {
     *this << *param;
   }
   *this << ") {" << indent;
-  if (decl.name == "main") {
-    // TODO Make this more generic
-    *this << nl << "dyn_array double_buf_storage; dyn_array* double_buf = NULL;";
-  }
   *this << *decl.stmts << outdent << nl << "}";
 }
 void CPrinter::print(AST::AgentMember &member) {
@@ -367,7 +419,27 @@ void CPrinter::print(AST::ConstDeclaration &decl) {
 }
 void CPrinter::print(AST::Script &script) {
   *this << "#include \"libabl.h\"" << nl << nl;
+
+  // First declare all agents
+  for (AST::AgentDeclaration *decl : script.agents) {
+    *this << *decl << nl;
+  }
+
+  // And create structure to store agents
+  *this << "static struct {" << indent;
   for (const AST::DeclarationPtr &decl : *script.decls) {
+    if (auto agent = dynamic_cast<const AST::AgentDeclaration *>(&*decl)) {
+      *this << nl << "dyn_array agents_" << agent->name << ";";
+      *this << nl << "dyn_array agents_" << agent->name << "_dbuf;";
+    }
+  }
+  *this << outdent << nl << "} agents;" << nl << nl;
+
+  // Then declare everything else
+  for (AST::ConstDeclaration *decl : script.consts) {
+    *this << *decl << nl;
+  }
+  for (AST::FunctionDeclaration *decl : script.funcs) {
     *this << *decl << nl;
   }
 }

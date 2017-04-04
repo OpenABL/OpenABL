@@ -9,8 +9,8 @@
 namespace OpenABL {
 
 struct AnalysisVisitor : public AST::Visitor {
-  AnalysisVisitor(ErrorStream &err, BuiltinFunctions &builtins)
-    : builtins(builtins), err(err) {}
+  AnalysisVisitor(AST::Script &script, ErrorStream &err, BuiltinFunctions &builtins)
+    : script(script), builtins(builtins), err(err) {}
 
   void enter(AST::Var &);
   void enter(AST::Literal &);
@@ -23,6 +23,8 @@ struct AnalysisVisitor : public AST::Visitor {
   void enter(AST::CallExpression &);
   void enter(AST::MemberAccessExpression &);
   void enter(AST::TernaryExpression &);
+  void enter(AST::MemberInitEntry &);
+  void enter(AST::AgentCreationExpression &);
   void enter(AST::NewArrayExpression &);
   void enter(AST::ExpressionStatement &);
   void enter(AST::BlockStatement &);
@@ -30,6 +32,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void enter(AST::IfStatement &);
   void enter(AST::ForStatement &);
   void enter(AST::ParallelForStatement &);
+  void enter(AST::SimulateStatement &);
   void enter(AST::ReturnStatement &);
   void enter(AST::SimpleType &);
   void enter(AST::ArrayType &);
@@ -50,6 +53,8 @@ struct AnalysisVisitor : public AST::Visitor {
   void leave(AST::CallExpression &);
   void leave(AST::MemberAccessExpression &);
   void leave(AST::TernaryExpression &);
+  void leave(AST::MemberInitEntry &);
+  void leave(AST::AgentCreationExpression &);
   void leave(AST::NewArrayExpression &);
   void leave(AST::ExpressionStatement &);
   void leave(AST::BlockStatement &);
@@ -57,6 +62,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void leave(AST::IfStatement &);
   void leave(AST::ForStatement &);
   void leave(AST::ParallelForStatement &);
+  void leave(AST::SimulateStatement &);
   void leave(AST::ReturnStatement &);
   void leave(AST::SimpleType &);
   void leave(AST::ArrayType &);
@@ -74,6 +80,9 @@ private:
   Type resolveAstType(AST::Type &);
 
   using VarMap = std::map<std::string, VarId>;
+
+  // Analyzed script
+  AST::Script &script;
   // Currently *visible* variables
   VarMap varMap;
   // Stack of previous visible variable scopes

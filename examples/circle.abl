@@ -13,38 +13,38 @@ float W = 500;
 // Density of agents
 float rho = 0.01;
 
-interact sep_aggr(Point in -> out, Point other) {
-  float pos_dist = dist(in.pos, other.pos);
-  float sep_dist = pos_dist - r;
-  float2 force = float2(0.0);
-  if (sep_dist < r) {
-    float k = sep_dist > 0.0 ? k_att : -k_rep;
-    // r or pos_dist here?
-    force = k * sep_dist * (in.pos - other.pos) / r;
+// Step function
+// TODO Add keyword?
+void move_point(Point in -> out) {
+  float2 new_pos = in.pos;
+  for (Point nx : near(in, 2*r)) {
+    float pos_dist = dist(in.pos, nx.pos);
+    float sep_dist = pos_dist - r;
+    float2 force = float2(0.0);
+    if (sep_dist < r) {
+      float k = sep_dist > 0.0 ? k_att : -k_rep;
+      // r or pos_dist here?
+      force = k * sep_dist * (in.pos - nx.pos) / r;
+    }
+    new_pos += force;
   }
-  out.pos += force;
+  out.pos = new_pos;
 }
 
 void main() {
   // Determine population size and allocate agents
   int A_pop = int(W*W * rho);
-  Point[] points = new Point[A_pop];
 
   // initialization (sequential)
-  for (Point p : points) {
-    p.pos = random(float2(0), float2(W));
+  for (int i : 0 .. A_pop) {
+    add(Point {
+      pos: random(float2(0), float2(W))
+    });
   }
 
   // simulation (parallel)
-  for (int time_step : 0 .. 100) { // TODO We have a float/range lexing conflict here
-    pfor (Point in -> out : points) {
-      Point tmp = in;
-      for (Point nx : near(points, in, 2*r)) {
-        sep_aggr(in -> tmp, nx);
-      }
-      out = tmp;
-    }
-  }
+  int timesteps = 100;
+  simulate(timesteps) { move_point }
 
-  save(points, "points.out");
+  //save("points.out");
 }

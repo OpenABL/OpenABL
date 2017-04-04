@@ -40,6 +40,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   POSITION
   PFOR
   RETURN
+  SIMULATE
 
   ADD
   SUB
@@ -128,6 +129,8 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 %type <OpenABL::AST::Arg *> arg;
 %type <OpenABL::AST::ArgList *> arg_list non_empty_arg_list;
 %type <OpenABL::AST::StatementList *> statement_list;
+%type <OpenABL::AST::MemberInitEntry *> member_init_entry;
+%type <OpenABL::AST::MemberInitList *> member_init_list non_empty_member_init_list;
 %type <OpenABL::AST::Declaration *> declaration func_decl agent_decl const_decl;
 %type <OpenABL::AST::DeclarationList *> declaration_list;
 %type <OpenABL::AST::Expression *> expression;
@@ -205,6 +208,8 @@ statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
              { $$ = new ReturnStatement($2, @$); }
          | RETURN SEMI
              { $$ = new ReturnStatement(nullptr, @$); }
+         | SIMULATE LPAREN expression RPAREN LBRACE IDENTIFIER RBRACE
+             { $$ = new SimulateStatement($3, $6, @$); }
          ;
 
 arg: expression { $$ = new Arg($1, nullptr, @$); }
@@ -216,10 +221,25 @@ arg_list: %empty { $$ = new ArgList(); }
 non_empty_arg_list: arg { $$ = new ArgList(); $$->emplace_back($1); }
                   | non_empty_arg_list COMMA arg { $1->emplace_back($3); $$ = $1; };
 
+optional_comma: %empty
+              | COMMA;
+
+member_init_entry: IDENTIFIER COLON expression { $$ = new MemberInitEntry($1, $3, @$); };
+
+member_init_list: %empty { $$ = new MemberInitList(); }
+                | non_empty_member_init_list optional_comma { $$ = $1; };
+
+non_empty_member_init_list: member_init_entry
+                              { $$ = new MemberInitList(); $$->emplace_back($1); }
+                          | non_empty_member_init_list COMMA member_init_entry
+                              { $1->emplace_back($3); $$ = $1; };
+
 expression: var { $$ = new VarExpression($1, @$); }
           | literal { $$ = $1; }
           | LPAREN expression RPAREN { $$ = $2; }
           | IDENTIFIER LPAREN arg_list RPAREN { $$ = new CallExpression($1, $3, @$); }
+          | IDENTIFIER LBRACE member_init_list RBRACE
+              { $$ = new AgentCreationExpression($1, $3, @$); }
           | expression DOT IDENTIFIER { $$ = new MemberAccessExpression($1, $3, @$); }
           | expression QM expression COLON expression
               { $$ = new TernaryExpression($1, $3, $5, @$); }

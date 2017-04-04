@@ -83,20 +83,23 @@ void AnalysisVisitor::enter(AST::Arg &) {};
 void AnalysisVisitor::enter(AST::CallExpression &) {};
 void AnalysisVisitor::enter(AST::MemberAccessExpression &) {};
 void AnalysisVisitor::enter(AST::TernaryExpression &) {};
+void AnalysisVisitor::enter(AST::MemberInitEntry &) {};
+void AnalysisVisitor::enter(AST::AgentCreationExpression &) {};
 void AnalysisVisitor::enter(AST::NewArrayExpression &) {};
 void AnalysisVisitor::enter(AST::ExpressionStatement &) {};
 void AnalysisVisitor::enter(AST::IfStatement &) {};
+void AnalysisVisitor::enter(AST::SimulateStatement &) {};
 void AnalysisVisitor::enter(AST::ReturnStatement &) {};
 void AnalysisVisitor::enter(AST::AgentMember &) {};
 void AnalysisVisitor::enter(AST::Script &) {};
 void AnalysisVisitor::enter(AST::VarExpression &) {};
-void AnalysisVisitor::enter(AST::ConstDeclaration &) {};
 void AnalysisVisitor::enter(AST::VarDeclarationStatement &) {};
 void AnalysisVisitor::enter(AST::Param &) {};
 void AnalysisVisitor::leave(AST::Var &) {};
 void AnalysisVisitor::leave(AST::AssignOpExpression &) {};
 void AnalysisVisitor::leave(AST::AssignExpression &) {};
 void AnalysisVisitor::leave(AST::Arg &) {};
+void AnalysisVisitor::leave(AST::MemberInitEntry &) {};
 void AnalysisVisitor::leave(AST::ExpressionStatement &) {};
 void AnalysisVisitor::leave(AST::IfStatement &) {};
 void AnalysisVisitor::leave(AST::SimpleType &) {};
@@ -116,6 +119,8 @@ void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
 
   funcs.insert({ decl.name, &decl });
   currentFunc = &decl;
+
+  script.funcs.push_back(&decl);
 };
 void AnalysisVisitor::leave(AST::FunctionDeclaration &) {
   popVarScope();
@@ -227,6 +232,23 @@ void AnalysisVisitor::leave(AST::ParallelForStatement &) {
   popVarScope();
 };
 
+void AnalysisVisitor::leave(AST::SimulateStatement &stmt) {
+  if (!stmt.timestepsExpr->type.isPromotableTo(Type::INT32)) {
+    err << "Number of timesteps must be an integer, "
+        << stmt.timestepsExpr->type << " given" << stmt.timestepsExpr->loc;
+    return;
+  }
+
+  auto it = funcs.find(stmt.stepFunc);
+  if (it == funcs.end()) {
+    err << "Unknown step function \"" << stmt.stepFunc << "\"" << stmt.loc;
+    return;
+  }
+
+  stmt.stepFuncDecl = it->second;
+  // TODO Verify that the function is a step function (flag? signature?)
+};
+
 void AnalysisVisitor::leave(AST::ReturnStatement &stmt) {
   Type returnType = currentFunc->returnType->resolved;
   if (returnType.isVoid()) {
@@ -256,6 +278,11 @@ void AnalysisVisitor::enter(AST::AgentDeclaration &decl) {
   }
 
   agents.insert({ decl.name, &decl });
+  script.agents.push_back(&decl);
+};
+
+void AnalysisVisitor::enter(AST::ConstDeclaration &decl) {
+  script.consts.push_back(&decl);
 };
 
 void AnalysisVisitor::leave(AST::VarExpression &expr) {
@@ -402,6 +429,42 @@ void AnalysisVisitor::leave(AST::TernaryExpression &expr) {
   expr.type = ifType;
 };
 
+static AST::AgentMember *findAgentMember(AST::AgentDeclaration &decl, const std::string &name) {
+  for (AST::AgentMemberPtr &member : *decl.members) {
+    if (member->name == name) {
+      return &*member;
+    }
+  }
+  return nullptr;
+}
+
+void AnalysisVisitor::leave(AST::AgentCreationExpression &expr) {
+  auto it = agents.find(expr.name);
+  if (it == agents.end()) {
+    err << "Unknown agent type \"" << expr.name << "\"" << expr.loc;
+    return;
+  }
+
+  AST::AgentDeclaration &agent = *it->second;
+  for (AST::MemberInitEntryPtr &entry : *expr.members) {
+    AST::AgentMember *member = findAgentMember(agent, entry->name);
+    if (!member) {
+      err << "Agent has no member \"" << entry->name << "\"" << entry->loc;
+      return;
+    }
+
+    Type memberType = member->type->resolved;
+    Type exprType = entry->expr->type;
+    if (!exprType.isPromotableTo(memberType)) {
+      err << "Trying to initialize member of type " << memberType
+          << " from expression of type " << exprType << entry->expr->loc;
+      return;
+    }
+  }
+
+  expr.type = { Type::AGENT, &agent };
+};
+
 void AnalysisVisitor::leave(AST::NewArrayExpression &expr) {
   Type elemType = expr.elemType->resolved;
   if (elemType.isArray()) {
@@ -411,15 +474,6 @@ void AnalysisVisitor::leave(AST::NewArrayExpression &expr) {
 
   expr.type = { Type::ARRAY, elemType };
 };
-
-static AST::AgentMember *findAgentMember(AST::AgentDeclaration &decl, const std::string &name) {
-  for (AST::AgentMemberPtr &member : *decl.members) {
-    if (member->name == name) {
-      return &*member;
-    }
-  }
-  return nullptr;
-}
 
 static bool isValidVecMember(Type type, const std::string &name) {
   if (name == "x" || name == "y") {

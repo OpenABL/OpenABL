@@ -18,87 +18,88 @@ float match_scale = 1.25;
 
 // This function looks somewhat weird to me, but let's take it as-is
 float3 boundPosition(float3 pos) {
-    pos.x = pos.x < min_pos ? max_pos : pos.x;
-    pos.x = pos.x > max_pos ? min_pos : pos.x;
+  pos.x = pos.x < min_pos ? max_pos : pos.x;
+  pos.x = pos.x > max_pos ? min_pos : pos.x;
 
-    pos.y = pos.y < min_pos ? max_pos : pos.y;
-    pos.y = pos.y > max_pos ? min_pos : pos.y;
+  pos.y = pos.y < min_pos ? max_pos : pos.y;
+  pos.y = pos.y > max_pos ? min_pos : pos.y;
 
-    pos.z = pos.z < min_pos ? max_pos : pos.z;
-    pos.z = pos.z > max_pos ? min_pos : pos.z;
+  pos.z = pos.z < min_pos ? max_pos : pos.z;
+  pos.z = pos.z > max_pos ? min_pos : pos.z;
 
-    return pos;
+  return pos;
 }
 
-void main() {
-  //Boid[] boids = load("boids.in");
+void update_boid(Boid in->out) {
+  float3 global_velocity = float3(0, 0, 0);
+  float3 global_center = float3(0, 0, 0);
+  float3 collision_center = float3(0, 0, 0);
+  int interaction_count = 0;
+  int collision_count = 0;
 
-  int num_boids = 5000;
-  Boid[] boids = new Boid[num_boids];
-  for (Boid boid : boids) {
-    boid.pos = random(float3(min_pos), float3(max_pos));
-    boid.velocity = random(float3(0), float3(1));
-  }
+  for (Boid nx : near(in, interaction_radius)) {
+    global_center += nx.pos;
+    global_velocity += nx.velocity;
+    interaction_count += 1;
 
-  for (int time_step : 0 .. 100) {
-    pfor (Boid in -> out : boids) {
-      float3 global_velocity = float3(0, 0, 0);
-      float3 global_center = float3(0, 0, 0);
-      float3 collision_center = float3(0, 0, 0);
-      int interaction_count = 0;
-      int collision_count = 0;
-
-      for (Boid nx : near(boids, in, interaction_radius)) {
-        global_center += nx.pos;
-        global_velocity += nx.velocity;
-        interaction_count += 1;
-
-        float separation = dist(in.pos, nx.pos);
-        if (separation < separation_radius) {
-          collision_center += nx.pos;
-          collision_count += 1;
-        }
-      }
-
-      float3 velocity_change = float3(0, 0, 0);
-
-      // Rule 1) Steer towards perceived center of flock
-      float3 steer_velocity = float3(0, 0, 0);
-      if (interaction_count > 0) {
-        global_center /= interaction_count;
-        steer_velocity = (global_center - in.pos) * steer_scale;
-      }
-      velocity_change += steer_velocity;
-
-      // Rule 2) Match neighbours speeds
-      float3 match_velocity = float3(0, 0, 0);
-      if (interaction_count > 0) {
-        global_velocity /= interaction_count;
-        match_velocity = global_velocity * match_scale;
-      }
-      velocity_change += match_velocity;
-
-      // Rule 3) Avoid close range neighbors
-      float3 avoid_velocity = float3(0, 0, 0);
-      if (collision_count > 0) {
-        collision_center /= collision_count;
-        avoid_velocity = (in.pos - collision_center) * collision_scale;
-      }
-      velocity_change += avoid_velocity;
-
-      float3 new_velocity = in.velocity + velocity_change * global_scale;
-      float new_velocity_scale = length(new_velocity);
-      if (new_velocity_scale > 1) {
-        new_velocity /= new_velocity_scale;
-      }
-
-      float3 new_pos = in.pos + new_velocity * time_scale;
-      new_pos = boundPosition(new_pos);
-
-      out.pos = new_pos;
-      out.velocity = new_velocity;
+    float separation = dist(in.pos, nx.pos);
+    if (separation < separation_radius) {
+      collision_center += nx.pos;
+      collision_count += 1;
     }
   }
 
-  save(boids, "boids.out");
+  float3 velocity_change = float3(0, 0, 0);
+
+  // Rule 1) Steer towards perceived center of flock
+  float3 steer_velocity = float3(0, 0, 0);
+  if (interaction_count > 0) {
+    global_center /= interaction_count;
+    steer_velocity = (global_center - in.pos) * steer_scale;
+  }
+  velocity_change += steer_velocity;
+
+  // Rule 2) Match neighbours speeds
+  float3 match_velocity = float3(0, 0, 0);
+  if (interaction_count > 0) {
+    global_velocity /= interaction_count;
+    match_velocity = global_velocity * match_scale;
+  }
+  velocity_change += match_velocity;
+
+  // Rule 3) Avoid close range neighbors
+  float3 avoid_velocity = float3(0, 0, 0);
+  if (collision_count > 0) {
+    collision_center /= collision_count;
+    avoid_velocity = (in.pos - collision_center) * collision_scale;
+  }
+  velocity_change += avoid_velocity;
+
+  float3 new_velocity = in.velocity + velocity_change * global_scale;
+  float new_velocity_scale = length(new_velocity);
+  if (new_velocity_scale > 1) {
+    new_velocity /= new_velocity_scale;
+  }
+
+  float3 new_pos = in.pos + new_velocity * time_scale;
+  new_pos = boundPosition(new_pos);
+
+  out.pos = new_pos;
+  out.velocity = new_velocity;
+}
+
+void main() {
+  //load("boids.in");
+
+  int num_boids = 5000;
+  for (int i : 0 .. num_boids) {
+    add(Boid {
+      pos: random(float3(min_pos), float3(max_pos)),
+      velocity: random(float3(0), float3(1)),
+    });
+  }
+
+  simulate(100) { update_boid }
+
+  //save("boids.out");
 }

@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 /*
@@ -12,11 +13,19 @@ typedef struct {
 	size_t cap;
 } dyn_array;
 
+#define DYN_ARRAY_INIT_CAPACITY 128
+
 #define DYN_ARRAY_CREATE_FIXED(elem_type, len) \
 	dyn_array_create_fixed(sizeof(elem_type), len)
 
 #define DYN_ARRAY_GET(ary, elem_type, idx) \
 	(&((elem_type *) (ary)->values)[idx])
+
+#define DYN_ARRAY_PLACE(ary, elem_type) \
+	((elem_type *) dyn_array_place(ary, sizeof(elem_type)))
+
+/*#define DYN_ARRAY_COPY(ary, elem_type) \
+	dyn_array_copy(ary, sizeof(elem_size))*/
 
 static inline dyn_array dyn_array_create_fixed(size_t elem_size, size_t len) {
 	return (dyn_array) {
@@ -26,8 +35,28 @@ static inline dyn_array dyn_array_create_fixed(size_t elem_size, size_t len) {
 	};
 }
 
-static inline void dyn_array_release(dyn_array *ary) {
+/* Returns place for new element */
+static inline void *dyn_array_place(dyn_array *ary, size_t elem_size) {
+	if (ary->len == ary->cap) {
+		ary->cap = ary->cap ? ary->cap * 2 : DYN_ARRAY_INIT_CAPACITY;
+		ary->values = realloc(ary->values, elem_size * ary->cap);
+	}
+	return (char *) ary->values + elem_size * ary->len++;
+}
+
+/*static inline dyn_array dyn_array_copy(dyn_array *ary, size_t elem_size) {
+	dyn_array result = (dyn_array) {
+		.values = malloc(elem_size * ary->cap),
+		.len = ary->len,
+		.cap = ary->cap,
+	};
+	memcpy(result.values, ary->values, elem_size * ary->len);
+	return result;
+}*/
+
+static inline void dyn_array_clean(dyn_array *ary) {
 	free(ary->values);
+	ary->len = ary->cap = 0;
 }
 
 /*

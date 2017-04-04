@@ -54,6 +54,7 @@ loc.step();
 "position" { return Parser::make_POSITION(loc); }
 "pfor"     { return Parser::make_PFOR(loc); }
 "return"   { return Parser::make_RETURN(loc); }
+"simulate" { return Parser::make_SIMULATE(loc); }
 
 true  { return Parser::make_BOOL(true, loc); }
 false { return Parser::make_BOOL(false, loc); }
