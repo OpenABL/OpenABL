@@ -101,5 +101,5 @@ void main() {
 
   simulate(100) { update_boid }
 
-  //save("boids.out");
+  save("boids.out");
 }

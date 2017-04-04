@@ -24,9 +24,6 @@ typedef struct {
 #define DYN_ARRAY_PLACE(ary, elem_type) \
 	((elem_type *) dyn_array_place(ary, sizeof(elem_type)))
 
-/*#define DYN_ARRAY_COPY(ary, elem_type) \
-	dyn_array_copy(ary, sizeof(elem_size))*/
-
 static inline dyn_array dyn_array_create_fixed(size_t elem_size, size_t len) {
 	return (dyn_array) {
 		.values = calloc(elem_size, len),
@@ -43,16 +40,6 @@ static inline void *dyn_array_place(dyn_array *ary, size_t elem_size) {
 	}
 	return (char *) ary->values + elem_size * ary->len++;
 }
-
-/*static inline dyn_array dyn_array_copy(dyn_array *ary, size_t elem_size) {
-	dyn_array result = (dyn_array) {
-		.values = malloc(elem_size * ary->cap),
-		.len = ary->len,
-		.cap = ary->cap,
-	};
-	memcpy(result.values, ary->values, elem_size * ary->len);
-	return result;
-}*/
 
 static inline void dyn_array_clean(dyn_array *ary) {
 	free(ary->values);
@@ -181,4 +168,10 @@ typedef struct {
 	const char *name;
 } type_info;
 
-void save(dyn_array *arr, const char *path, const type_info *info);
+typedef struct {
+	const type_info *info;
+	unsigned offset;
+	const char *name;
+} agent_info;
+
+void save(void *agents, const agent_info *info, const char *path);

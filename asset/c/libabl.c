@@ -77,13 +77,7 @@ static void save_agent(FILE *file, char *agent, const type_info *info) {
 	fputs("}", file);
 }
 
-void save(dyn_array *arr, const char *path, const type_info *info) {
-	FILE *file = fopen(path, "w");
-	if (!file) {
-		fprintf(stderr, "save(): Count not open \"%s\" for writing\n", path);
-		return;
-	}
-
+static void save_agents(FILE *file, dyn_array *arr, const type_info *info) {
 	size_t elem_size = type_info_get_size(info);
 	bool first = true;
 
@@ -96,6 +90,27 @@ void save(dyn_array *arr, const char *path, const type_info *info) {
 		save_agent(file, agent, info);
 	}
 	fputs("]", file);
+}
+
+void save(void *agents, const agent_info *info, const char *path) {
+	FILE *file = fopen(path, "w");
+	if (!file) {
+		fprintf(stderr, "save(): Count not open \"%s\" for writing\n", path);
+		return;
+	}
+
+	bool first = true;
+	fputs("{", file);
+	while (info->name) {
+		if (!first) fputs(",", file);
+		first = false;
+
+		dyn_array *arr = (dyn_array *) ((char *) agents + info->offset);
+		fprintf(file, "\"%s\":", info->name);
+		save_agents(file, arr, info->info);
+		info++;
+	}
+	fputs("}", file);
 
 	fclose(file);
 }

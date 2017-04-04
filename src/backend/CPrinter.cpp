@@ -163,17 +163,14 @@ static void printBuiltin(CPrinter &p, AST::CallExpression &expr) {
     p << "*DYN_ARRAY_PLACE(&agents.agents_" << agent->name
       << ", " << agent->name << ") = " << *(*expr.args)[0];
     return;
+  } else if (sig.name == "save") {
+    p << "save(&agents, agents_info, " << *(*expr.args)[0] << ")";
+    return;
   }
 
   p << sig.name;
   p << "(";
   printArgs(p, expr);
-  if (sig.name == "save") {
-    // Pass runtime type information
-    // TODO Needs update for implicit agent list / multiple agent types
-    /*AST::AgentDeclaration *agent = sig.paramTypes[0].getBaseType().getAgentDecl();
-    p << ", " << agent->name << "_info";*/
-  }
   p << ")";
 }
 void CPrinter::print(AST::CallExpression &expr) {
@@ -399,7 +396,7 @@ void CPrinter::print(AST::AgentDeclaration &decl) {
         << "} " << decl.name << ";" << nl;
 
   // Runtime type information
-  *this << "const type_info " << decl.name << "_info[] = {" << indent << nl;
+  *this << "static const type_info " << decl.name << "_info[] = {" << indent << nl;
   for (AST::AgentMemberPtr &member : *decl.members) {
     *this << "{ ";
     printTypeIdentifier(*this, member->type->resolved);
@@ -419,15 +416,23 @@ void CPrinter::print(AST::Script &script) {
     *this << *decl << nl;
   }
 
-  // And create structure to store agents
-  *this << "static struct {" << indent;
-  for (const AST::DeclarationPtr &decl : *script.decls) {
-    if (auto agent = dynamic_cast<const AST::AgentDeclaration *>(&*decl)) {
-      *this << nl << "dyn_array agents_" << agent->name << ";";
-      *this << nl << "dyn_array agents_" << agent->name << "_dbuf;";
-    }
+  // Create structure to store agents
+  *this << "struct agent_struct {" << indent;
+  for (AST::AgentDeclaration *decl : script.agents) {
+    *this << nl << "dyn_array agents_" << decl->name << ";";
+    *this << nl << "dyn_array agents_" << decl->name << "_dbuf;";
   }
-  *this << outdent << nl << "} agents;" << nl << nl;
+  *this << outdent << nl << "};" << nl
+        << "struct agent_struct agents;" << nl;
+
+  // Create runtime type information for this structure
+  *this << "static const agent_info agents_info[] = {" << indent << nl;
+  for (AST::AgentDeclaration *decl : script.agents) {
+    *this << "{ " << decl->name << "_info, "
+          << "offsetof(struct agent_struct, agents_" << decl->name
+          << "), \"" << decl->name << "\" }," << nl;
+  }
+  *this << "{ NULL, 0, NULL }" << outdent << nl << "};" << nl << nl;
 
   // Then declare everything else
   for (AST::ConstDeclaration *decl : script.consts) {
