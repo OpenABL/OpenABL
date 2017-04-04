@@ -397,14 +397,17 @@ struct ForStatement : public Statement {
 
 struct FunctionDeclaration;
 
+using IdentList = std::vector<std::string>;
+using IdentListPtr = std::unique_ptr<IdentList>;
+
 struct SimulateStatement : public Statement {
   ExpressionPtr timestepsExpr;
-  std::string stepFunc;
+  IdentListPtr stepFuncs;
 
-  FunctionDeclaration *stepFuncDecl;
+  std::vector<FunctionDeclaration *> stepFuncDecls;
 
-  SimulateStatement(Expression *timestepsExpr, std::string stepFunc, Location loc)
-    : Statement{loc}, timestepsExpr{timestepsExpr}, stepFunc{stepFunc} {}
+  SimulateStatement(Expression *timestepsExpr, IdentList *stepFuncs, Location loc)
+    : Statement{loc}, timestepsExpr{timestepsExpr}, stepFuncs{stepFuncs} {}
 
   void accept(Visitor &);
   void print(Printer &);

@@ -61,9 +61,6 @@ void CPrinter::print(AST::Literal &lit) {
 void CPrinter::print(AST::VarExpression &expr) {
   *this << *expr.var;
 }
-void CPrinter::print(AST::UnaryOpExpression &expr) {
-  *this << "(" << AST::getUnaryOpSigil(expr.op) << *expr.expr << ")";
-}
 static void printBinaryOp(CPrinter &p, AST::BinaryOp op,
                           AST::Expression &left, AST::Expression &right) {
   Type l = left.type;
@@ -92,6 +89,24 @@ static void printBinaryOp(CPrinter &p, AST::BinaryOp op,
   }
 
   p << "(" << left << " " << AST::getBinaryOpSigil(op) << " " << right << ")";
+}
+void CPrinter::print(AST::UnaryOpExpression &expr) {
+  Type t = expr.expr->type;
+  if (t.isVec()) {
+    if (expr.op == AST::UnaryOp::PLUS) {
+      // Nothing to do
+      *this << *expr.expr;
+    } else if (expr.op == AST::UnaryOp::MINUS) {
+      // Compile to multiplication by -1.0
+      AST::FloatLiteral negOne(-1.0, AST::Location());
+      printBinaryOp(*this, AST::BinaryOp::MUL, *expr.expr, negOne);
+    } else {
+      assert(0);
+    }
+    return;
+  }
+
+  *this << "(" << AST::getUnaryOpSigil(expr.op) << *expr.expr << ")";
 }
 void CPrinter::print(AST::BinaryOpExpression &expr) {
   printBinaryOp(*this, expr.op, *expr.left, *expr.right);
@@ -287,40 +302,43 @@ void CPrinter::print(AST::SimulateStatement &stmt) {
   std::string tLabel = makeAnonLabel();
   *this << "for (int " << tLabel << " = 0; "
         << tLabel << " < " << *stmt.timestepsExpr << "; "
-        << tLabel << "++) {" << indent << nl;
+        << tLabel << "++) {" << indent << nl
+        << "dyn_array tmp;";
 
-  AST::FunctionDeclaration *stepFunc = stmt.stepFuncDecl;
-  const AST::Param &param = *(*stepFunc->params)[0];
-  Type type = param.type->resolved;
+  for (AST::FunctionDeclaration *stepFunc : stmt.stepFuncDecls) {
+    const AST::Param &param = *(*stepFunc->params)[0];
+    Type type = param.type->resolved;
 
-  std::ostringstream s;
-  s << "agents.agents_" << type;
-  std::string bufName = s.str();
-  s << "_dbuf";
-  std::string dbufName = s.str();
+    std::ostringstream s;
+    s << "agents.agents_" << type;
+    std::string bufName = s.str();
+    s << "_dbuf";
+    std::string dbufName = s.str();
 
-  std::string iLabel = makeAnonLabel();
-  std::string inLabel = makeAnonLabel();
-  std::string outLabel = makeAnonLabel();
+    std::string iLabel = makeAnonLabel();
+    std::string inLabel = makeAnonLabel();
+    std::string outLabel = makeAnonLabel();
 
-  *this << "if (!" << dbufName << ".values) { "
-        << dbufName << " = DYN_ARRAY_CREATE_FIXED(" << type
-        << ", " << bufName << ".len); }" << nl
-        << "#pragma omp parallel for" << nl
-        << "for (size_t " << iLabel << " = 0; "
-        << iLabel << " < " << bufName << ".len; "
-        << iLabel << "++) {" << indent << nl
-        << type << " *" << inLabel
-        << " = DYN_ARRAY_GET(&" << bufName << ", " << type
-        << ", " << iLabel << ");" << nl
-        << type << " *" << outLabel
-        << " = DYN_ARRAY_GET(&" << dbufName << ", " << type
-        << ", " << iLabel << ");" << nl
-        << stmt.stepFunc << "(" << inLabel << ", "
-        << outLabel << ");" << outdent << nl << "}" << nl
-        << "dyn_array tmp = " << bufName << ";" << nl
-        << bufName << " = " << dbufName << ";" << nl
-        << dbufName << " = tmp;";
+    *this << nl << "if (!" << dbufName << ".values) { "
+          << dbufName << " = DYN_ARRAY_CREATE_FIXED(" << type
+          << ", " << bufName << ".len); }" << nl
+          << "#pragma omp parallel for" << nl
+          << "for (size_t " << iLabel << " = 0; "
+          << iLabel << " < " << bufName << ".len; "
+          << iLabel << "++) {" << indent << nl
+          << type << " *" << inLabel
+          << " = DYN_ARRAY_GET(&" << bufName << ", " << type
+          << ", " << iLabel << ");" << nl
+          << type << " *" << outLabel
+          << " = DYN_ARRAY_GET(&" << dbufName << ", " << type
+          << ", " << iLabel << ");" << nl
+          << stepFunc->name << "(" << inLabel << ", "
+          << outLabel << ");" << outdent << nl << "}" << nl
+          << "tmp = " << bufName << ";" << nl
+          << bufName << " = " << dbufName << ";" << nl
+          << dbufName << " = tmp;";
+    // TODO Semantics: At which point should be double buffer switch occur?
+  }
 
   *this << outdent << nl << "}";
   // TODO Cleanup memory

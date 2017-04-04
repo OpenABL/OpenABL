@@ -7,35 +7,40 @@ agent Prey {
   float3 dir;
 }
 
-interact escape(Prey old -> new, Predator other) {
-  // TODO
-}
-interact follow(Predator old -> new, Prey other) {
-  // TODO
-}
+float radius = 5.0;
 
-main() {
-  Prey[] preys = load("prey.in");
-  Predator[] predators = load("predator.in");
-
-  for (int time_step : 0 .. 100) {
-    pfor (Prey old -> new : preys) {
-      Prey tmp = old;
-      for (Predator nx : near(old, 7)) { // TODO need to specify the type?
-        escape(old -> tmp, nx);
-      }
-      new = tmp;
-    }
-
-    pfor (Predator old -> new : predators) {
-      Predator tmp = old;
-      for (Prey nx : near(old, 7)) { // TODO need to specify the type?
-        follow(old -> tmp, nx);
-      }
-      new = tmp;
-    }  
+// TODO Use a real model here
+void update_prey(Prey in -> out) {
+  // Get average position of predators
+  float3 predPos = float3(0);
+  int predNum = 0;
+  for (Predator pred : near(in, radius)) {
+    predPos += pred.pos;
+	predNum += 1;
   }
 
-  save(prey, "prey.out");
-  save(predator, "predator.out");
+  out.pos = in.pos + in.dir;
+  if (predNum != 0) {
+    // Move in direction away from predators
+    predPos /= predNum;
+	float3 predDir = predPos - in.pos;
+	out.dir = -predDir / length(predDir);
+  } else {
+    out.dir = in.dir;
+  }
+}
+void update_predator(Predator in -> out) {
+  // TODO
+  out = in;
+}
+
+void main() {
+  //load("agents.in");
+
+  simulate(100) {
+    update_prey,
+	update_predator
+  }
+
+  //save("agents.out");
 }

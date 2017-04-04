@@ -132,6 +132,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 %type <OpenABL::AST::MemberInitList *> member_init_list non_empty_member_init_list;
 %type <OpenABL::AST::Declaration *> declaration func_decl agent_decl const_decl;
 %type <OpenABL::AST::DeclarationList *> declaration_list;
+%type <OpenABL::AST::IdentList *> ident_list;
 %type <OpenABL::AST::Expression *> expression;
 %type <OpenABL::AST::Statement *> statement;
 
@@ -189,6 +190,9 @@ type: IDENTIFIER { $$ = new SimpleType($1, @$); }
 statement_list: %empty { $$ = new StatementList(); }
               | statement_list statement { $1->emplace_back($2); $$ = $1; };
 
+ident_list: IDENTIFIER { $$ = new IdentList(); $$->push_back($1); }
+		  | ident_list COMMA IDENTIFIER { $1->push_back($3); $$ = $1; };
+
 statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
          | LBRACE statement_list RBRACE { $$ = new BlockStatement($2, @$); }
          | type var SEMI
@@ -205,7 +209,7 @@ statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
              { $$ = new ReturnStatement($2, @$); }
          | RETURN SEMI
              { $$ = new ReturnStatement(nullptr, @$); }
-         | SIMULATE LPAREN expression RPAREN LBRACE IDENTIFIER RBRACE
+         | SIMULATE LPAREN expression RPAREN LBRACE ident_list RBRACE
              { $$ = new SimulateStatement($3, $6, @$); }
          ;
 

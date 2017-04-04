@@ -198,6 +198,16 @@ void AnalysisVisitor::leave(AST::ForStatement &stmt) {
     return;
   }
 
+  // For near() the agent type is determined by the for loop -- it doesn't necessarily
+  // match the type of the agent passed to the near() function. As such, do not perform
+  // the type check below
+  if (AST::CallExpression *call = dynamic_cast<AST::CallExpression *>(&*stmt.expr)) {
+    if (call->name == "near") {
+      stmt.kind = AST::ForStatement::Kind::NEAR;
+      return;
+    }
+  }
+
   Type declType = stmt.type->resolved;
   if (!exprType.getBaseType().isCompatibleWith(declType)) {
     err << "For expression type " << exprType
@@ -209,11 +219,6 @@ void AnalysisVisitor::leave(AST::ForStatement &stmt) {
   if (AST::BinaryOpExpression *op = dynamic_cast<AST::BinaryOpExpression *>(&*stmt.expr)) {
     if (op->op == AST::BinaryOp::RANGE) {
       stmt.kind = AST::ForStatement::Kind::RANGE;
-      return;
-    }
-  } else if (AST::CallExpression *call = dynamic_cast<AST::CallExpression *>(&*stmt.expr)) {
-    if (call->name == "near") {
-      stmt.kind = AST::ForStatement::Kind::NEAR;
       return;
     }
   }
@@ -228,14 +233,16 @@ void AnalysisVisitor::leave(AST::SimulateStatement &stmt) {
     return;
   }
 
-  auto it = funcs.find(stmt.stepFunc);
-  if (it == funcs.end()) {
-    err << "Unknown step function \"" << stmt.stepFunc << "\"" << stmt.loc;
-    return;
-  }
+  for (const std::string &name : *stmt.stepFuncs) {
+    auto it = funcs.find(name);
+    if (it == funcs.end()) {
+      err << "Unknown step function \"" << name << "\"" << stmt.loc;
+      return;
+    }
 
-  stmt.stepFuncDecl = it->second;
-  // TODO Verify that the function is a step function (flag? signature?)
+    stmt.stepFuncDecls.push_back(it->second);
+    // TODO Verify that the function is a step function (flag? signature?)
+  }
 };
 
 void AnalysisVisitor::leave(AST::ReturnStatement &stmt) {
@@ -349,6 +356,8 @@ static Type getBinaryOpType(AST::BinaryOp op, Type l, Type r) {
         return { Type::INVALID };
       }
       return { Type::INT32 };
+    case AST::BinaryOp::EQUALS:
+    case AST::BinaryOp::NOT_EQUALS:
     case AST::BinaryOp::SMALLER:
     case AST::BinaryOp::SMALLER_EQUALS:
     case AST::BinaryOp::GREATER:
