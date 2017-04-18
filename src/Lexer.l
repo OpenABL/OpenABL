@@ -48,7 +48,6 @@ loc.step();
 "agent"    { return Parser::make_AGENT(loc); }
 "else"     { return Parser::make_ELSE(loc); }
 "if"       { return Parser::make_IF(loc); }
-"interact" { return Parser::make_INTERACT(loc); }
 "for"      { return Parser::make_FOR(loc); }
 "new"      { return Parser::make_NEW(loc); }
 "position" { return Parser::make_POSITION(loc); }

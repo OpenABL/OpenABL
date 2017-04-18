@@ -34,7 +34,6 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   AGENT
   ELSE
   IF
-  INTERACT
   FOR
   NEW
   POSITION
@@ -160,9 +159,7 @@ opt_position: %empty { $$ = false; }
 agent_member: opt_position type IDENTIFIER SEMI { $$ = new AgentMember($1, $2, $3, @$); };
 
 func_decl: type IDENTIFIER LPAREN param_list RPAREN LBRACE statement_list RBRACE
-             { $$ = new FunctionDeclaration(false, $1, $2, $4, $7, @$); }
-         | INTERACT IDENTIFIER LPAREN param_list RPAREN LBRACE statement_list RBRACE
-             { $$ = new FunctionDeclaration(true, nullptr, $2, $4, $7, @$); };
+             { $$ = new FunctionDeclaration($1, $2, $4, $7, @$); };
 
 param_list: %empty { $$ = new ParamList(); }
           | non_empty_param_list { $$ = $1; };

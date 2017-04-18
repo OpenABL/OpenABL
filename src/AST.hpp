@@ -475,15 +475,14 @@ using DeclarationList = std::vector<DeclarationPtr>;
 using DeclarationListPtr = std::unique_ptr<DeclarationList>;
 
 struct FunctionDeclaration : public Declaration {
-  bool isInteract;
   TypePtr returnType;
   std::string name;
   ParamListPtr params;
   StatementListPtr stmts;
 
-  FunctionDeclaration(bool isInteract, Type *returnType, std::string name,
+  FunctionDeclaration(Type *returnType, std::string name,
                       ParamList *params, StatementList *stmts, Location loc)
-    : Declaration{loc}, isInteract{isInteract}, returnType{returnType},
+    : Declaration{loc}, returnType{returnType},
       name{name}, params{params}, stmts{stmts} {}
 
   bool isMain() const { return name == "main"; }
