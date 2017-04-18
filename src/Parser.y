@@ -13,7 +13,7 @@
 #include "AST.hpp"
 
 namespace OpenABL {
-class ParserContext;
+struct ParserContext;
 }
 
 }

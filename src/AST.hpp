@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <set>
 #include "Analysis.hpp"
 #include "location.hh"
 
@@ -24,6 +25,7 @@ struct Node {
 
   virtual void accept(Visitor &) = 0;
   virtual void print(Printer &) = 0;
+  virtual ~Node() {}
 };
 
 struct Var : public Node {
@@ -479,6 +481,14 @@ struct FunctionDeclaration : public Declaration {
   std::string name;
   ParamListPtr params;
   StatementListPtr stmts;
+
+  // The following members are for step functions only
+  
+  // The type of the agent that is interacted with (type of agent
+  // in for-near loop)
+  AgentDeclaration *accessedAgent = nullptr;
+  // Which members of the agent that we interact with are accessed
+  std::set<std::string> accessedMembers;
 
   FunctionDeclaration(Type *returnType, std::string name,
                       ParamList *params, StatementList *stmts, Location loc)

@@ -32,6 +32,8 @@ using XmlElems = std::vector<XmlElem>;
 // IMPORTANT: This doesn't implement any escaping, as it's currently
 // not necessary. Should be added once it's needed.
 struct XmlWriter {
+  XmlWriter() : indentLevel{0} {}
+
   std::string serialize(const XmlElem &root) {
     s << "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
     write(root);

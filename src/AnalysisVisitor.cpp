@@ -186,29 +186,48 @@ void AnalysisVisitor::leave(AST::Param &param) {
 void AnalysisVisitor::enter(AST::ForStatement &stmt) {
   pushVarScope();
 
-  Type type = resolveAstType(*stmt.type); // Not resolved yet
-  stmt.var->id = declareVar(stmt.var->name, type);
+  Type declType = resolveAstType(*stmt.type); // Not resolved yet
+  stmt.var->id = declareVar(stmt.var->name, declType);
+
+  // Handle for-near loops early, as we want to collect member accesses
+  if (AST::CallExpression *call = dynamic_cast<AST::CallExpression *>(&*stmt.expr)) {
+    if (call->name == "near") {
+      if (!declType.isAgent()) {
+        err << "Type specified in for-near loop is not an agent" << stmt.type->loc;
+        return;
+      }
+
+      if (currentFunc->accessedAgent) {
+        // TODO relax?
+        err << "Multiple for-near loops in a single step function" << stmt.loc;
+        return;
+      }
+
+      currentFunc->accessedAgent = declType.getAgentDecl();
+      stmt.kind = AST::ForStatement::Kind::NEAR;
+
+      // Collect member accesses on this variable
+      collectAccessVar = stmt.var->id;
+      return;
+    }
+  }
 };
 void AnalysisVisitor::leave(AST::ForStatement &stmt) {
   popVarScope();
 
+  if (stmt.isNear()) {
+    // Already handled, only disable member collection
+    collectAccessVar.reset();
+    return;
+  }
+
+  Type declType = stmt.type->resolved;
   Type exprType = stmt.expr->type;
   if (!exprType.isArray()) {
     err << "Can only use for with array type, received " << exprType << stmt.expr->loc;
     return;
   }
 
-  // For near() the agent type is determined by the for loop -- it doesn't necessarily
-  // match the type of the agent passed to the near() function. As such, do not perform
-  // the type check below
-  if (AST::CallExpression *call = dynamic_cast<AST::CallExpression *>(&*stmt.expr)) {
-    if (call->name == "near") {
-      stmt.kind = AST::ForStatement::Kind::NEAR;
-      return;
-    }
-  }
-
-  Type declType = stmt.type->resolved;
   if (!exprType.getBaseType().isCompatibleWith(declType)) {
     err << "For expression type " << exprType
         << " not compatible with declared " << declType << stmt.expr->loc;
@@ -505,6 +524,13 @@ void AnalysisVisitor::leave(AST::MemberAccessExpression &expr) {
   } else {
     err << "Can only access members on agent or vector type" << expr.loc;
     return;
+  }
+
+  // Record member access, if necessary
+  if (AST::VarExpression *varExpr = dynamic_cast<AST::VarExpression *>(&*expr.expr)) {
+    if (collectAccessVar == varExpr->var->id) {
+      currentFunc->accessedMembers.insert(name);
+    }
   }
 };
 

@@ -11,6 +11,10 @@ struct ParserContext {
   ParserContext(FILE *file)
     : file{file}, script{nullptr} {}
 
+  ~ParserContext() {
+    delete script;
+  }
+
   bool parse();
 
 private:

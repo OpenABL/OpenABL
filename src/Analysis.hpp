@@ -17,11 +17,15 @@ struct VarId {
     return VarId { ++max_id };
   }
 
+  bool operator==(const VarId &other) const {
+    return id == other.id;
+  }
   bool operator<(const VarId &other) const {
     return id < other.id;
   }
 
   VarId() : id{0} {}
+  void reset() { id = 0; }
 
 private:
   VarId(uint32_t id) : id{id} {}

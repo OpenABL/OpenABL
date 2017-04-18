@@ -81,6 +81,11 @@ private:
 
   // Analyzed script
   AST::Script &script;
+  // Builtin functions
+  BuiltinFunctions &builtins;
+  // Stream for error reporting
+  ErrorStream &err;
+
   // Currently *visible* variables
   VarMap varMap;
   // Stack of previous visible variable scopes
@@ -88,17 +93,15 @@ private:
   std::stack<VarMap> varMapStack;
   // Information about *all* variables, indexed by unique VarId's
   Scope scope;
-
   // Current function
   AST::FunctionDeclaration *currentFunc;
   // Declared agents by name
   std::map<std::string, AST::AgentDeclaration *> agents;
   // Declared functions by name
   std::map<std::string, AST::FunctionDeclaration *> funcs;
-  // Builtin functions
-  BuiltinFunctions &builtins;
-  // Stream for error reporting
-  ErrorStream &err;
+  // Variable on which member accesses should be collected
+  // (for FunctionDeclaration::accessedMembers)
+  VarId collectAccessVar;
 };
 
 }
