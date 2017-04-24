@@ -9,7 +9,8 @@ set(OpenABL_SOURCES
     src/main.cpp
     src/backend/CBackend.cpp
     src/backend/CPrinter.cpp
-    src/backend/FlameGPUBackend.cpp)
+    src/backend/FlameGPUBackend.cpp
+	src/backend/FlameGPUPrinter.cpp)
 
 find_package(BISON 3.0)
 find_package(FLEX 2.5)

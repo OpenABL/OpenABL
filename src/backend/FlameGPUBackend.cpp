@@ -2,25 +2,10 @@
 #include "Backend.hpp"
 #include "FileUtil.hpp"
 #include "XmlUtil.hpp"
+#include "FlameModel.hpp"
+#include "FlameGPUPrinter.hpp"
 
 namespace OpenABL {
-
-struct FlameModel {
-  struct Message {
-    std::string name;
-    std::vector<const AST::AgentMember *> members;
-  };
-  struct Func {
-    std::string name;
-    std::string inMsgName;
-    std::string outMsgName;
-    const AST::AgentDeclaration *agent = nullptr;
-    const AST::FunctionDeclaration *func = nullptr;
-  };
-
-  std::vector<Message> messages;
-  std::vector<Func> funcs;
-};
 
 static FlameModel generateFlameModel(AST::Script &script) {
   FlameModel model;
@@ -194,9 +179,7 @@ static XmlElems createXmlLayers(const FlameModel &model) {
   return layers;
 }
 
-static std::string createXmlModel(AST::Script &script) {
-  FlameModel model = generateFlameModel(script);
-
+static std::string createXmlModel(AST::Script &script, const FlameModel &model) {
   XmlElems xagents = createXmlAgents(script, model);
   XmlElems messages = createXmlMessages(model);
   XmlElems layers = createXmlLayers(model);
@@ -217,11 +200,23 @@ static std::string createXmlModel(AST::Script &script) {
   return writer.serialize(root);
 }
 
+static std::string createFunctionsFile(AST::Script &script, const FlameModel &model) {
+  FlameGPUPrinter printer(script, model);
+  printer.print(script);
+  return printer.extractStr();
+}
+
 void FlameGPUBackend::generate(
     AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
   (void) assetDir;
 
-  writeToFile(outputDir + "/XMLModelFile.xml", createXmlModel(script));
+  FlameModel model = generateFlameModel(script);
+
+  createDirectory(outputDir + "/model");
+  createDirectory(outputDir + "/dynamic");
+
+  writeToFile(outputDir + "/model/XMLModelFile.xml", createXmlModel(script, model));
+  writeToFile(outputDir + "/model/functions.c", createFunctionsFile(script, model));
 }
 
 }
