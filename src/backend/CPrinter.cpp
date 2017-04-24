@@ -206,9 +206,6 @@ void CPrinter::print(AST::NewArrayExpression &expr) {
   printStorageType(*this, expr.elemType->resolved);
   *this << ", " << *expr.sizeExpr << ")";
 }
-void CPrinter::print(AST::ExpressionStatement &stmt) {
-  *this << *stmt.expr << ";";
-}
 void CPrinter::print(AST::BlockStatement &stmt) {
   *this << "{" << indent << *stmt.stmts << outdent << nl << "}";
 }

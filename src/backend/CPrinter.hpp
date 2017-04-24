@@ -1,12 +1,15 @@
 #pragma once
 
 #include "AST.hpp"
-#include "Printer.hpp"
+#include "GenericCPrinter.hpp"
 
 namespace OpenABL {
 
-struct CPrinter : public Printer {
-  CPrinter(AST::Script &script) : script(script) {}
+struct CPrinter : public GenericCPrinter {
+  using GenericCPrinter::print;
+
+  CPrinter(AST::Script &script)
+    : GenericCPrinter(script), script(script) {}
 
   void print(AST::Var &);
   void print(AST::Literal &);
@@ -22,7 +25,6 @@ struct CPrinter : public Printer {
   void print(AST::MemberInitEntry &);
   void print(AST::AgentCreationExpression &);
   void print(AST::NewArrayExpression &);
-  void print(AST::ExpressionStatement &);
   void print(AST::BlockStatement &);
   void print(AST::VarDeclarationStatement &);
   void print(AST::IfStatement &);

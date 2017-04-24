@@ -16,7 +16,6 @@ void FlameGPUPrinter::print(AST::TernaryExpression &) {}
 void FlameGPUPrinter::print(AST::MemberInitEntry &) {}
 void FlameGPUPrinter::print(AST::AgentCreationExpression &) {}
 void FlameGPUPrinter::print(AST::NewArrayExpression &) {}
-void FlameGPUPrinter::print(AST::ExpressionStatement &) {}
 void FlameGPUPrinter::print(AST::BlockStatement &) {}
 void FlameGPUPrinter::print(AST::VarDeclarationStatement &) {}
 void FlameGPUPrinter::print(AST::IfStatement &) {}
@@ -71,7 +70,7 @@ void FlameGPUPrinter::print(AST::Script &) {
       }
       *this << ");";
     } else {
-      // TODO Real step function
+      *this << *func.func->stmts;
     }
 
     *this << nl << "return 0;" << outdent << nl << "}\n\n";

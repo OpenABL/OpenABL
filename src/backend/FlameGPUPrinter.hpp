@@ -1,14 +1,16 @@
 #pragma once
 
 #include "AST.hpp"
-#include "Printer.hpp"
+#include "GenericCPrinter.hpp"
 #include "FlameModel.hpp"
 
 namespace OpenABL {
 
-struct FlameGPUPrinter : public Printer {
+struct FlameGPUPrinter : public GenericCPrinter {
+  using GenericCPrinter::print;
+
   FlameGPUPrinter(AST::Script &script, const FlameModel &model)
-    : script(script), model(model) {}
+    : GenericCPrinter(script), script(script), model(model) {}
 
   void print(AST::Var &);
   void print(AST::Literal &);
@@ -24,7 +26,6 @@ struct FlameGPUPrinter : public Printer {
   void print(AST::MemberInitEntry &);
   void print(AST::AgentCreationExpression &);
   void print(AST::NewArrayExpression &);
-  void print(AST::ExpressionStatement &);
   void print(AST::BlockStatement &);
   void print(AST::VarDeclarationStatement &);
   void print(AST::IfStatement &);
