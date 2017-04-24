@@ -483,7 +483,7 @@ struct FunctionDeclaration : public Declaration {
   StatementListPtr stmts;
 
   // The following members are for step functions only
-  
+  //
   // The type of the agent that is interacted with (type of agent
   // in for-near loop)
   AgentDeclaration *accessedAgent = nullptr;
@@ -495,6 +495,7 @@ struct FunctionDeclaration : public Declaration {
     : Declaration{loc}, returnType{returnType},
       name{name}, params{params}, stmts{stmts} {}
 
+  bool isStep() const { return accessedAgent != nullptr; }
   bool isMain() const { return name == "main"; }
 
   void accept(Visitor &);
