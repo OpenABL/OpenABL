@@ -11,7 +11,6 @@ struct Visitor {
   virtual void enter(VarExpression &) {};
   virtual void enter(UnaryOpExpression &) {};
   virtual void enter(BinaryOpExpression &) {};
-  virtual void enter(AssignOpExpression &) {};
   virtual void enter(AssignExpression &) {};
   virtual void enter(Arg &) {};
   virtual void enter(CallExpression &) {};
@@ -21,6 +20,7 @@ struct Visitor {
   virtual void enter(AgentCreationExpression &) {};
   virtual void enter(NewArrayExpression &) {};
   virtual void enter(ExpressionStatement &) {};
+  virtual void enter(AssignOpStatement &) {};
   virtual void enter(BlockStatement &) {};
   virtual void enter(VarDeclarationStatement &) {};
   virtual void enter(IfStatement &) {};
@@ -41,7 +41,6 @@ struct Visitor {
   virtual void leave(VarExpression &) {};
   virtual void leave(UnaryOpExpression &) {};
   virtual void leave(BinaryOpExpression &) {};
-  virtual void leave(AssignOpExpression &) {};
   virtual void leave(AssignExpression &) {};
   virtual void leave(Arg &) {};
   virtual void leave(CallExpression &) {};
@@ -51,6 +50,7 @@ struct Visitor {
   virtual void leave(AgentCreationExpression &) {};
   virtual void leave(NewArrayExpression &) {};
   virtual void leave(ExpressionStatement &) {};
+  virtual void leave(AssignOpStatement &) {};
   virtual void leave(BlockStatement &) {};
   virtual void leave(VarDeclarationStatement &) {};
   virtual void leave(IfStatement &) {};

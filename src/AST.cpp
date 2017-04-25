@@ -34,13 +34,6 @@ void BinaryOpExpression::accept(Visitor &visitor) {
   visitor.leave(*this);
 }
 
-void AssignOpExpression::accept(Visitor &visitor) {
-  visitor.enter(*this);
-  left->accept(visitor);
-  right->accept(visitor);
-  visitor.leave(*this);
-}
-
 void AssignExpression::accept(Visitor &visitor) {
   visitor.enter(*this);
   left->accept(visitor);
@@ -103,6 +96,13 @@ void NewArrayExpression::accept(Visitor &visitor) {
 void ExpressionStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
   expr->accept(visitor);
+  visitor.leave(*this);
+}
+
+void AssignOpStatement::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  left->accept(visitor);
+  right->accept(visitor);
   visitor.leave(*this);
 }
 
@@ -225,7 +225,6 @@ void Literal::print(Printer &printer) { printer.print(*this); }
 void VarExpression::print(Printer &printer) { printer.print(*this); }
 void UnaryOpExpression::print(Printer &printer) { printer.print(*this); }
 void BinaryOpExpression::print(Printer &printer) { printer.print(*this); }
-void AssignOpExpression::print(Printer &printer) { printer.print(*this); }
 void AssignExpression::print(Printer &printer) { printer.print(*this); }
 void Arg::print(Printer &printer) { printer.print(*this); }
 void CallExpression::print(Printer &printer) { printer.print(*this); }
@@ -235,6 +234,7 @@ void MemberInitEntry::print(Printer &printer) { printer.print(*this); }
 void AgentCreationExpression::print(Printer &printer) { printer.print(*this); }
 void NewArrayExpression::print(Printer &printer) { printer.print(*this); }
 void ExpressionStatement::print(Printer &printer) { printer.print(*this); }
+void AssignOpStatement::print(Printer &printer) { printer.print(*this); }
 void BlockStatement::print(Printer &printer) { printer.print(*this); }
 void VarDeclarationStatement::print(Printer &printer) { printer.print(*this); }
 void IfStatement::print(Printer &printer) { printer.print(*this); }

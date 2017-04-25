@@ -61,6 +61,10 @@ void GenericCPrinter::printArgs(AST::CallExpression &expr) {
 void GenericCPrinter::print(AST::ExpressionStatement &stmt) {
   *this << *stmt.expr << ";";
 }
+void GenericCPrinter::print(AST::AssignOpStatement &stmt) {
+  *this << *stmt.left << " " << AST::getBinaryOpSigil(stmt.op)
+        << "= " << *stmt.right << ";";
+}
 
 void GenericCPrinter::print(AST::BlockStatement &stmt) {
   *this << "{" << indent << *stmt.stmts << outdent << nl << "}";

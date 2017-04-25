@@ -15,6 +15,7 @@ struct GenericCPrinter : public Printer {
   virtual void print(AST::BinaryOpExpression &);
   virtual void print(AST::Arg &);
   virtual void print(AST::ExpressionStatement &);
+  virtual void print(AST::AssignOpStatement &);
   virtual void print(AST::BlockStatement &);
   virtual void print(AST::IfStatement &);
   virtual void print(AST::VarDeclarationStatement &);

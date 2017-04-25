@@ -186,18 +186,6 @@ struct BinaryOpExpression : public Expression {
   void print(Printer &);
 };
 
-struct AssignOpExpression : public Expression {
-  BinaryOp op; // Note: Not all binary ops are allowed here!
-  ExpressionPtr left;
-  ExpressionPtr right;
-
-  AssignOpExpression(BinaryOp op, Expression *left, Expression *right, Location loc)
-    : Expression{loc}, op{op}, left{left}, right{right} {}
-
-  void accept(Visitor &);
-  void print(Printer &);
-};
-
 struct AssignExpression : public Expression {
   ExpressionPtr left;
   ExpressionPtr right;
@@ -321,6 +309,18 @@ struct ExpressionStatement : public Statement {
 
   ExpressionStatement(Expression *expr, Location loc)
     : Statement{loc}, expr{expr} {}
+
+  void accept(Visitor &);
+  void print(Printer &);
+};
+
+struct AssignOpStatement : public Statement {
+  BinaryOp op; // Note: Not all binary ops are allowed here!
+  ExpressionPtr left;
+  ExpressionPtr right;
+
+  AssignOpStatement(BinaryOp op, Expression *left, Expression *right, Location loc)
+    : Statement{loc}, op{op}, left{left}, right{right} {}
 
   void accept(Visitor &);
   void print(Printer &);

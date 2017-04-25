@@ -208,6 +208,27 @@ statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
              { $$ = new ReturnStatement(nullptr, @$); }
          | SIMULATE LPAREN expression RPAREN LBRACE ident_list RBRACE
              { $$ = new SimulateStatement($3, $6, @$); }
+
+         | expression ADD_ASSIGN expression SEMI
+             { $$ = new AssignOpStatement(BinaryOp::ADD, $1, $3, @$); }
+         | expression SUB_ASSIGN expression SEMI
+             { $$ = new AssignOpStatement(BinaryOp::SUB, $1, $3, @$); }
+         | expression MUL_ASSIGN expression SEMI
+             { $$ = new AssignOpStatement(BinaryOp::MUL, $1, $3, @$); }
+         | expression DIV_ASSIGN expression SEMI
+             { $$ = new AssignOpStatement(BinaryOp::DIV, $1, $3, @$); }
+         | expression MOD_ASSIGN expression SEMI
+             { $$ = new AssignOpStatement(BinaryOp::MOD, $1, $3, @$); }
+         | expression BITWISE_AND_ASSIGN expression SEMI
+             { $$ = new AssignOpStatement(BinaryOp::BITWISE_AND, $1, $3, @$); }
+         | expression BITWISE_XOR_ASSIGN expression SEMI
+             { $$ = new AssignOpStatement(BinaryOp::BITWISE_XOR, $1, $3, @$); }
+         | expression BITWISE_OR_ASSIGN expression SEMI
+             { $$ = new AssignOpStatement(BinaryOp::BITWISE_OR, $1, $3, @$); }
+         | expression SHIFT_LEFT_ASSIGN expression SEMI
+             { $$ = new AssignOpStatement(BinaryOp::SHIFT_LEFT, $1, $3, @$); }
+         | expression SHIFT_RIGHT_ASSIGN expression SEMI
+             { $$ = new AssignOpStatement(BinaryOp::SHIFT_RIGHT, $1, $3, @$); }
          ;
 
 arg: expression { $$ = new Arg($1, nullptr, @$); }
@@ -289,26 +310,6 @@ expression: var { $$ = new VarExpression($1, @$); }
 
           | expression ASSIGN expression
               { $$ = new AssignExpression($1, $3, @$); }
-          | expression ADD_ASSIGN expression
-              { $$ = new AssignOpExpression(BinaryOp::ADD, $1, $3, @$); }
-          | expression SUB_ASSIGN expression
-              { $$ = new AssignOpExpression(BinaryOp::SUB, $1, $3, @$); }
-          | expression MUL_ASSIGN expression
-              { $$ = new AssignOpExpression(BinaryOp::MUL, $1, $3, @$); }
-          | expression DIV_ASSIGN expression
-              { $$ = new AssignOpExpression(BinaryOp::DIV, $1, $3, @$); }
-          | expression MOD_ASSIGN expression
-              { $$ = new AssignOpExpression(BinaryOp::MOD, $1, $3, @$); }
-          | expression BITWISE_AND_ASSIGN expression
-              { $$ = new AssignOpExpression(BinaryOp::BITWISE_AND, $1, $3, @$); }
-          | expression BITWISE_XOR_ASSIGN expression
-              { $$ = new AssignOpExpression(BinaryOp::BITWISE_XOR, $1, $3, @$); }
-          | expression BITWISE_OR_ASSIGN expression
-              { $$ = new AssignOpExpression(BinaryOp::BITWISE_OR, $1, $3, @$); }
-          | expression SHIFT_LEFT_ASSIGN expression
-              { $$ = new AssignOpExpression(BinaryOp::SHIFT_LEFT, $1, $3, @$); }
-          | expression SHIFT_RIGHT_ASSIGN expression
-              { $$ = new AssignOpExpression(BinaryOp::SHIFT_RIGHT, $1, $3, @$); }
           ;
 %%
 

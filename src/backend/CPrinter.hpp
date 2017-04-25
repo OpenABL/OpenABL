@@ -13,7 +13,6 @@ struct CPrinter : public GenericCPrinter {
 
   void print(AST::UnaryOpExpression &);
   void print(AST::BinaryOpExpression &);
-  void print(AST::AssignOpExpression &);
   void print(AST::AssignExpression &);
   void print(AST::CallExpression &);
   void print(AST::MemberAccessExpression &);
@@ -21,6 +20,7 @@ struct CPrinter : public GenericCPrinter {
   void print(AST::MemberInitEntry &);
   void print(AST::AgentCreationExpression &);
   void print(AST::NewArrayExpression &);
+  void print(AST::AssignOpStatement &);
   void print(AST::VarDeclarationStatement &);
   void print(AST::ForStatement &);
   void print(AST::SimulateStatement &);

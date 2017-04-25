@@ -2,7 +2,6 @@
 
 namespace OpenABL {
 
-void FlameGPUPrinter::print(AST::AssignOpExpression &) {}
 void FlameGPUPrinter::print(AST::AssignExpression &) {}
 void FlameGPUPrinter::print(AST::MemberAccessExpression &) {}
 void FlameGPUPrinter::print(AST::TernaryExpression &) {}

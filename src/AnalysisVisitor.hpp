@@ -17,7 +17,6 @@ struct AnalysisVisitor : public AST::Visitor {
   void enter(AST::VarExpression &);
   void enter(AST::UnaryOpExpression &);
   void enter(AST::BinaryOpExpression &);
-  void enter(AST::AssignOpExpression &);
   void enter(AST::AssignExpression &);
   void enter(AST::Arg &);
   void enter(AST::CallExpression &);
@@ -27,6 +26,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void enter(AST::AgentCreationExpression &);
   void enter(AST::NewArrayExpression &);
   void enter(AST::ExpressionStatement &);
+  void enter(AST::AssignOpStatement &);
   void enter(AST::BlockStatement &);
   void enter(AST::VarDeclarationStatement &);
   void enter(AST::IfStatement &);
@@ -46,7 +46,6 @@ struct AnalysisVisitor : public AST::Visitor {
   void leave(AST::VarExpression &);
   void leave(AST::UnaryOpExpression &);
   void leave(AST::BinaryOpExpression &);
-  void leave(AST::AssignOpExpression &);
   void leave(AST::AssignExpression &);
   void leave(AST::Arg &);
   void leave(AST::CallExpression &);
@@ -56,6 +55,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void leave(AST::AgentCreationExpression &);
   void leave(AST::NewArrayExpression &);
   void leave(AST::ExpressionStatement &);
+  void leave(AST::AssignOpStatement &);
   void leave(AST::BlockStatement &);
   void leave(AST::VarDeclarationStatement &);
   void leave(AST::IfStatement &);

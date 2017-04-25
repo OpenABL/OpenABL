@@ -12,7 +12,6 @@ struct FlameGPUPrinter : public GenericCPrinter {
   FlameGPUPrinter(AST::Script &script, const FlameModel &model)
     : GenericCPrinter(script), script(script), model(model) {}
 
-  void print(AST::AssignOpExpression &);
   void print(AST::AssignExpression &);
   void print(AST::CallExpression &);
   void print(AST::MemberAccessExpression &);

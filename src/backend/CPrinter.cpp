@@ -79,11 +79,6 @@ void CPrinter::print(AST::UnaryOpExpression &expr) {
 void CPrinter::print(AST::BinaryOpExpression &expr) {
   printBinaryOp(*this, expr.op, *expr.left, *expr.right);
 }
-void CPrinter::print(AST::AssignOpExpression &expr) {
-  *this << "(" << *expr.left << " = ";
-  printBinaryOp(*this, expr.op, *expr.left, *expr.right);
-  *this << ")";
-}
 void CPrinter::print(AST::AssignExpression &expr) {
   if (expr.right->type.isAgent()) {
     // Agent assignments are interpreted as copies, not reference assignments
@@ -158,6 +153,12 @@ void CPrinter::print(AST::NewArrayExpression &expr) {
   *this << "DYN_ARRAY_CREATE_FIXED(";
   printStorageType(*this, expr.elemType->resolved);
   *this << ", " << *expr.sizeExpr << ")";
+}
+
+void CPrinter::print(AST::AssignOpStatement &stmt) {
+  *this << *stmt.left << " = ";
+  printBinaryOp(*this, stmt.op, *stmt.left, *stmt.right);
+  *this << ";";
 }
 void CPrinter::print(AST::VarDeclarationStatement &stmt) {
   Type type = stmt.type->resolved;
