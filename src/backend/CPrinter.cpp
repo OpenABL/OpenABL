@@ -3,18 +3,6 @@
 
 namespace OpenABL {
 
-static void printStringLiteral(Printer &p, const std::string &str) {
-  p << '"';
-  for (char c : str) {
-    if (c == '"' || c == '\\') {
-      p << '\\' << c;
-    } else {
-      p << c;
-    }
-  }
-  p << '"';
-}
-
 static void printType(Printer &s, Type type) {
   if (type.isArray()) {
     s << "dyn_array*";
@@ -40,26 +28,6 @@ static void printStorageType(Printer &s, Type type) {
 
 static bool typeRequiresStorage(Type type) {
   return type.isArray() || type.isAgent();
-}
-
-void CPrinter::print(AST::Var &var) {
-  *this << var.name;
-}
-void CPrinter::print(AST::Literal &lit) {
-  if (AST::IntLiteral *ilit = dynamic_cast<AST::IntLiteral *>(&lit)) {
-    *this << ilit->value;
-  } else if (AST::FloatLiteral *flit = dynamic_cast<AST::FloatLiteral *>(&lit)) {
-    *this << flit->value;
-  } else if (AST::BoolLiteral *blit = dynamic_cast<AST::BoolLiteral *>(&lit)) {
-    *this << blit->value;
-  } else if (AST::StringLiteral *slit = dynamic_cast<AST::StringLiteral *>(&lit)) {
-    printStringLiteral(*this, slit->value);
-  } else {
-    assert(0);
-  }
-}
-void CPrinter::print(AST::VarExpression &expr) {
-  *this << *expr.var;
 }
 static void printBinaryOp(CPrinter &p, AST::BinaryOp op,
                           AST::Expression &left, AST::Expression &right) {
@@ -106,7 +74,7 @@ void CPrinter::print(AST::UnaryOpExpression &expr) {
     return;
   }
 
-  *this << "(" << AST::getUnaryOpSigil(expr.op) << *expr.expr << ")";
+  GenericCPrinter::print(expr);
 }
 void CPrinter::print(AST::BinaryOpExpression &expr) {
   printBinaryOp(*this, expr.op, *expr.left, *expr.right);
@@ -125,21 +93,6 @@ void CPrinter::print(AST::AssignExpression &expr) {
     *this << "(" << *expr.left << " = " << *expr.right << ")";
   }
 }
-void CPrinter::print(AST::Arg &arg) {
-  *this << *arg.expr;
-  if (arg.outExpr) {
-    *this << ", " << *arg.outExpr;
-  }
-}
-
-static void printArgs(CPrinter &p, AST::CallExpression &expr) {
-  bool first = true;
-  for (const AST::ArgPtr &arg : *expr.args) {
-    if (!first) p << ", ";
-    first = false;
-    p << *arg;
-  }
-}
 static void printTypeCtor(CPrinter &p, AST::CallExpression &expr) {
   Type t = expr.type;
   if (t.isVec()) {
@@ -150,7 +103,7 @@ static void printTypeCtor(CPrinter &p, AST::CallExpression &expr) {
       p << (numArgs == 1 ? "float3_fill" : "float3_create");
     }
     p << "(";
-    printArgs(p, expr);
+    p.printArgs(expr);
     p << ")";
   } else {
     p << "(" << t << ") " << *(*expr.args)[0];
@@ -170,7 +123,7 @@ static void printBuiltin(CPrinter &p, AST::CallExpression &expr) {
 
   p << sig.name;
   p << "(";
-  printArgs(p, expr);
+  p.printArgs(expr);
   p << ")";
 }
 void CPrinter::print(AST::CallExpression &expr) {
@@ -180,7 +133,7 @@ void CPrinter::print(AST::CallExpression &expr) {
     printBuiltin(*this, expr);
   } else {
     *this << expr.name << "(";
-    printArgs(*this, expr);
+    this->printArgs(expr);
     *this << ")";
   }
 }
@@ -206,9 +159,6 @@ void CPrinter::print(AST::NewArrayExpression &expr) {
   printStorageType(*this, expr.elemType->resolved);
   *this << ", " << *expr.sizeExpr << ")";
 }
-void CPrinter::print(AST::BlockStatement &stmt) {
-  *this << "{" << indent << *stmt.stmts << outdent << nl << "}";
-}
 void CPrinter::print(AST::VarDeclarationStatement &stmt) {
   Type type = stmt.type->resolved;
   if (typeRequiresStorage(type)) {
@@ -228,15 +178,8 @@ void CPrinter::print(AST::VarDeclarationStatement &stmt) {
     *this << ";" << nl;
     *this << type << " " << *stmt.var << " = &" << sLabel << ";";
   } else {
-    *this << *stmt.type << " " << *stmt.var;
-    if (stmt.initializer) {
-      *this << " = " << *stmt.initializer;
-    }
-    *this << ";";
+    GenericCPrinter::print(stmt);
   }
-}
-void CPrinter::print(AST::IfStatement &stmt) {
-  *this << "if (" << *stmt.condExpr << ") " << *stmt.ifStmt;
 }
 
 static void printRangeFor(CPrinter &p, AST::ForStatement &stmt) {
