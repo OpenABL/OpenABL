@@ -483,7 +483,7 @@ struct FunctionDeclaration : public Declaration {
   StatementListPtr stmts;
 
   // The following members are for step functions only
-  //
+ 
   // The type of the agent that is interacted with (type of agent
   // in for-near loop)
   AgentDeclaration *accessedAgent = nullptr;

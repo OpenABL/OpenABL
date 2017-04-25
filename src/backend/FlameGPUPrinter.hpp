@@ -16,6 +16,7 @@ struct FlameGPUPrinter : public GenericCPrinter {
   void print(AST::MemberInitEntry &);
   void print(AST::AgentCreationExpression &);
   void print(AST::NewArrayExpression &);
+  void print(AST::MemberAccessExpression &);
   void print(AST::ForStatement &);
   void print(AST::SimulateStatement &);
   void print(AST::SimpleType &);
