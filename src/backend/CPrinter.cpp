@@ -85,7 +85,7 @@ void CPrinter::print(AST::AssignExpression &expr) {
     *this << "(*" << *expr.left << " = *" << *expr.right << ")";
     // TODO This can't be used as a return value. Forbid expression use of assignments?
   } else {
-    *this << "(" << *expr.left << " = " << *expr.right << ")";
+    GenericCPrinter::print(expr);
   }
 }
 static void printTypeCtor(CPrinter &p, AST::CallExpression &expr) {
@@ -131,16 +131,6 @@ void CPrinter::print(AST::CallExpression &expr) {
     this->printArgs(expr);
     *this << ")";
   }
-}
-void CPrinter::print(AST::MemberAccessExpression &expr) {
-  if (expr.expr->type.isAgent()) {
-    *this << *expr.expr << "->" << expr.member;
-  } else {
-    *this << *expr.expr << "." << expr.member;
-  }
-}
-void CPrinter::print(AST::TernaryExpression &expr) {
-  *this << "(" << *expr.condExpr << " ? " << *expr.ifExpr << " : " << *expr.elseExpr << ")";
 }
 void CPrinter::print(AST::MemberInitEntry &entry) {
   *this << "." << entry.name << " = " << *entry.expr << ",";
@@ -281,40 +271,11 @@ void CPrinter::print(AST::SimulateStatement &stmt) {
   *this << outdent << nl << "}";
   // TODO Cleanup memory
 }
-void CPrinter::print(AST::ReturnStatement &stmt) {
-  if (stmt.expr) {
-    *this << "return " << *stmt.expr << ";";
-  } else {
-    *this << "return;";
-  }
-}
 void CPrinter::print(AST::SimpleType &type) {
   *this << type.resolved;
 }
 void CPrinter::print(AST::ArrayType &type) {
   *this << type.resolved;
-}
-void CPrinter::print(AST::Param &param) {
-  *this << *param.type << " " << *param.var;
-  if (param.outVar) {
-    *this << ", " << *param.type << " " << *param.outVar;
-  }
-}
-void CPrinter::print(AST::FunctionDeclaration &decl) {
-  if (decl.returnType) {
-    *this << *decl.returnType;
-  } else {
-    *this << "void";
-  }
-  *this << " " << decl.name << "(";
-  bool first = true;
-  for (const AST::ParamPtr &param : *decl.params) {
-    if (!first) *this << ", ";
-    first = false;
-    *this << *param;
-  }
-  *this << ") {" << indent;
-  *this << *decl.stmts << outdent << nl << "}";
 }
 void CPrinter::print(AST::AgentMember &member) {
   *this << *member.type << " " << member.name << ";";

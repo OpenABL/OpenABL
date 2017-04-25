@@ -41,6 +41,19 @@ void GenericCPrinter::print(AST::BinaryOpExpression &expr) {
   *this << "(" << *expr.left << " "
         << AST::getBinaryOpSigil(expr.op) << " " << *expr.right << ")";
 }
+void GenericCPrinter::print(AST::AssignExpression &expr) {
+  *this << "(" << *expr.left << " = " << *expr.right << ")";
+}
+void GenericCPrinter::print(AST::TernaryExpression &expr) {
+  *this << "(" << *expr.condExpr << " ? " << *expr.ifExpr << " : " << *expr.elseExpr << ")";
+}
+void GenericCPrinter::print(AST::MemberAccessExpression &expr) {
+  if (expr.expr->type.isAgent()) {
+    *this << *expr.expr << "->" << expr.member;
+  } else {
+    *this << *expr.expr << "." << expr.member;
+  }
+}
 
 void GenericCPrinter::print(AST::Arg &arg) {
   *this << *arg.expr;
@@ -79,6 +92,36 @@ void GenericCPrinter::print(AST::VarDeclarationStatement &stmt) {
       *this << " = " << *stmt.initializer;
     }
     *this << ";";
+}
+void GenericCPrinter::print(AST::ReturnStatement &stmt) {
+  if (stmt.expr) {
+    *this << "return " << *stmt.expr << ";";
+  } else {
+    *this << "return;";
+  }
+}
+
+void GenericCPrinter::print(AST::Param &param) {
+  *this << *param.type << " " << *param.var;
+  if (param.outVar) {
+    *this << ", " << *param.type << " " << *param.outVar;
+  }
+}
+void GenericCPrinter::print(AST::FunctionDeclaration &decl) {
+  if (decl.returnType) {
+    *this << *decl.returnType;
+  } else {
+    *this << "void";
+  }
+  *this << " " << decl.name << "(";
+  bool first = true;
+  for (const AST::ParamPtr &param : *decl.params) {
+    if (!first) *this << ", ";
+    first = false;
+    *this << *param;
+  }
+  *this << ") {" << indent;
+  *this << *decl.stmts << outdent << nl << "}";
 }
 
 }

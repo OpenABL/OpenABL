@@ -12,20 +12,14 @@ struct FlameGPUPrinter : public GenericCPrinter {
   FlameGPUPrinter(AST::Script &script, const FlameModel &model)
     : GenericCPrinter(script), script(script), model(model) {}
 
-  void print(AST::AssignExpression &);
   void print(AST::CallExpression &);
-  void print(AST::MemberAccessExpression &);
-  void print(AST::TernaryExpression &);
   void print(AST::MemberInitEntry &);
   void print(AST::AgentCreationExpression &);
   void print(AST::NewArrayExpression &);
   void print(AST::ForStatement &);
   void print(AST::SimulateStatement &);
-  void print(AST::ReturnStatement &);
   void print(AST::SimpleType &);
   void print(AST::ArrayType &);
-  void print(AST::Param &);
-  void print(AST::FunctionDeclaration &);
   void print(AST::AgentMember &);
   void print(AST::AgentDeclaration &);
   void print(AST::ConstDeclaration &);
@@ -34,6 +28,7 @@ struct FlameGPUPrinter : public GenericCPrinter {
 private:
   AST::Script &script;
   const FlameModel &model;
+  const FlameModel::Func *currentFunc = nullptr;
 };
 
 }
