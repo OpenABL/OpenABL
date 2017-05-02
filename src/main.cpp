@@ -27,6 +27,7 @@ void registerBuiltinFunctions(BuiltinFunctions &funcs) {
 std::map<std::string, std::unique_ptr<Backend>> getBackends() {
   std::map<std::string, std::unique_ptr<Backend>> backends;
   backends["c"] = std::unique_ptr<Backend>(new CBackend);
+  backends["flame"] = std::unique_ptr<Backend>(new FlameBackend);
   backends["flamegpu"] = std::unique_ptr<Backend>(new FlameGPUBackend);
   return backends;
 }

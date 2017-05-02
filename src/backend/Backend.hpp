@@ -14,6 +14,11 @@ struct CBackend : public Backend {
                 const std::string &assetDir);
 };
 
+struct FlameBackend : public Backend {
+  void generate(AST::Script &script, const std::string &targetDir,
+                const std::string &assetDir);
+};
+
 struct FlameGPUBackend : public Backend {
   void generate(AST::Script &script, const std::string &targetDir,
                 const std::string &assetDir);

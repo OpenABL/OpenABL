@@ -1,25 +1,24 @@
-#include <sstream>
 #include "Backend.hpp"
-#include "FileUtil.hpp"
 #include "XmlUtil.hpp"
+#include "FileUtil.hpp"
 #include "FlameModel.hpp"
-#include "FlameGPUPrinter.hpp"
+#include "FlamePrinter.hpp"
 
 namespace OpenABL {
 
 static XmlElems createXmlAgents(AST::Script &script, const FlameModel &model) {
-  XmlElems xagents;
+  XmlElems agents;
   for (const AST::AgentDeclaration *decl : script.agents) {
-    XmlElems members;
+    XmlElems members, functions;
+
     auto unpackedMembers = FlameModel::getUnpackedMembers(*decl->members);
     for (const FlameModel::Member &member : unpackedMembers) {
-      members.push_back({ "gpu:variable", {
+      members.push_back({ "variable", {
         { "type", {{ member.second }} },
         { "name", {{ member.first }} },
       }});
     }
 
-    XmlElems functions;
     for (const FlameModel::Func &func : model.funcs) {
       if (func.agent != decl) {
         continue;
@@ -28,36 +27,33 @@ static XmlElems createXmlAgents(AST::Script &script, const FlameModel &model) {
       XmlElems inputs, outputs;
 
       if (!func.inMsgName.empty()) {
-        inputs.push_back({ "gpu:input", {
+        inputs.push_back({ "input", {
           { "messageName", {{ func.inMsgName }} },
         }});
       }
 
       if (!func.outMsgName.empty()) {
-        outputs.push_back({ "gpu:output", {
+        outputs.push_back({ "output", {
           { "messageName", {{ func.outMsgName }} },
-          { "gpu:type", {{ "single_message" }} },
         }});
       }
 
-      functions.push_back({ "gpu:function", {
+      functions.push_back({ "function", {
         { "name", {{ func.name }} },
         { "currentState", {{ "default" }} },
         { "nextState", {{ "default" }} },
         { "inputs", inputs },
         { "outputs", outputs },
-        { "gpu:reallocate", {{ "false" }} },
-        { "gpu:RNG", {{ "false" }} },
       }});
     }
 
-    xagents.push_back({ "gpu:xagent", {
+    agents.push_back({ "xagent", {
       { "name", {{ decl->name }} },
       { "memory", members },
       { "functions", functions },
     }});
   }
-  return xagents;
+  return agents;
 }
 
 static XmlElems createXmlMessages(const FlameModel &model) {
@@ -66,13 +62,13 @@ static XmlElems createXmlMessages(const FlameModel &model) {
     XmlElems variables;
     auto unpackedMembers = FlameModel::getUnpackedMembers(msg.members);
     for (const FlameModel::Member &member : unpackedMembers) {
-      variables.push_back({ "gpu:variable", {
+      variables.push_back({ "variable", {
         { "type", {{ member.second }} },
         { "name", {{ member.first }} },
       }});
     }
 
-    messages.push_back({ "gpu:message", {
+    messages.push_back({ "message", {
       { "name", {{ msg.name }} },
       { "variables", variables },
     }});
@@ -80,56 +76,42 @@ static XmlElems createXmlMessages(const FlameModel &model) {
   return messages;
 }
 
-static XmlElems createXmlLayers(const FlameModel &model) {
-  XmlElems layers;
-  for (const FlameModel::Func &func : model.funcs) {
-    layers.push_back({ "layer", {
-      { "gpu:layerFunction", {
-        { "name", {{ func.name }} },
-      }},
-    }});
-  }
-  return layers;
-}
-
 static std::string createXmlModel(AST::Script &script, const FlameModel &model) {
-  XmlElems xagents = createXmlAgents(script, model);
+  XmlElems agents = createXmlAgents(script, model);
   XmlElems messages = createXmlMessages(model);
-  XmlElems layers = createXmlLayers(model);
-  XmlElem root("gpu:model", {
+  XmlElem root("xmodel", {
     { "name", {{ "TODO" }} },
-    { "gpu:environment", {
-      { "gpu:functionFiles", {
+    { "version", {{ "01" }} },
+    { "environment", {
+      { "functionFiles", {
         { "file", {{ "functions.c" }} },
       }}
     }},
-    { "xagents", xagents },
+    { "agents", agents },
     { "messages", messages },
-    { "layers", layers },
   });
-  root.setAttr("xmlns:gpu", "http://www.dcs.shef.ac.uk/~paul/XMMLGPU");
-  root.setAttr("xmlns", "http://www.dcs.shef.ac.uk/~paul/XMML");
+  root.setAttr("version", "2");
+  root.setAttr("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+  root.setAttr("xsi:noNamespaceSchemaLocation", "http://flame.ac.uk/schema/xmml_v2.xsd");
+
   XmlWriter writer;
   return writer.serialize(root);
 }
 
 static std::string createFunctionsFile(AST::Script &script, const FlameModel &model) {
-  FlameGPUPrinter printer(script, model);
+  FlamePrinter printer(script, model);
   printer.print(script);
   return printer.extractStr();
 }
 
-void FlameGPUBackend::generate(
+void FlameBackend::generate(
     AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
   (void) assetDir;
 
   FlameModel model = FlameModel::generateFromScript(script);
 
-  createDirectory(outputDir + "/model");
-  createDirectory(outputDir + "/dynamic");
-
-  writeToFile(outputDir + "/model/XMLModelFile.xml", createXmlModel(script, model));
-  writeToFile(outputDir + "/model/functions.c", createFunctionsFile(script, model));
+  writeToFile(outputDir + "/XMLModelFile.xml", createXmlModel(script, model));
+  writeToFile(outputDir + "/functions.c", createFunctionsFile(script, model));
 }
 
 }
