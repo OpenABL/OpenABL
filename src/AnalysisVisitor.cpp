@@ -245,7 +245,29 @@ void AnalysisVisitor::leave(AST::ForStatement &stmt) {
   stmt.kind = AST::ForStatement::Kind::NORMAL;
 };
 
+bool isStepFunction(const AST::FunctionDeclaration &fn) {
+    if (fn.params->size() != 1) {
+      return false;
+    }
+
+    const AST::Param &param = *(*fn.params)[0];
+    if (!param.outVar) {
+      return false;
+    }
+
+    if (!param.type->resolved.isAgent()) {
+      return false;
+    }
+
+    return true;
+}
+
 void AnalysisVisitor::leave(AST::SimulateStatement &stmt) {
+  if (script.simStmt) {
+    err << "Script can only contain a single simulate statement" << stmt.loc;
+    return;
+  }
+
   if (!stmt.timestepsExpr->type.isPromotableTo(Type::INT32)) {
     err << "Number of timesteps must be an integer, "
         << stmt.timestepsExpr->type << " given" << stmt.timestepsExpr->loc;
@@ -259,9 +281,17 @@ void AnalysisVisitor::leave(AST::SimulateStatement &stmt) {
       return;
     }
 
-    stmt.stepFuncDecls.push_back(it->second);
-    // TODO Verify that the function is a step function (flag? signature?)
+    AST::FunctionDeclaration &fn = *it->second;
+    if (!isStepFunction(fn)) {
+      err << "Function \"" << name << "\" is not a step function" << stmt.loc;
+      return;
+    }
+
+    fn.isStep = true;
+    stmt.stepFuncDecls.push_back(&fn);
   }
+
+  script.simStmt = &stmt;
 };
 
 void AnalysisVisitor::leave(AST::ReturnStatement &stmt) {

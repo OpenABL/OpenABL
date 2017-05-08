@@ -40,8 +40,8 @@ static XmlElems createXmlAgents(AST::Script &script, const FlameModel &model) {
 
       functions.push_back({ "function", {
         { "name", {{ func.name }} },
-        { "currentState", {{ "default" }} },
-        { "nextState", {{ "default" }} },
+        { "currentState", {{ func.currentState }} },
+        { "nextState", {{ func.nextState }} },
         { "inputs", inputs },
         { "outputs", outputs },
       }});

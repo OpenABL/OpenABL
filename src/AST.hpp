@@ -483,7 +483,7 @@ struct FunctionDeclaration : public Declaration {
   StatementListPtr stmts;
 
   // The following members are for step functions only
- 
+  bool isStep = false;
   // The type of the agent that is interacted with (type of agent
   // in for-near loop)
   AgentDeclaration *accessedAgent = nullptr;
@@ -495,8 +495,12 @@ struct FunctionDeclaration : public Declaration {
     : Declaration{loc}, returnType{returnType},
       name{name}, params{params}, stmts{stmts} {}
 
-  bool isStep() const { return accessedAgent != nullptr; }
   bool isMain() const { return name == "main"; }
+
+  AST::AgentDeclaration &stepAgent() const {
+    assert(isStep);
+    return *(*this->params)[0]->type->resolved.getAgentDecl();
+  }
 
   void accept(Visitor &);
   void print(Printer &);
@@ -557,6 +561,7 @@ struct Script : public Node {
   std::vector<AgentDeclaration *> agents;
   std::vector<ConstDeclaration *> consts;
   std::vector<FunctionDeclaration *> funcs;
+  SimulateStatement *simStmt = nullptr;
 
   Script(DeclarationList *decls, Location loc)
     : Node{loc}, decls{decls} {}

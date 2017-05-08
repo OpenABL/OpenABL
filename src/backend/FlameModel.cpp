@@ -2,18 +2,26 @@
 
 namespace OpenABL {
 
+static std::string getStateName(unsigned n) {
+  if (n == 0) {
+    return "start";
+  }
+
+  return std::to_string(n);
+}
+
 FlameModel FlameModel::generateFromScript(AST::Script &script) {
   FlameModel model;
+  if (!script.simStmt) {
+    return model;
+  }
 
-  for (const AST::FunctionDeclaration *func : script.funcs) {
-    if (!func->isStep()) {
-      continue;
-    }
-
+  std::map<const AST::AgentDeclaration *, unsigned> numStates;
+  auto stepFuncs = script.simStmt->stepFuncDecls;
+  for (const AST::FunctionDeclaration *func : stepFuncs) {
     AST::AgentDeclaration &accessedAgent = *func->accessedAgent;
     const auto &accessedMembers = func->accessedMembers;
-
-    AST::AgentDeclaration &stepAgent = *(*func->params)[0]->type->resolved.getAgentDecl();
+    AST::AgentDeclaration &stepAgent = func->stepAgent();
 
     // Generate a new message with all the members accessed by this step function
     FlameModel::Message msg;
@@ -30,6 +38,9 @@ FlameModel FlameModel::generateFromScript(AST::Script &script) {
     fnGen.name = func->name + "_gen";
     fnGen.outMsgName = msg.name;
     fnGen.agent = &accessedAgent;
+    unsigned &genState = numStates[&accessedAgent];
+    fnGen.currentState = getStateName(genState++);
+    fnGen.nextState = getStateName(genState);
     model.funcs.push_back(fnGen);
 
     // Add the step function itself
@@ -38,6 +49,9 @@ FlameModel FlameModel::generateFromScript(AST::Script &script) {
     fnStep.inMsgName = msg.name;
     fnStep.agent = &stepAgent;
     fnStep.func = func;
+    unsigned &stepState = numStates[&stepAgent];
+    fnStep.currentState = getStateName(stepState++);
+    fnStep.nextState = getStateName(stepState);
     model.funcs.push_back(fnStep);
   }
 

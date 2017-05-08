@@ -145,7 +145,7 @@ void FlamePrinter::print(AST::Script &script) {
   *this << "#include \"header.h\"\n\n";
 
   for (AST::FunctionDeclaration *func : script.funcs) {
-    if (func->isStep()) {
+    if (func->isStep) {
       // Step functions will be handled separately later
       continue;
     }
