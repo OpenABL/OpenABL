@@ -13,11 +13,11 @@ struct GenericCPrinter : public Printer {
   virtual void print(AST::VarExpression &);
   virtual void print(AST::UnaryOpExpression &);
   virtual void print(AST::BinaryOpExpression &);
-  virtual void print(AST::AssignExpression &);
   virtual void print(AST::TernaryExpression &);
   virtual void print(AST::MemberAccessExpression &);
   virtual void print(AST::Arg &);
   virtual void print(AST::ExpressionStatement &);
+  virtual void print(AST::AssignStatement &);
   virtual void print(AST::AssignOpStatement &);
   virtual void print(AST::BlockStatement &);
   virtual void print(AST::IfStatement &);

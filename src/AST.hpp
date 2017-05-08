@@ -186,17 +186,6 @@ struct BinaryOpExpression : public Expression {
   void print(Printer &);
 };
 
-struct AssignExpression : public Expression {
-  ExpressionPtr left;
-  ExpressionPtr right;
-
-  AssignExpression(Expression *left, Expression *right, Location loc)
-    : Expression{loc}, left{left}, right{right} {}
-
-  void accept(Visitor &);
-  void print(Printer &);
-};
-
 struct Arg : public Node {
   ExpressionPtr expr;
   ExpressionPtr outExpr;
@@ -309,6 +298,17 @@ struct ExpressionStatement : public Statement {
 
   ExpressionStatement(Expression *expr, Location loc)
     : Statement{loc}, expr{expr} {}
+
+  void accept(Visitor &);
+  void print(Printer &);
+};
+
+struct AssignStatement : public Statement {
+  ExpressionPtr left;
+  ExpressionPtr right;
+
+  AssignStatement(Expression *left, Expression *right, Location loc)
+    : Statement{loc}, left{left}, right{right} {}
 
   void accept(Visitor &);
   void print(Printer &);

@@ -209,6 +209,8 @@ statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
          | SIMULATE LPAREN expression RPAREN LBRACE ident_list RBRACE
              { $$ = new SimulateStatement($3, $6, @$); }
 
+         | expression ASSIGN expression SEMI
+             { $$ = new AssignStatement($1, $3, @$); }
          | expression ADD_ASSIGN expression SEMI
              { $$ = new AssignOpStatement(BinaryOp::ADD, $1, $3, @$); }
          | expression SUB_ASSIGN expression SEMI
@@ -307,9 +309,6 @@ expression: var { $$ = new VarExpression($1, @$); }
               { $$ = new BinaryOpExpression(BinaryOp::LOGICAL_OR, $1, $3, @$); }
           | expression DOTDOT expression
               { $$ = new BinaryOpExpression(BinaryOp::RANGE, $1, $3, @$); }
-
-          | expression ASSIGN expression
-              { $$ = new AssignExpression($1, $3, @$); }
           ;
 %%
 

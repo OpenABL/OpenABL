@@ -79,15 +79,6 @@ void CPrinter::print(AST::UnaryOpExpression &expr) {
 void CPrinter::print(AST::BinaryOpExpression &expr) {
   printBinaryOp(*this, expr.op, *expr.left, *expr.right);
 }
-void CPrinter::print(AST::AssignExpression &expr) {
-  if (expr.right->type.isAgent()) {
-    // Agent assignments are interpreted as copies, not reference assignments
-    *this << "(*" << *expr.left << " = *" << *expr.right << ")";
-    // TODO This can't be used as a return value. Forbid expression use of assignments?
-  } else {
-    GenericCPrinter::print(expr);
-  }
-}
 static void printTypeCtor(CPrinter &p, AST::CallExpression &expr) {
   Type t = expr.type;
   if (t.isVec()) {
@@ -145,6 +136,14 @@ void CPrinter::print(AST::NewArrayExpression &expr) {
   *this << ", " << *expr.sizeExpr << ")";
 }
 
+void CPrinter::print(AST::AssignStatement &expr) {
+  if (expr.right->type.isAgent()) {
+    // Agent assignments are interpreted as copies, not reference assignments
+    *this << "*" << *expr.left << " = *" << *expr.right << ";";
+  } else {
+    GenericCPrinter::print(expr);
+  }
+}
 void CPrinter::print(AST::AssignOpStatement &stmt) {
   *this << *stmt.left << " = ";
   printBinaryOp(*this, stmt.op, *stmt.left, *stmt.right);

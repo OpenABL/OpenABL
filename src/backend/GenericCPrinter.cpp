@@ -41,9 +41,6 @@ void GenericCPrinter::print(AST::BinaryOpExpression &expr) {
   *this << "(" << *expr.left << " "
         << AST::getBinaryOpSigil(expr.op) << " " << *expr.right << ")";
 }
-void GenericCPrinter::print(AST::AssignExpression &expr) {
-  *this << "(" << *expr.left << " = " << *expr.right << ")";
-}
 void GenericCPrinter::print(AST::TernaryExpression &expr) {
   *this << "(" << *expr.condExpr << " ? " << *expr.ifExpr << " : " << *expr.elseExpr << ")";
 }
@@ -73,6 +70,9 @@ void GenericCPrinter::printArgs(AST::CallExpression &expr) {
 
 void GenericCPrinter::print(AST::ExpressionStatement &stmt) {
   *this << *stmt.expr << ";";
+}
+void GenericCPrinter::print(AST::AssignStatement &expr) {
+  *this << *expr.left << " = " << *expr.right << ";";
 }
 void GenericCPrinter::print(AST::AssignOpStatement &stmt) {
   *this << *stmt.left << " " << AST::getBinaryOpSigil(stmt.op)

@@ -19,7 +19,6 @@ struct Printer {
   virtual void print(AST::VarExpression &) = 0;
   virtual void print(AST::UnaryOpExpression &) = 0;
   virtual void print(AST::BinaryOpExpression &) = 0;
-  virtual void print(AST::AssignExpression &) = 0;
   virtual void print(AST::Arg &) = 0;
   virtual void print(AST::CallExpression &) = 0;
   virtual void print(AST::MemberAccessExpression &) = 0;
@@ -28,6 +27,7 @@ struct Printer {
   virtual void print(AST::AgentCreationExpression &) = 0;
   virtual void print(AST::NewArrayExpression &) = 0;
   virtual void print(AST::ExpressionStatement &) = 0;
+  virtual void print(AST::AssignStatement &) = 0;
   virtual void print(AST::AssignOpStatement &) = 0;
   virtual void print(AST::BlockStatement &) = 0;
   virtual void print(AST::VarDeclarationStatement &) = 0;
