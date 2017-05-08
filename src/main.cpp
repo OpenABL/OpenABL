@@ -97,7 +97,11 @@ void printHelp() {
                "  -b, --backend      Backend (default: c)\n"
                "  -h, --help         Display this help\n"
                "  -i, --input        Input file\n"
-               "  -o, --output-dir   Output directory"
+               "  -o, --output-dir   Output directory\n\n"
+               "Available backends:\n"
+               " * c        (working)\n"
+               " * flame    (partially working)\n"
+               " * flamegpu (not working)"
             << std::endl;
 }
 

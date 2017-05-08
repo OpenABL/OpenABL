@@ -17,9 +17,9 @@ make -j4
 
 ## Running
 
-Examples are located in the `examples` directory. Currently only `examples/circle.abl` is working.
+Examples are located in the `examples` directory.
 
-To compile it using the C backend:
+To compile the `examples/circle.abl` example using the C backend:
 
 ```sh
 ./OpenABL -i ../examples/circle.abl -o ./output --backend c
@@ -48,4 +48,9 @@ Options:
   -h, --help         Display this help
   -i, --input        Input file
   -o, --output-dir   Output directory
+
+Available backends:
+ * c        (working)
+ * flame    (partially working)
+ * flamegpu (not working)
 ```
