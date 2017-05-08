@@ -106,12 +106,11 @@ static std::string createFunctionsFile(AST::Script &script, const FlameModel &mo
 
 void FlameBackend::generate(
     AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
-  (void) assetDir;
-
   FlameModel model = FlameModel::generateFromScript(script);
 
   writeToFile(outputDir + "/XMLModelFile.xml", createXmlModel(script, model));
   writeToFile(outputDir + "/functions.c", createFunctionsFile(script, model));
+  copyFile(assetDir + "/c/libabl.h", outputDir + "/libabl.h");
 }
 
 }

@@ -100,6 +100,9 @@ void GenericCPrinter::print(AST::ReturnStatement &stmt) {
     *this << "return;";
   }
 }
+void GenericCPrinter::print(AST::ConstDeclaration &decl) {
+  *this << *decl.type << " " << *decl.var << " = " << *decl.expr << ";";
+}
 
 void GenericCPrinter::print(AST::Param &param) {
   *this << *param.type << " " << *param.var;

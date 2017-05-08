@@ -23,6 +23,7 @@ struct GenericCPrinter : public Printer {
   virtual void print(AST::IfStatement &);
   virtual void print(AST::VarDeclarationStatement &);
   virtual void print(AST::ReturnStatement &);
+  virtual void print(AST::ConstDeclaration &);
   virtual void print(AST::Param &);
   virtual void print(AST::FunctionDeclaration &);
 

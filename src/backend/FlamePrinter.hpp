@@ -12,6 +12,9 @@ struct FlamePrinter : public GenericCPrinter {
   FlamePrinter(AST::Script &script, const FlameModel &model)
     : GenericCPrinter(script), script(script), model(model) {}
 
+  void print(AST::BinaryOpExpression &);
+  void print(AST::UnaryOpExpression &);
+  void print(AST::AssignOpStatement &);
   void print(AST::CallExpression &);
   void print(AST::MemberInitEntry &);
   void print(AST::AgentCreationExpression &);
@@ -23,7 +26,6 @@ struct FlamePrinter : public GenericCPrinter {
   void print(AST::ArrayType &);
   void print(AST::AgentMember &);
   void print(AST::AgentDeclaration &);
-  void print(AST::ConstDeclaration &);
   void print(AST::Script &);
 
 private:

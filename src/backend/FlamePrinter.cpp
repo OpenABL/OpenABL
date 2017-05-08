@@ -12,35 +12,76 @@ void FlamePrinter::print(AST::SimulateStatement &) {}
 void FlamePrinter::print(AST::ArrayType &) {}
 void FlamePrinter::print(AST::AgentMember &) {}
 void FlamePrinter::print(AST::AgentDeclaration &) {}
-void FlamePrinter::print(AST::ConstDeclaration &) {}
 
 void FlamePrinter::print(AST::SimpleType &type) {
   Type t = type.resolved;
-  switch (t.getTypeId()) {
-    case Type::VOID:
-    case Type::BOOL:
-    case Type::INT32:
-    case Type::FLOAT32:
-      *this << t;
-      return;
-    case Type::VEC2:
-      *this << "glm::vec2";
-      return;
-    case Type::VEC3:
-      *this << "glm::vec3";
-      return;
-    default:
-      assert(0);
+  *this << t;
+}
+
+static void printBinaryOp(FlamePrinter &p, AST::BinaryOp op,
+                          AST::Expression &left, AST::Expression &right) {
+  Type l = left.type;
+  Type r = right.type;
+  if (l.isVec() || r.isVec()) {
+    Type v = l.isVec() ? l : r;
+    p << (v.getTypeId() == Type::VEC2 ? "float2_" : "float3_");
+    switch (op) {
+      case AST::BinaryOp::ADD: p << "add"; break;
+      case AST::BinaryOp::SUB: p << "sub"; break;
+      case AST::BinaryOp::DIV: p << "div_scalar"; break;
+      case AST::BinaryOp::MUL:
+        p << "mul_scalar";
+        if (r.isVec()) {
+          // Normalize to right multiplication
+          // TODO Move into analysis
+          p << "(" << right << ", " << left << ")";
+          return;
+        }
+        break;
+      default:
+        assert(0);
+    }
+    p << "(" << left << ", " << right << ")";
+    return;
   }
+
+  p << "(" << left << " " << AST::getBinaryOpSigil(op) << " " << right << ")";
+}
+void FlamePrinter::print(AST::UnaryOpExpression &expr) {
+  Type t = expr.expr->type;
+  if (t.isVec()) {
+    if (expr.op == AST::UnaryOp::PLUS) {
+      // Nothing to do
+      *this << *expr.expr;
+    } else if (expr.op == AST::UnaryOp::MINUS) {
+      // Compile to multiplication by -1.0
+      AST::FloatLiteral negOne(-1.0, AST::Location());
+      printBinaryOp(*this, AST::BinaryOp::MUL, *expr.expr, negOne);
+    } else {
+      assert(0);
+    }
+    return;
+  }
+
+  GenericCPrinter::print(expr);
+}
+void FlamePrinter::print(AST::BinaryOpExpression &expr) {
+  printBinaryOp(*this, expr.op, *expr.left, *expr.right);
+}
+void FlamePrinter::print(AST::AssignOpStatement &stmt) {
+  *this << *stmt.left << " = ";
+  printBinaryOp(*this, stmt.op, *stmt.left, *stmt.right);
+  *this << ";";
 }
 
 static void printTypeCtor(FlamePrinter &p, AST::CallExpression &expr) {
   Type t = expr.type;
   if (t.isVec()) {
+    size_t numArgs = expr.args->size();
     if (t.getTypeId() == Type::VEC2) {
-      p << "glm::vec2";
+      p << (numArgs == 1 ? "float2_fill" : "float2_create");
     } else {
-      p << "glm::vec3";
+      p << (numArgs == 1 ? "float3_fill" : "float3_create");
     }
     p << "(";
     p.printArgs(expr);
@@ -49,15 +90,29 @@ static void printTypeCtor(FlamePrinter &p, AST::CallExpression &expr) {
     p << "(" << t << ") " << *(*expr.args)[0];
   }
 }
+static void printBuiltin(FlamePrinter &p, AST::CallExpression &expr) {
+  const FunctionSignature &sig = expr.calledSig;
+  // TODO
+  /*if (sig.name == "add") {
+    AST::AgentDeclaration *agent = sig.paramTypes[0].getAgentDecl();
+    p << "*DYN_ARRAY_PLACE(&agents.agents_" << agent->name
+      << ", " << agent->name << ") = " << *(*expr.args)[0];
+    return;
+  } else if (sig.name == "save") {
+    p << "save(&agents, agents_info, " << *(*expr.args)[0] << ")";
+    return;
+  }*/
+
+  p << sig.name;
+  p << "(";
+  p.printArgs(expr);
+  p << ")";
+}
 void FlamePrinter::print(AST::CallExpression &expr) {
   if (expr.isCtor()) {
     printTypeCtor(*this, expr);
   } else if (expr.isBuiltin()) {
-    // TODO
-    //printBuiltin(*this, expr);
-    *this << expr.name << "(";
-    this->printArgs(expr);
-    *this << ")";
+    printBuiltin(*this, expr);
   } else {
     *this << expr.name << "(";
     this->printArgs(expr);
@@ -91,7 +146,8 @@ static void extractMember(
   AST::Type &type = *member.type;
   const std::string &name = member.name;
   if (type.resolved.isVec()) {
-    p << Printer::nl << type << " " << toVar << "_" << name << " = " << type << "("
+    p << Printer::nl << type << " " << toVar << "_" << name << " = "
+      << type << "_create("
       << acc(fromVar, name + "_x") << ", "
       << acc(fromVar, name + "_y");
     if (type.resolved.getTypeId() == Type::VEC3) {
@@ -131,7 +187,7 @@ void FlamePrinter::print(AST::ForStatement &stmt) {
     *this << "START_" << upperMsgName << "_LOOP" << indent;
     extractMsgMembers(*this, msg, stmt.var->name);
     *this << nl << *stmt.stmt
-          << outdent << nl << "END_" << upperMsgName << "_LOOP";
+          << outdent << nl << "FINISH_" << upperMsgName << "_LOOP";
 
     // TODO What are our semantics on agent self-interaction?
     return;
@@ -142,7 +198,12 @@ void FlamePrinter::print(AST::ForStatement &stmt) {
 }
 
 void FlamePrinter::print(AST::Script &script) {
-  *this << "#include \"header.h\"\n\n";
+  *this << "#include \"header.h\"\n"
+        << "#include \"libabl.h\"\n\n";
+
+  for (AST::ConstDeclaration *decl : script.consts) {
+    *this << *decl << nl;
+  }
 
   for (AST::FunctionDeclaration *func : script.funcs) {
     if (func->isStep) {
