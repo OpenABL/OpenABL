@@ -14,6 +14,7 @@ struct FlamePrinter : public GenericCPrinter {
 
   void print(AST::BinaryOpExpression &);
   void print(AST::UnaryOpExpression &);
+  void print(AST::AssignStatement &);
   void print(AST::AssignOpStatement &);
   void print(AST::CallExpression &);
   void print(AST::MemberInitEntry &);

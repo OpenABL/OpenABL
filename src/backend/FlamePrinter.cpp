@@ -68,6 +68,29 @@ void FlamePrinter::print(AST::UnaryOpExpression &expr) {
 void FlamePrinter::print(AST::BinaryOpExpression &expr) {
   printBinaryOp(*this, expr.op, *expr.left, *expr.right);
 }
+
+void FlamePrinter::print(AST::AssignStatement &stmt) {
+  if (auto memAcc = dynamic_cast<AST::MemberAccessExpression *>(&*stmt.left)) {
+    if (memAcc->expr->type.isAgent()) {
+      // TODO We're assuming here that this is a write to the "out" variable (obviously wrong)
+      // Write to agent member (convert to set_* call)
+      const std::string &name = memAcc->member;
+      if (memAcc->type.isVec()) {
+        // TODO Prevent double evaluation of RHS?
+        *this << "set_" << name << "_x(" << *stmt.right << ".x);" << nl;
+        *this << "set_" << name << "_y(" << *stmt.right << ".y);";
+        if (memAcc->type.getTypeId() == Type::VEC3) {
+          *this << nl << "set_" << name << "_z(" << *stmt.right << ".z);";
+        }
+      } else {
+        *this << "set_" << name << "(" << *stmt.right << ");";
+      }
+      return;
+    }
+  }
+  GenericCPrinter::print(stmt);
+}
+
 void FlamePrinter::print(AST::AssignOpStatement &stmt) {
   *this << *stmt.left << " = ";
   printBinaryOp(*this, stmt.op, *stmt.left, *stmt.right);
