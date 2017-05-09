@@ -254,7 +254,7 @@ void FlamePrinter::print(AST::Script &script) {
       for (const AST::AgentMember *member : msg->members) {
         const std::string &name = member->name;
         if (!first) *this << ", ";
-        first = true;
+        first = false;
 
         // TODO reuse pushMembers() code?
         switch (member->type->resolved.getTypeId()) {

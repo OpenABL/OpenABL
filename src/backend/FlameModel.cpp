@@ -19,29 +19,32 @@ FlameModel FlameModel::generateFromScript(AST::Script &script) {
   std::map<const AST::AgentDeclaration *, unsigned> numStates;
   auto stepFuncs = script.simStmt->stepFuncDecls;
   for (const AST::FunctionDeclaration *func : stepFuncs) {
-    AST::AgentDeclaration &accessedAgent = *func->accessedAgent;
     const auto &accessedMembers = func->accessedMembers;
     AST::AgentDeclaration &stepAgent = func->stepAgent();
 
     // Generate a new message with all the members accessed by this step function
+    // If no members of other agents are accessed, we don't use the message
     FlameModel::Message msg;
-    msg.name = func->name + "_message";
-    for (const AST::AgentMemberPtr &member : *accessedAgent.members) {
-      if (accessedMembers.find(member->name) != accessedMembers.end()) {
-        msg.members.push_back(&*member);
+    if (func->accessedAgent) {
+      AST::AgentDeclaration &accessedAgent = *func->accessedAgent;
+      msg.name = func->name + "_message";
+      for (const AST::AgentMemberPtr &member : *accessedAgent.members) {
+        if (accessedMembers.find(member->name) != accessedMembers.end()) {
+          msg.members.push_back(&*member);
+        }
       }
-    }
-    model.messages.push_back(msg);
+      model.messages.push_back(msg);
 
-    // Add a function generating the message
-    FlameModel::Func fnGen;
-    fnGen.name = func->name + "_gen";
-    fnGen.outMsgName = msg.name;
-    fnGen.agent = &accessedAgent;
-    unsigned &genState = numStates[&accessedAgent];
-    fnGen.currentState = getStateName(genState++);
-    fnGen.nextState = getStateName(genState);
-    model.funcs.push_back(fnGen);
+      // Add a function generating the message
+      FlameModel::Func fnGen;
+      fnGen.name = func->name + "_gen";
+      fnGen.outMsgName = msg.name;
+      fnGen.agent = &accessedAgent;
+      unsigned &genState = numStates[&accessedAgent];
+      fnGen.currentState = getStateName(genState++);
+      fnGen.nextState = getStateName(genState);
+      model.funcs.push_back(fnGen);
+    }
 
     // Add the step function itself
     FlameModel::Func fnStep;
