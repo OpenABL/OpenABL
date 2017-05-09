@@ -36,6 +36,7 @@ std::map<std::string, std::unique_ptr<Backend>> getBackends() {
 
 struct Options {
   bool help;
+  bool lintOnly;
   std::string fileName;
   std::string backend;
   std::string outputDir;
@@ -63,6 +64,8 @@ static Options parseCliOptions(int argc, char **argv) {
       options.outputDir = argv[++i];
     } else if (arg == "-A" || arg == "--asset-dir") {
       options.assetDir = argv[++i];
+    } else if (arg == "--lint-only") {
+      options.lintOnly = true;
     } else {
       std::cerr << "Unknown option \"" << arg << "\"" << std::endl;
       return {};
@@ -72,6 +75,10 @@ static Options parseCliOptions(int argc, char **argv) {
   if (options.fileName.empty()) {
     std::cerr << "Missing input file (-i or --input)" << std::endl;
     return {};
+  }
+
+  if (options.lintOnly) {
+    return options;
   }
 
   if (options.outputDir.empty()) {
@@ -122,6 +129,29 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  OpenABL::ParserContext ctx(file);
+  if (!ctx.parse()) {
+    return 1;
+  }
+
+  OpenABL::AST::Script &script = *ctx.script;
+
+  int retval = 0;
+  OpenABL::ErrorStream err([&retval](const OpenABL::Error &err) {
+    std::cerr << err.msg << " on line " << err.loc.begin.line << std::endl;
+    retval = 1;
+  });
+
+  OpenABL::BuiltinFunctions funcs;
+  registerBuiltinFunctions(funcs);
+
+  OpenABL::AnalysisVisitor visitor(script, err, funcs);
+  script.accept(visitor);
+
+  if (options.lintOnly) {
+    return retval;
+  }
+
   if (!OpenABL::createDirectory(options.outputDir)) {
     std::cerr << "Failed to create directory \"" << options.outputDir << "\"." << std::endl;
     return 1;
@@ -141,26 +171,8 @@ int main(int argc, char **argv) {
   }
 
   OpenABL::Backend &backend = *it->second;
-
-  OpenABL::ParserContext ctx(file);
-  if (!ctx.parse()) {
-    return 1;
-  }
-
-  OpenABL::AST::Script &script = *ctx.script;
-
-  OpenABL::ErrorStream err([](const OpenABL::Error &err) {
-    std::cerr << err.msg << " on line " << err.loc.begin.line << std::endl;
-  });
-
-  OpenABL::BuiltinFunctions funcs;
-  registerBuiltinFunctions(funcs);
-
-  OpenABL::AnalysisVisitor visitor(script, err, funcs);
-  script.accept(visitor);
-
   backend.generate(script, options.outputDir, options.assetDir);
 
   fclose(file);
-  return 0;
+  return retval;
 }

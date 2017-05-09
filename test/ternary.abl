@@ -1,0 +1,7 @@
+void main() {
+  bool b = true;
+  int x = b ? 0 : 1;
+  float y = b ? 0 : 1.0;
+  float z = b ? 0.0 : 1;
+  int u = b ? 0 : "string";
+}

@@ -72,7 +72,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void leave(AST::Script &);
 
 private:
-  VarId declareVar(std::string, Type);
+  void declareVar(AST::Var &, Type);
   void pushVarScope();
   void popVarScope();
   Type resolveAstType(AST::Type &);

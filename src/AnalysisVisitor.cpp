@@ -1,6 +1,10 @@
 #include "AnalysisVisitor.hpp"
 #include "ErrorHandling.hpp"
 
+#define SKIP_INVALID(type) do { \
+  if (type.isInvalid()) { return; } \
+} while (0)
+
 namespace OpenABL {
 
 static Type tryResolveNameToSimpleType(const std::string &name) {
@@ -50,18 +54,15 @@ Type AnalysisVisitor::resolveAstType(AST::Type &type) {
   }
 }
 
-VarId AnalysisVisitor::declareVar(std::string name, Type type) {
-  auto it = varMap.find(name);
+void AnalysisVisitor::declareVar(AST::Var &var, Type type) {
+  auto it = varMap.find(var.name);
   if (it != varMap.end()) {
-    std::cout << "Cannot redeclare " << name << std::endl;
-    // TODO migrate to errstream
-    // TODO We need more specific location information for identifiers
+    err << "Cannot redeclare variable \"" << var.name << "\"" << var.loc;
   }
 
-  VarId id = VarId::make();
-  varMap.insert({ name, id });
-  scope.add(id, type);
-  return id;
+  var.id = VarId::make();
+  varMap.insert({ var.name, var.id });
+  scope.add(var.id, type);
 }
 
 void AnalysisVisitor::pushVarScope() {
@@ -150,7 +151,7 @@ bool isConstantExpression(const AST::Expression &expr) {
 }
 
 void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
-  decl.var->id = declareVar(decl.var->name, decl.type->resolved);
+  declareVar(*decl.var, decl.type->resolved);
 
   if (!isConstantExpression(*decl.expr)) {
     err << "Initializer of global constant must be a constant expression" << decl.expr->loc;
@@ -165,10 +166,13 @@ void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
   }
 };
 void AnalysisVisitor::leave(AST::VarDeclarationStatement &decl) {
-  decl.var->id = declareVar(decl.var->name, decl.type->resolved);
+  declareVar(*decl.var, decl.type->resolved);
   if (decl.initializer) {
     Type declType = decl.type->resolved;
     Type initType = decl.initializer->type;
+    SKIP_INVALID(declType);
+    SKIP_INVALID(initType);
+
     if (!initType.isPromotableTo(declType)) {
       err << "Trying to assign value of type " << initType
           << " to variable of type " << declType << decl.initializer->loc;
@@ -177,9 +181,9 @@ void AnalysisVisitor::leave(AST::VarDeclarationStatement &decl) {
 };
 
 void AnalysisVisitor::leave(AST::Param &param) {
-  param.var->id = declareVar(param.var->name, param.type->resolved);
+  declareVar(*param.var, param.type->resolved);
   if (param.outVar) {
-    param.outVar->id = declareVar(param.outVar->name, param.type->resolved);
+    declareVar(*param.outVar, param.type->resolved);
   }
 }
 
@@ -187,7 +191,7 @@ void AnalysisVisitor::enter(AST::ForStatement &stmt) {
   pushVarScope();
 
   Type declType = resolveAstType(*stmt.type); // Not resolved yet
-  stmt.var->id = declareVar(stmt.var->name, declType);
+  declareVar(*stmt.var, declType);
 
   // Handle for-near loops early, as we want to collect member accesses
   if (AST::CallExpression *call = dynamic_cast<AST::CallExpression *>(&*stmt.expr)) {
@@ -466,14 +470,14 @@ void AnalysisVisitor::leave(AST::UnaryOpExpression &expr) {
 void AnalysisVisitor::leave(AST::TernaryExpression &expr) {
   Type ifType = expr.ifExpr->type;
   Type elseType = expr.elseExpr->type;
-  if (ifType != elseType) {
-    // TODO type promotion
+  if (ifType.isPromotableTo(elseType)) {
+    expr.type = elseType;
+  } else if (elseType.isPromotableTo(ifType)) {
+    expr.type = ifType;
+  } else {
     err << "Branches of ternary operator have divergent types "
         << ifType << " and " << elseType << expr.loc;
-    return;
   }
-
-  expr.type = ifType;
 };
 
 static AST::AgentMember *findAgentMember(AST::AgentDeclaration &decl, const std::string &name) {

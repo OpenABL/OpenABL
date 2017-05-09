@@ -3,3 +3,5 @@ CMakeCache.txt
 Makefile
 *.cmake
 *.swp
+*.out
+*.diff
