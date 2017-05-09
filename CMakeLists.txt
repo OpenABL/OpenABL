@@ -6,12 +6,12 @@ set(OpenABL_SOURCES
     src/AST.cpp
     src/Analysis.cpp
     src/AnalysisVisitor.cpp
-	src/FileUtil.cpp
+    src/FileUtil.cpp
     src/main.cpp
     src/backend/GenericCPrinter.cpp
     src/backend/CBackend.cpp
     src/backend/CPrinter.cpp
-	src/backend/FlameModel.cpp
+    src/backend/FlameModel.cpp
     src/backend/FlameBackend.cpp
     src/backend/FlamePrinter.cpp
     src/backend/FlameGPUBackend.cpp

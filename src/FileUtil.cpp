@@ -1,5 +1,3 @@
-#pragma once
-
 #include "FileUtil.hpp"
 #include <fstream>
 #include <sys/stat.h>
