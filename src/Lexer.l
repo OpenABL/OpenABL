@@ -1,4 +1,4 @@
-%option noyywrap nounput noinput batch
+%option noyywrap nounput noinput nounistd never-interactive batch
 %x ST_COMMENT
 
 %{
