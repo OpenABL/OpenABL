@@ -562,6 +562,7 @@ struct Script : public Node {
   std::vector<ConstDeclaration *> consts;
   std::vector<FunctionDeclaration *> funcs;
   SimulateStatement *simStmt = nullptr;
+  FunctionDeclaration *mainFunc = nullptr;
 
   Script(DeclarationList *decls, Location loc)
     : Node{loc}, decls{decls} {}

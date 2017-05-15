@@ -4,13 +4,27 @@
 
 namespace OpenABL {
 
+static std::string generateMainCode(AST::Script &script) {
+  MasonPrinter printer(script);
+  printer.print(script);
+  return printer.extractStr();
+}
+
+static std::string generateAgentCode(AST::Script &script, AST::AgentDeclaration &agent) {
+  MasonPrinter printer(script);
+  printer.print(agent);
+  return printer.extractStr();
+}
+
 void MasonBackend::generate(
     AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
   (void) assetDir;
 
-  MasonPrinter printer(script);
-  printer.print(script);
-  writeToFile(outputDir + "/Main.java", printer.extractStr());
+  writeToFile(outputDir + "/Sim.java", generateMainCode(script));
+
+  for (AST::AgentDeclaration *agent : script.agents) {
+    writeToFile(outputDir + "/" + agent->name + ".java", generateAgentCode(script, *agent));
+  }
 }
 
 }

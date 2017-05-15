@@ -122,6 +122,10 @@ void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
   currentFunc = &decl;
 
   script.funcs.push_back(&decl);
+
+  if (decl.isMain()) {
+    script.mainFunc = &decl;
+  }
 };
 void AnalysisVisitor::leave(AST::FunctionDeclaration &) {
   popVarScope();
