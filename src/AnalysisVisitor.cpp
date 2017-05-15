@@ -54,7 +54,7 @@ Type AnalysisVisitor::resolveAstType(AST::Type &type) {
   }
 }
 
-void AnalysisVisitor::declareVar(AST::Var &var, Type type) {
+void AnalysisVisitor::declareVar(AST::Var &var, Type type, bool isConst) {
   auto it = varMap.find(var.name);
   if (it != varMap.end()) {
     err << "Cannot redeclare variable \"" << var.name << "\"" << var.loc;
@@ -62,7 +62,7 @@ void AnalysisVisitor::declareVar(AST::Var &var, Type type) {
 
   var.id = VarId::make();
   varMap.insert({ var.name, var.id });
-  scope.add(var.id, type);
+  scope.add(var.id, type, isConst);
 }
 
 void AnalysisVisitor::pushVarScope() {
@@ -100,8 +100,6 @@ void AnalysisVisitor::leave(AST::Var &) {};
 void AnalysisVisitor::leave(AST::Arg &) {};
 void AnalysisVisitor::leave(AST::MemberInitEntry &) {};
 void AnalysisVisitor::leave(AST::ExpressionStatement &) {};
-void AnalysisVisitor::leave(AST::AssignStatement &) {};
-void AnalysisVisitor::leave(AST::AssignOpStatement &) {};
 void AnalysisVisitor::leave(AST::IfStatement &) {};
 void AnalysisVisitor::leave(AST::SimpleType &) {};
 void AnalysisVisitor::leave(AST::ArrayType &) {};
@@ -155,7 +153,7 @@ bool isConstantExpression(const AST::Expression &expr) {
 }
 
 void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
-  declareVar(*decl.var, decl.type->resolved);
+  declareVar(*decl.var, decl.type->resolved, true);
 
   if (!isConstantExpression(*decl.expr)) {
     err << "Initializer of global constant must be a constant expression" << decl.expr->loc;
@@ -170,7 +168,7 @@ void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
   }
 };
 void AnalysisVisitor::leave(AST::VarDeclarationStatement &decl) {
-  declareVar(*decl.var, decl.type->resolved);
+  declareVar(*decl.var, decl.type->resolved, false);
   if (decl.initializer) {
     Type declType = decl.type->resolved;
     Type initType = decl.initializer->type;
@@ -185,9 +183,9 @@ void AnalysisVisitor::leave(AST::VarDeclarationStatement &decl) {
 };
 
 void AnalysisVisitor::leave(AST::Param &param) {
-  declareVar(*param.var, param.type->resolved);
+  declareVar(*param.var, param.type->resolved, true);
   if (param.outVar) {
-    declareVar(*param.outVar, param.type->resolved);
+    declareVar(*param.outVar, param.type->resolved, false);
   }
 }
 
@@ -195,7 +193,7 @@ void AnalysisVisitor::enter(AST::ForStatement &stmt) {
   pushVarScope();
 
   Type declType = resolveAstType(*stmt.type); // Not resolved yet
-  declareVar(*stmt.var, declType);
+  declareVar(*stmt.var, declType, true);
 
   // Handle for-near loops early, as we want to collect member accesses
   if (AST::CallExpression *call = dynamic_cast<AST::CallExpression *>(&*stmt.expr)) {
@@ -321,6 +319,36 @@ void AnalysisVisitor::leave(AST::ReturnStatement &stmt) {
       return;
     }
   }
+};
+
+static bool isConst(const Scope &scope, AST::Expression &expr) {
+  if (auto var = dynamic_cast<AST::VarExpression *>(&expr)) {
+    const ScopeEntry &entry = scope.get(var->var->id);
+    return entry.isConst;
+  } else if (auto access = dynamic_cast<AST::MemberAccessExpression *>(&expr)) {
+    return isConst(scope, *access->expr);
+  } else {
+    // This should only be called on "variable-like" expressions
+    assert(0);
+  }
+}
+
+void AnalysisVisitor::leave(AST::AssignStatement &stmt) {
+  if (isConst(scope, *stmt.left)) {
+    err << "Trying to assign to immutable variable" << stmt.left->loc;
+    return;
+  }
+
+  // TODO Check type compatibility
+};
+
+void AnalysisVisitor::leave(AST::AssignOpStatement &stmt) {
+  if (isConst(scope, *stmt.left)) {
+    err << "Trying to assign to immutable variable" << stmt.left->loc;
+    return;
+  }
+
+  // TODO Check type compatibility
 };
 
 void AnalysisVisitor::enter(AST::AgentDeclaration &decl) {

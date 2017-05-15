@@ -5,7 +5,7 @@ for file in $DIR/*.abl; do
   baseName=${file%.abl}
   echo $file
   $DIR/../OpenABL --lint-only -i $file 2> $baseName.out
-  rm $baseName.diff
+  rm -f $baseName.diff
   if [ -f $baseName.exp ]; then
     diff -b $baseName.out $baseName.exp > $baseName.diff
 	if [ $? -ne 0 ]; then

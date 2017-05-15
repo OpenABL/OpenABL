@@ -152,13 +152,14 @@ std::ostream &operator<<(std::ostream &, const Type &);
 
 struct ScopeEntry {
   Type type;
+  bool isConst;
 };
 
 struct Scope {
-  void add(VarId var, Type type) {
-    vars.insert({ var, ScopeEntry { type } });
+  void add(VarId var, Type type, bool isConst) {
+    vars.insert({ var, ScopeEntry { type, isConst } });
   }
-  ScopeEntry &get(VarId var) {
+  const ScopeEntry &get(VarId var) const {
     auto it = vars.find(var);
     return it->second;
   }

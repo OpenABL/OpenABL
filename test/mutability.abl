@@ -1,0 +1,16 @@
+agent Agent {
+  position float2 pos;
+}
+
+float pi = 3.14;
+
+void step_fn(Agent in -> out) {
+  in.pos = float2(0);
+}
+
+void main() {
+  pi = 4.0;
+  pi += 1.0;
+
+  simulate(10) { step_fn }
+}
