@@ -74,7 +74,7 @@ void CPrinter::print(AST::UnaryOpExpression &expr) {
     return;
   }
 
-  GenericCPrinter::print(expr);
+  GenericPrinter::print(expr);
 }
 void CPrinter::print(AST::BinaryOpExpression &expr) {
   printBinaryOp(*this, expr.op, *expr.left, *expr.right);
@@ -136,12 +136,20 @@ void CPrinter::print(AST::NewArrayExpression &expr) {
   *this << ", " << *expr.sizeExpr << ")";
 }
 
+void CPrinter::print(AST::MemberAccessExpression &expr) {
+  if (expr.expr->type.isAgent()) {
+    *this << *expr.expr << "->" << expr.member;
+  } else {
+    GenericPrinter::print(expr);
+  }
+}
+
 void CPrinter::print(AST::AssignStatement &expr) {
   if (expr.right->type.isAgent()) {
     // Agent assignments are interpreted as copies, not reference assignments
     *this << "*" << *expr.left << " = *" << *expr.right << ";";
   } else {
-    GenericCPrinter::print(expr);
+    GenericPrinter::print(expr);
   }
 }
 void CPrinter::print(AST::AssignOpStatement &stmt) {
@@ -168,7 +176,7 @@ void CPrinter::print(AST::VarDeclarationStatement &stmt) {
     *this << ";" << nl;
     *this << type << " " << *stmt.var << " = &" << sLabel << ";";
   } else {
-    GenericCPrinter::print(stmt);
+    GenericPrinter::print(stmt);
   }
 }
 

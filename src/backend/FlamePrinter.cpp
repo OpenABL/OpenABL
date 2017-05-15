@@ -63,7 +63,7 @@ void FlamePrinter::print(AST::UnaryOpExpression &expr) {
     return;
   }
 
-  GenericCPrinter::print(expr);
+  GenericPrinter::print(expr);
 }
 void FlamePrinter::print(AST::BinaryOpExpression &expr) {
   printBinaryOp(*this, expr.op, *expr.left, *expr.right);
@@ -88,7 +88,7 @@ void FlamePrinter::print(AST::AssignStatement &stmt) {
       return;
     }
   }
-  GenericCPrinter::print(stmt);
+  GenericPrinter::print(stmt);
 }
 
 void FlamePrinter::print(AST::AssignOpStatement &stmt) {
@@ -150,7 +150,7 @@ void FlamePrinter::print(AST::MemberAccessExpression &expr) {
     // TODO Assuming its the current agent for now, obviously wrong
     *this << "get_" << expr.member << "()" ;
   } else {
-    GenericCPrinter::print(expr);
+    GenericPrinter::print(expr);
   }
 }
 

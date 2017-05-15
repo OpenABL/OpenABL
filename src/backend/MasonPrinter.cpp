@@ -2,20 +2,7 @@
 
 namespace OpenABL {
 
-static void printStringLiteral(Printer &p, const std::string &str) {
-  p << '"';
-  for (char c : str) {
-    if (c == '"' || c == '\\') {
-      p << '\\' << c;
-    } else {
-      p << c;
-    }
-  }
-  p << '"';
-}
-
 void MasonPrinter::print(AST::Arg &) {}
-void MasonPrinter::print(AST::CallExpression &) {}
 void MasonPrinter::print(AST::MemberInitEntry &) {}
 void MasonPrinter::print(AST::AgentCreationExpression &) {}
 void MasonPrinter::print(AST::NewArrayExpression &) {}
@@ -46,28 +33,6 @@ void MasonPrinter::print(AST::SimpleType &type) {
   }
 }
 
-void MasonPrinter::print(AST::Var &var) {
-  *this << var.name;
-}
-
-void MasonPrinter::print(AST::Literal &lit) {
-  if (AST::IntLiteral *ilit = dynamic_cast<AST::IntLiteral *>(&lit)) {
-    *this << ilit->value;
-  } else if (AST::FloatLiteral *flit = dynamic_cast<AST::FloatLiteral *>(&lit)) {
-    *this << flit->value;
-  } else if (AST::BoolLiteral *blit = dynamic_cast<AST::BoolLiteral *>(&lit)) {
-    *this << blit->value;
-  } else if (AST::StringLiteral *slit = dynamic_cast<AST::StringLiteral *>(&lit)) {
-    printStringLiteral(*this, slit->value);
-  } else {
-    assert(0);
-  }
-}
-
-void MasonPrinter::print(AST::VarExpression &expr) {
-  *this << *expr.var;
-}
-
 void MasonPrinter::print(AST::MemberAccessExpression &expr) {
   if (expr.expr->type.isAgent()) {
     // TODO Right now this simply refers to "this", which is obviously
@@ -75,30 +40,30 @@ void MasonPrinter::print(AST::MemberAccessExpression &expr) {
     // needs to be implemented here
     *this << "this." << expr.member;
   } else {
-    *this << *expr.expr << "." << expr.member;
+    GenericPrinter::print(expr);
   }
 }
 
 void MasonPrinter::print(AST::UnaryOpExpression &expr) {
-  *this << "(" << AST::getUnaryOpSigil(expr.op) << *expr.expr << ")";
+  // TODO Handle vec operations
+  GenericPrinter::print(expr);
 }
 
 void MasonPrinter::print(AST::BinaryOpExpression &expr) {
-  *this << "(" << *expr.left << " " << AST::getBinaryOpSigil(expr.op)
-        << " " << *expr.right << ")";
+  // TODO Handle vec operations
+  GenericPrinter::print(expr);
 }
 
-void MasonPrinter::print(AST::TernaryExpression &expr) {
-  *this << "(" << *expr.condExpr << " ? " << *expr.ifExpr << " : " << *expr.elseExpr << ")";
-}
-
-void MasonPrinter::print(AST::AssignStatement &stmt) {
-  *this << *stmt.left << " = " << *stmt.right << ";";
+void MasonPrinter::print(AST::CallExpression &expr) {
+  // TODO This is wrong for Java
+  *this << expr.name << "(";
+  this->printArgs(expr);
+  *this << ")";
 }
 
 void MasonPrinter::print(AST::AssignOpStatement &stmt) {
-  *this << *stmt.left << " " << AST::getBinaryOpSigil(stmt.op)
-        << "= " << *stmt.right << ";";
+  // TODO Handle vec operations
+  GenericPrinter::print(stmt);
 }
 
 void MasonPrinter::print(AST::VarDeclarationStatement &stmt) {
@@ -107,22 +72,6 @@ void MasonPrinter::print(AST::VarDeclarationStatement &stmt) {
     *this << " = " << *stmt.initializer;
   }
   *this << ";";
-}
-
-void MasonPrinter::print(AST::ReturnStatement &stmt) {
-  if (stmt.expr) {
-    *this << "return " << *stmt.expr << ";";
-  } else {
-    *this << "return;";
-  }
-}
-
-void MasonPrinter::print(AST::BlockStatement &stmt) {
-  *this << "{" << indent << *stmt.stmts << outdent << nl << "}";
-}
-
-void MasonPrinter::print(AST::IfStatement &stmt) {
-  *this << "if (" << *stmt.condExpr << ") " << *stmt.ifStmt;
 }
 
 void MasonPrinter::print(AST::ForStatement &stmt) {

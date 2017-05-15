@@ -1,15 +1,15 @@
 #pragma once
 
 #include "AST.hpp"
-#include "GenericCPrinter.hpp"
+#include "GenericPrinter.hpp"
 
 namespace OpenABL {
 
-struct CPrinter : public GenericCPrinter {
-  using GenericCPrinter::print;
+struct CPrinter : public GenericPrinter {
+  using GenericPrinter::print;
 
   CPrinter(AST::Script &script)
-    : GenericCPrinter(script), script(script) {}
+    : GenericPrinter(script), script(script) {}
 
   void print(AST::UnaryOpExpression &);
   void print(AST::BinaryOpExpression &);
@@ -17,6 +17,7 @@ struct CPrinter : public GenericCPrinter {
   void print(AST::MemberInitEntry &);
   void print(AST::AgentCreationExpression &);
   void print(AST::NewArrayExpression &);
+  void print(AST::MemberAccessExpression &);
   void print(AST::AssignStatement &);
   void print(AST::AssignOpStatement &);
   void print(AST::VarDeclarationStatement &);

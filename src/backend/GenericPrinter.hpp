@@ -5,8 +5,12 @@
 
 namespace OpenABL {
 
-struct GenericCPrinter : public Printer {
-  GenericCPrinter(AST::Script &script) : script(script) {}
+/* This printer provides printing implementations for parts
+ * that are likely to be the same for many backends. Of course,
+ * it is possible to overwrite the default implementations with
+ * more specific ones. */
+struct GenericPrinter : public Printer {
+  GenericPrinter(AST::Script &script) : script(script) {}
 
   virtual void print(AST::Var &);
   virtual void print(AST::Literal &);

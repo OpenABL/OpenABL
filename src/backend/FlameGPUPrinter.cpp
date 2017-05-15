@@ -62,8 +62,10 @@ void FlameGPUPrinter::print(AST::CallExpression &expr) {
 void FlameGPUPrinter::print(AST::MemberAccessExpression &expr) {
   if (expr.type.isVec()) {
     *this << *expr.expr << "_" << expr.member;
+  } else if (expr.type.isAgent()) {
+    *this << *expr.expr << "->" << expr.member;
   } else {
-    GenericCPrinter::print(expr);
+    GenericPrinter::print(expr);
   }
 }
 
