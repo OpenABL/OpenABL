@@ -24,4 +24,9 @@ struct FlameGPUBackend : public Backend {
                 const std::string &assetDir);
 };
 
+struct MasonBackend : public Backend {
+  void generate(AST::Script &script, const std::string &targetDir,
+                const std::string &assetDir);
+};
+
 }
