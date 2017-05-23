@@ -9,9 +9,9 @@ struct MasonPrinter : public GenericPrinter {
   MasonPrinter(AST::Script &script)
     : GenericPrinter(script), script(script) {}
 
+  void print(const AST::VarExpression &);
   void print(const AST::UnaryOpExpression &);
   void print(const AST::BinaryOpExpression &);
-  void print(const AST::Arg &);
   void print(const AST::CallExpression &);
   void print(const AST::MemberAccessExpression &);
   void print(const AST::MemberInitEntry &);

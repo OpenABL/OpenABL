@@ -2,7 +2,6 @@
 
 namespace OpenABL {
 
-void MasonPrinter::print(const AST::Arg &) {}
 void MasonPrinter::print(const AST::MemberInitEntry &) {}
 void MasonPrinter::print(const AST::AgentCreationExpression &) {}
 void MasonPrinter::print(const AST::NewArrayExpression &) {}
@@ -10,14 +9,17 @@ void MasonPrinter::print(const AST::ExpressionStatement &) {}
 void MasonPrinter::print(const AST::SimulateStatement &) {}
 void MasonPrinter::print(const AST::ArrayType &) {}
 void MasonPrinter::print(const AST::Param &) {}
-void MasonPrinter::print(const AST::ConstDeclaration &) {}
 
 void MasonPrinter::print(const AST::SimpleType &type) {
   switch (type.resolved.getTypeId()) {
     case Type::BOOL:
     case Type::INT32:
-    case Type::FLOAT32:
       *this << type.resolved;
+      return;
+    case Type::FLOAT32:
+      // TODO Use doubles, because that's what Mason uses.
+      // Need to figure out what semantics we want to have here.
+      *this << "double";
       return;
     case Type::STRING:
       *this << "String";
@@ -30,6 +32,15 @@ void MasonPrinter::print(const AST::SimpleType &type) {
       return;
     default:
       assert(0); // TODO
+  }
+}
+
+void MasonPrinter::print(const AST::VarExpression &expr) {
+  const ScopeEntry &entry = script.scope.get(expr.var->id);
+  if (entry.isGlobal) {
+    *this << "Sim." << *expr.var;
+  } else {
+    *this << *expr.var;
   }
 }
 
@@ -52,7 +63,7 @@ static void printBinaryOp(MasonPrinter &p, AST::BinaryOp op,
     p << left << ".";
     switch (op) {
       case AST::BinaryOp::ADD: p << "add"; break;
-      case AST::BinaryOp::SUB: p << "sub"; break;
+      case AST::BinaryOp::SUB: p << "subtract"; break;
       case AST::BinaryOp::MUL: p << "multiply"; break;
       case AST::BinaryOp::DIV:
         // Emulate divide via multiply by reciprocal
@@ -68,25 +79,75 @@ static void printBinaryOp(MasonPrinter &p, AST::BinaryOp op,
   p << "(" << left << " " << AST::getBinaryOpSigil(op) << " " << right << ")";
 }
 
-void MasonPrinter::print(const AST::UnaryOpExpression &expr) {
-  // TODO Handle vec operations
-  GenericPrinter::print(expr);
-}
-
 void MasonPrinter::print(const AST::BinaryOpExpression &expr) {
   printBinaryOp(*this, expr.op, *expr.left, * expr.right);
 }
 
+static void printTypeCtor(MasonPrinter &p, const AST::CallExpression &expr) {
+  Type t = expr.type;
+  if (t.isVec()) {
+    int vecWidth = t.getTypeId() == Type::VEC2 ? 2 : 3;
+    p << "new Double" << vecWidth << "D(";
+    size_t numArgs = expr.args->size();
+    if (numArgs == 1) {
+      // TODO Multiple evaluation
+      const AST::Expression &arg = *expr.getArg(0).expr;
+      p << arg << ", " << arg;
+      if (vecWidth == 3) {
+        p << ", " << arg;
+      }
+    } else {
+      p.printArgs(expr);
+    }
+    p << ")";
+  } else {
+    p << "(" << t << ") " << *expr.getArg(0).expr;
+  }
+}
+static void printBuiltin(MasonPrinter &p, const AST::CallExpression &expr) {
+  if (expr.name == "dist") {
+    p << expr.getArg(0) << ".distance(" << expr.getArg(1) << ")";
+  } else {
+    // TODO Handle other builtins
+    const FunctionSignature &sig = expr.calledSig;
+    p << sig.name << "(";
+    p.printArgs(expr);
+    p << ")";
+  }
+}
 void MasonPrinter::print(const AST::CallExpression &expr) {
-  // TODO This is wrong for Java
-  *this << expr.name << "(";
-  this->printArgs(expr);
-  *this << ")";
+  if (expr.isCtor()) {
+    printTypeCtor(*this, expr);
+  } else if (expr.isBuiltin()) {
+    printBuiltin(*this, expr);
+  } else {
+    *this << "Sim." << expr.name << "(";
+    this->printArgs(expr);
+    *this << ")";
+  }
 }
 
 void MasonPrinter::print(const AST::AssignOpStatement &stmt) {
-  // TODO Handle vec operations
-  GenericPrinter::print(stmt);
+  *this << *stmt.left << " = ";
+  printBinaryOp(*this, stmt.op, *stmt.left, *stmt.right);
+  *this << ";";
+}
+
+void MasonPrinter::print(const AST::UnaryOpExpression &expr) {
+  Type t = expr.expr->type;
+  if (t.isVec()) {
+    if (expr.op == AST::UnaryOp::PLUS) {
+      // Nothing to do
+      *this << *expr.expr;
+    } else if (expr.op == AST::UnaryOp::MINUS) {
+      *this << *expr.expr << ".negate()";
+    } else {
+      assert(0);
+    }
+    return;
+  }
+
+  GenericPrinter::print(expr);
 }
 
 void MasonPrinter::print(const AST::VarDeclarationStatement &stmt) {
@@ -100,7 +161,15 @@ void MasonPrinter::print(const AST::VarDeclarationStatement &stmt) {
 void MasonPrinter::print(const AST::ForStatement &stmt) {
   if (stmt.isNear()) {
     // TODO Nearest neighbor loop
-    *this << "for (TODO) " << *stmt.stmt;
+    AST::AgentDeclaration *agentDecl = stmt.type->resolved.getAgentDecl();
+    std::string iLabel = makeAnonLabel();
+    *this << "Bag _bag = _sim.env.getAllObjects();" << nl
+          << "for (int " << iLabel << " = 0; " << iLabel << " < _bag.size(); "
+          << iLabel << "++) {" << indent << nl
+          << agentDecl->name << " " << *stmt.var << " = "
+          << "(" << agentDecl->name << ") _bag.get(" << iLabel << ");" << nl
+          << *stmt.stmt
+          << outdent << nl << "}";
   } else if (stmt.isRange()) {
     // TODO Range loop
   } else {
@@ -108,9 +177,15 @@ void MasonPrinter::print(const AST::ForStatement &stmt) {
   }
 }
 
+void MasonPrinter::print(const AST::ConstDeclaration &decl) {
+  *this << "public static " << *decl.type << " " << *decl.var
+        << " = " << *decl.expr << ";";
+}
+
 void MasonPrinter::print(const AST::FunctionDeclaration &decl) {
   if (decl.isStep) {
-    *this << "public void " << decl.name << "(SimState state) {" << indent
+    *this << "public void " << decl.name << "(SimState state) {" << indent << nl
+          << "Sim _sim = (Sim) state;"
           << *decl.stmts
           << outdent << nl << "}";
     // TODO
@@ -124,7 +199,8 @@ void MasonPrinter::print(const AST::AgentMember &member) {
 }
 
 void MasonPrinter::print(const AST::AgentDeclaration &decl) {
-  *this << "import sim.util.*;" << nl << nl
+  *this << "import sim.engine.*;" << nl
+        << "import sim.util.*;" << nl << nl
         << "public class " << decl.name << " {" << indent
         << *decl.members << nl << nl;
 
@@ -152,8 +228,17 @@ void MasonPrinter::print(const AST::AgentDeclaration &decl) {
 }
 
 void MasonPrinter::print(const AST::Script &script) {
-  *this << "import sim.engine.*;\n\n"
-        << "public class Sim extends SimState {" << indent << nl
+  *this << "import sim.engine.*;" << nl
+        << "import sim.util.*;" << nl
+        << "import sim.field.continuous.*;" << nl << nl
+        << "public class Sim extends SimState {" << indent << nl;
+
+  for (const AST::ConstDeclaration *decl : script.consts) {
+    *this << *decl << nl;
+  }
+
+  // TODO Replace dummy bounds
+  *this << "public Continuous2D env = new Continuous2D(1.0, 100, 100);" << nl << nl
         << "public Sim(long seed) {" << indent << nl
         << "super(seed);"
         << outdent << nl << "}" << nl << nl

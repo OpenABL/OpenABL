@@ -54,7 +54,7 @@ Type AnalysisVisitor::resolveAstType(AST::Type &type) {
   }
 }
 
-void AnalysisVisitor::declareVar(AST::Var &var, Type type, bool isConst) {
+void AnalysisVisitor::declareVar(AST::Var &var, Type type, bool isConst, bool isGlobal) {
   auto it = varMap.find(var.name);
   if (it != varMap.end()) {
     err << "Cannot redeclare variable \"" << var.name << "\"" << var.loc;
@@ -62,7 +62,7 @@ void AnalysisVisitor::declareVar(AST::Var &var, Type type, bool isConst) {
 
   var.id = VarId::make();
   varMap.insert({ var.name, var.id });
-  scope.add(var.id, type, isConst);
+  scope.add(var.id, type, isConst, isGlobal);
 }
 
 void AnalysisVisitor::pushVarScope() {
@@ -153,7 +153,7 @@ bool isConstantExpression(const AST::Expression &expr) {
 }
 
 void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
-  declareVar(*decl.var, decl.type->resolved, true);
+  declareVar(*decl.var, decl.type->resolved, true, true);
 
   if (!isConstantExpression(*decl.expr)) {
     err << "Initializer of global constant must be a constant expression" << decl.expr->loc;
@@ -168,7 +168,7 @@ void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
   }
 };
 void AnalysisVisitor::leave(AST::VarDeclarationStatement &decl) {
-  declareVar(*decl.var, decl.type->resolved, false);
+  declareVar(*decl.var, decl.type->resolved, false, false);
   if (decl.initializer) {
     Type declType = decl.type->resolved;
     Type initType = decl.initializer->type;
@@ -183,9 +183,9 @@ void AnalysisVisitor::leave(AST::VarDeclarationStatement &decl) {
 };
 
 void AnalysisVisitor::leave(AST::Param &param) {
-  declareVar(*param.var, param.type->resolved, true);
+  declareVar(*param.var, param.type->resolved, true, false);
   if (param.outVar) {
-    declareVar(*param.outVar, param.type->resolved, false);
+    declareVar(*param.outVar, param.type->resolved, false, false);
   }
 }
 
@@ -193,7 +193,7 @@ void AnalysisVisitor::enter(AST::ForStatement &stmt) {
   pushVarScope();
 
   Type declType = resolveAstType(*stmt.type); // Not resolved yet
-  declareVar(*stmt.var, declType, true);
+  declareVar(*stmt.var, declType, true, false);
 
   // Handle for-near loops early, as we want to collect member accesses
   if (AST::CallExpression *call = dynamic_cast<AST::CallExpression *>(&*stmt.expr)) {

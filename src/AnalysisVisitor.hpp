@@ -10,7 +10,7 @@ namespace OpenABL {
 
 struct AnalysisVisitor : public AST::Visitor {
   AnalysisVisitor(AST::Script &script, ErrorStream &err, BuiltinFunctions &builtins)
-    : script(script), builtins(builtins), err(err) {}
+    : script(script), builtins(builtins), err(err), scope(script.scope) {}
 
   void enter(AST::Var &);
   void enter(AST::Literal &);
@@ -72,7 +72,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void leave(AST::Script &);
 
 private:
-  void declareVar(AST::Var &, Type, bool isConst);
+  void declareVar(AST::Var &, Type, bool isConst, bool isGlobal);
   void pushVarScope();
   void popVarScope();
   Type resolveAstType(AST::Type &);
@@ -92,7 +92,7 @@ private:
   // This is inefficient, but we don't actually care...
   std::stack<VarMap> varMapStack;
   // Information about *all* variables, indexed by unique VarId's
-  Scope scope;
+  Scope &scope;
   // Current function
   AST::FunctionDeclaration *currentFunc;
   // Declared agents by name

@@ -223,6 +223,10 @@ struct CallExpression : public Expression {
 
   bool isBuiltin() const { return kind == Kind::BUILTIN; }
   bool isCtor() const { return kind == Kind::CTOR; }
+
+  const AST::Arg &getArg(size_t n) const {
+    return *(*args)[n];
+  }
 };
 
 struct MemberAccessExpression : public Expression {
@@ -558,6 +562,8 @@ struct ConstDeclaration : public Declaration {
 struct Script : public Node {
   DeclarationListPtr decls;
 
+  // Populated during analysis
+  Scope scope;
   std::vector<AgentDeclaration *> agents;
   std::vector<ConstDeclaration *> consts;
   std::vector<FunctionDeclaration *> funcs;

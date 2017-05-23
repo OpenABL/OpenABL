@@ -153,11 +153,12 @@ std::ostream &operator<<(std::ostream &, const Type &);
 struct ScopeEntry {
   Type type;
   bool isConst;
+  bool isGlobal;
 };
 
 struct Scope {
-  void add(VarId var, Type type, bool isConst) {
-    vars.insert({ var, ScopeEntry { type, isConst } });
+  void add(VarId var, Type type, bool isConst, bool isGlobal) {
+    vars.insert({ var, ScopeEntry { type, isConst, isGlobal } });
   }
   const ScopeEntry &get(VarId var) const {
     auto it = vars.find(var);
