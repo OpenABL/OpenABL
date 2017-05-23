@@ -220,35 +220,35 @@ void Script::accept(Visitor &visitor) {
   visitor.leave(*this);
 }
 
-void Var::print(Printer &printer) { printer.print(*this); }
-void Literal::print(Printer &printer) { printer.print(*this); }
-void VarExpression::print(Printer &printer) { printer.print(*this); }
-void UnaryOpExpression::print(Printer &printer) { printer.print(*this); }
-void BinaryOpExpression::print(Printer &printer) { printer.print(*this); }
-void Arg::print(Printer &printer) { printer.print(*this); }
-void CallExpression::print(Printer &printer) { printer.print(*this); }
-void MemberAccessExpression::print(Printer &printer) { printer.print(*this); }
-void TernaryExpression::print(Printer &printer) { printer.print(*this); }
-void MemberInitEntry::print(Printer &printer) { printer.print(*this); }
-void AgentCreationExpression::print(Printer &printer) { printer.print(*this); }
-void NewArrayExpression::print(Printer &printer) { printer.print(*this); }
-void ExpressionStatement::print(Printer &printer) { printer.print(*this); }
-void AssignStatement::print(Printer &printer) { printer.print(*this); }
-void AssignOpStatement::print(Printer &printer) { printer.print(*this); }
-void BlockStatement::print(Printer &printer) { printer.print(*this); }
-void VarDeclarationStatement::print(Printer &printer) { printer.print(*this); }
-void IfStatement::print(Printer &printer) { printer.print(*this); }
-void ForStatement::print(Printer &printer) { printer.print(*this); }
-void SimulateStatement::print(Printer &printer) { printer.print(*this); }
-void ReturnStatement::print(Printer &printer) { printer.print(*this); }
-void SimpleType::print(Printer &printer) { printer.print(*this); }
-void ArrayType::print(Printer &printer) { printer.print(*this); }
-void Param::print(Printer &printer) { printer.print(*this); }
-void FunctionDeclaration::print(Printer &printer) { printer.print(*this); }
-void AgentMember::print(Printer &printer) { printer.print(*this); }
-void AgentDeclaration::print(Printer &printer) { printer.print(*this); }
-void ConstDeclaration::print(Printer &printer) { printer.print(*this); }
-void Script::print(Printer &printer) { printer.print(*this); }
+void Var::print(Printer &printer) const { printer.print(*this); }
+void Literal::print(Printer &printer) const { printer.print(*this); }
+void VarExpression::print(Printer &printer) const { printer.print(*this); }
+void UnaryOpExpression::print(Printer &printer) const { printer.print(*this); }
+void BinaryOpExpression::print(Printer &printer) const { printer.print(*this); }
+void Arg::print(Printer &printer) const { printer.print(*this); }
+void CallExpression::print(Printer &printer) const { printer.print(*this); }
+void MemberAccessExpression::print(Printer &printer) const { printer.print(*this); }
+void TernaryExpression::print(Printer &printer) const { printer.print(*this); }
+void MemberInitEntry::print(Printer &printer) const { printer.print(*this); }
+void AgentCreationExpression::print(Printer &printer) const { printer.print(*this); }
+void NewArrayExpression::print(Printer &printer) const { printer.print(*this); }
+void ExpressionStatement::print(Printer &printer) const { printer.print(*this); }
+void AssignStatement::print(Printer &printer) const { printer.print(*this); }
+void AssignOpStatement::print(Printer &printer) const { printer.print(*this); }
+void BlockStatement::print(Printer &printer) const { printer.print(*this); }
+void VarDeclarationStatement::print(Printer &printer) const { printer.print(*this); }
+void IfStatement::print(Printer &printer) const { printer.print(*this); }
+void ForStatement::print(Printer &printer) const { printer.print(*this); }
+void SimulateStatement::print(Printer &printer) const { printer.print(*this); }
+void ReturnStatement::print(Printer &printer) const { printer.print(*this); }
+void SimpleType::print(Printer &printer) const { printer.print(*this); }
+void ArrayType::print(Printer &printer) const { printer.print(*this); }
+void Param::print(Printer &printer) const { printer.print(*this); }
+void FunctionDeclaration::print(Printer &printer) const { printer.print(*this); }
+void AgentMember::print(Printer &printer) const { printer.print(*this); }
+void AgentDeclaration::print(Printer &printer) const { printer.print(*this); }
+void ConstDeclaration::print(Printer &printer) const { printer.print(*this); }
+void Script::print(Printer &printer) const { printer.print(*this); }
 
 }
 }

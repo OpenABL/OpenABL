@@ -14,48 +14,48 @@ static void printStringLiteral(Printer &p, const std::string &str) {
   p << '"';
 }
 
-void GenericPrinter::print(AST::Var &var) {
+void GenericPrinter::print(const AST::Var &var) {
   *this << var.name;
 }
-void GenericPrinter::print(AST::Literal &lit) {
-  if (AST::IntLiteral *ilit = dynamic_cast<AST::IntLiteral *>(&lit)) {
+void GenericPrinter::print(const AST::Literal &lit) {
+  if (const AST::IntLiteral *ilit = dynamic_cast<const AST::IntLiteral *>(&lit)) {
     *this << ilit->value;
-  } else if (AST::FloatLiteral *flit = dynamic_cast<AST::FloatLiteral *>(&lit)) {
+  } else if (const AST::FloatLiteral *flit = dynamic_cast<const AST::FloatLiteral *>(&lit)) {
     *this << flit->value;
-  } else if (AST::BoolLiteral *blit = dynamic_cast<AST::BoolLiteral *>(&lit)) {
+  } else if (const AST::BoolLiteral *blit = dynamic_cast<const AST::BoolLiteral *>(&lit)) {
     *this << blit->value;
-  } else if (AST::StringLiteral *slit = dynamic_cast<AST::StringLiteral *>(&lit)) {
+  } else if (const AST::StringLiteral *slit = dynamic_cast<const AST::StringLiteral *>(&lit)) {
     printStringLiteral(*this, slit->value);
   } else {
     assert(0);
   }
 }
 
-void GenericPrinter::print(AST::VarExpression &expr) {
+void GenericPrinter::print(const AST::VarExpression &expr) {
   *this << *expr.var;
 }
-void GenericPrinter::print(AST::UnaryOpExpression &expr) {
+void GenericPrinter::print(const AST::UnaryOpExpression &expr) {
   *this << "(" << AST::getUnaryOpSigil(expr.op) << *expr.expr << ")";
 }
-void GenericPrinter::print(AST::BinaryOpExpression &expr) {
+void GenericPrinter::print(const AST::BinaryOpExpression &expr) {
   *this << "(" << *expr.left << " "
         << AST::getBinaryOpSigil(expr.op) << " " << *expr.right << ")";
 }
-void GenericPrinter::print(AST::TernaryExpression &expr) {
+void GenericPrinter::print(const AST::TernaryExpression &expr) {
   *this << "(" << *expr.condExpr << " ? " << *expr.ifExpr << " : " << *expr.elseExpr << ")";
 }
-void GenericPrinter::print(AST::MemberAccessExpression &expr) {
+void GenericPrinter::print(const AST::MemberAccessExpression &expr) {
   *this << *expr.expr << "." << expr.member;
 }
 
-void GenericPrinter::print(AST::Arg &arg) {
+void GenericPrinter::print(const AST::Arg &arg) {
   *this << *arg.expr;
   if (arg.outExpr) {
     *this << ", " << *arg.outExpr;
   }
 }
 
-void GenericPrinter::printArgs(AST::CallExpression &expr) {
+void GenericPrinter::printArgs(const AST::CallExpression &expr) {
   bool first = true;
   for (const AST::ArgPtr &arg : *expr.args) {
     if (!first) *this << ", ";
@@ -64,49 +64,49 @@ void GenericPrinter::printArgs(AST::CallExpression &expr) {
   }
 }
 
-void GenericPrinter::print(AST::ExpressionStatement &stmt) {
+void GenericPrinter::print(const AST::ExpressionStatement &stmt) {
   *this << *stmt.expr << ";";
 }
-void GenericPrinter::print(AST::AssignStatement &expr) {
+void GenericPrinter::print(const AST::AssignStatement &expr) {
   *this << *expr.left << " = " << *expr.right << ";";
 }
-void GenericPrinter::print(AST::AssignOpStatement &stmt) {
+void GenericPrinter::print(const AST::AssignOpStatement &stmt) {
   *this << *stmt.left << " " << AST::getBinaryOpSigil(stmt.op)
         << "= " << *stmt.right << ";";
 }
 
-void GenericPrinter::print(AST::BlockStatement &stmt) {
+void GenericPrinter::print(const AST::BlockStatement &stmt) {
   *this << "{" << indent << *stmt.stmts << outdent << nl << "}";
 }
-void GenericPrinter::print(AST::IfStatement &stmt) {
+void GenericPrinter::print(const AST::IfStatement &stmt) {
   *this << "if (" << *stmt.condExpr << ") " << *stmt.ifStmt;
 }
 
-void GenericPrinter::print(AST::VarDeclarationStatement &stmt) {
+void GenericPrinter::print(const AST::VarDeclarationStatement &stmt) {
     *this << *stmt.type << " " << *stmt.var;
     if (stmt.initializer) {
       *this << " = " << *stmt.initializer;
     }
     *this << ";";
 }
-void GenericPrinter::print(AST::ReturnStatement &stmt) {
+void GenericPrinter::print(const AST::ReturnStatement &stmt) {
   if (stmt.expr) {
     *this << "return " << *stmt.expr << ";";
   } else {
     *this << "return;";
   }
 }
-void GenericPrinter::print(AST::ConstDeclaration &decl) {
+void GenericPrinter::print(const AST::ConstDeclaration &decl) {
   *this << *decl.type << " " << *decl.var << " = " << *decl.expr << ";";
 }
 
-void GenericPrinter::print(AST::Param &param) {
+void GenericPrinter::print(const AST::Param &param) {
   *this << *param.type << " " << *param.var;
   if (param.outVar) {
     *this << ", " << *param.type << " " << *param.outVar;
   }
 }
-void GenericPrinter::print(AST::FunctionDeclaration &decl) {
+void GenericPrinter::print(const AST::FunctionDeclaration &decl) {
   if (decl.returnType) {
     *this << *decl.returnType;
   } else {

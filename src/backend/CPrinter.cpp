@@ -40,15 +40,7 @@ static void printBinaryOp(CPrinter &p, AST::BinaryOp op,
       case AST::BinaryOp::ADD: p << "add"; break;
       case AST::BinaryOp::SUB: p << "sub"; break;
       case AST::BinaryOp::DIV: p << "div_scalar"; break;
-      case AST::BinaryOp::MUL:
-        p << "mul_scalar";
-        if (r.isVec()) {
-          // Normalize to right multiplication
-          // TODO Move into analysis
-          p << "(" << right << ", " << left << ")";
-          return;
-        }
-        break;
+      case AST::BinaryOp::MUL: p << "mul_scalar"; break;
       default:
         assert(0);
     }
@@ -58,7 +50,7 @@ static void printBinaryOp(CPrinter &p, AST::BinaryOp op,
 
   p << "(" << left << " " << AST::getBinaryOpSigil(op) << " " << right << ")";
 }
-void CPrinter::print(AST::UnaryOpExpression &expr) {
+void CPrinter::print(const AST::UnaryOpExpression &expr) {
   Type t = expr.expr->type;
   if (t.isVec()) {
     if (expr.op == AST::UnaryOp::PLUS) {
@@ -76,10 +68,10 @@ void CPrinter::print(AST::UnaryOpExpression &expr) {
 
   GenericPrinter::print(expr);
 }
-void CPrinter::print(AST::BinaryOpExpression &expr) {
+void CPrinter::print(const AST::BinaryOpExpression &expr) {
   printBinaryOp(*this, expr.op, *expr.left, *expr.right);
 }
-static void printTypeCtor(CPrinter &p, AST::CallExpression &expr) {
+static void printTypeCtor(CPrinter &p, const AST::CallExpression &expr) {
   Type t = expr.type;
   if (t.isVec()) {
     size_t numArgs = expr.args->size();
@@ -95,7 +87,7 @@ static void printTypeCtor(CPrinter &p, AST::CallExpression &expr) {
     p << "(" << t << ") " << *(*expr.args)[0];
   }
 }
-static void printBuiltin(CPrinter &p, AST::CallExpression &expr) {
+static void printBuiltin(CPrinter &p, const AST::CallExpression &expr) {
   const FunctionSignature &sig = expr.calledSig;
   if (sig.name == "add") {
     AST::AgentDeclaration *agent = sig.paramTypes[0].getAgentDecl();
@@ -112,7 +104,7 @@ static void printBuiltin(CPrinter &p, AST::CallExpression &expr) {
   p.printArgs(expr);
   p << ")";
 }
-void CPrinter::print(AST::CallExpression &expr) {
+void CPrinter::print(const AST::CallExpression &expr) {
   if (expr.isCtor()) {
     printTypeCtor(*this, expr);
   } else if (expr.isBuiltin()) {
@@ -123,20 +115,20 @@ void CPrinter::print(AST::CallExpression &expr) {
     *this << ")";
   }
 }
-void CPrinter::print(AST::MemberInitEntry &entry) {
+void CPrinter::print(const AST::MemberInitEntry &entry) {
   *this << "." << entry.name << " = " << *entry.expr << ",";
 }
-void CPrinter::print(AST::AgentCreationExpression &expr) {
+void CPrinter::print(const AST::AgentCreationExpression &expr) {
   *this << "(" << expr.name << ") {" << indent
         << *expr.members << outdent << nl << "}";
 }
-void CPrinter::print(AST::NewArrayExpression &expr) {
+void CPrinter::print(const AST::NewArrayExpression &expr) {
   *this << "DYN_ARRAY_CREATE_FIXED(";
   printStorageType(*this, expr.elemType->resolved);
   *this << ", " << *expr.sizeExpr << ")";
 }
 
-void CPrinter::print(AST::MemberAccessExpression &expr) {
+void CPrinter::print(const AST::MemberAccessExpression &expr) {
   if (expr.expr->type.isAgent()) {
     *this << *expr.expr << "->" << expr.member;
   } else {
@@ -144,7 +136,7 @@ void CPrinter::print(AST::MemberAccessExpression &expr) {
   }
 }
 
-void CPrinter::print(AST::AssignStatement &expr) {
+void CPrinter::print(const AST::AssignStatement &expr) {
   if (expr.right->type.isAgent()) {
     // Agent assignments are interpreted as copies, not reference assignments
     *this << "*" << *expr.left << " = *" << *expr.right << ";";
@@ -152,12 +144,12 @@ void CPrinter::print(AST::AssignStatement &expr) {
     GenericPrinter::print(expr);
   }
 }
-void CPrinter::print(AST::AssignOpStatement &stmt) {
+void CPrinter::print(const AST::AssignOpStatement &stmt) {
   *this << *stmt.left << " = ";
   printBinaryOp(*this, stmt.op, *stmt.left, *stmt.right);
   *this << ";";
 }
-void CPrinter::print(AST::VarDeclarationStatement &stmt) {
+void CPrinter::print(const AST::VarDeclarationStatement &stmt) {
   Type type = stmt.type->resolved;
   if (typeRequiresStorage(type)) {
     // Type requires a separate variable for storage.
@@ -180,7 +172,7 @@ void CPrinter::print(AST::VarDeclarationStatement &stmt) {
   }
 }
 
-static void printRangeFor(CPrinter &p, AST::ForStatement &stmt) {
+static void printRangeFor(CPrinter &p, const AST::ForStatement &stmt) {
   std::string eLabel = p.makeAnonLabel();
   auto range = stmt.getRange();
   p << "for (int " << *stmt.var << " = " << range.first
@@ -188,7 +180,7 @@ static void printRangeFor(CPrinter &p, AST::ForStatement &stmt) {
     << *stmt.var << " < " << eLabel << "; ++" << *stmt.var << ") " << *stmt.stmt;
 }
 
-void CPrinter::print(AST::ForStatement &stmt) {
+void CPrinter::print(const AST::ForStatement &stmt) {
   if (stmt.isRange()) {
     printRangeFor(*this, stmt);
     return;
@@ -233,7 +225,7 @@ void CPrinter::print(AST::ForStatement &stmt) {
   *this << ", " << iLabel << ");" << nl
         << *stmt.stmt << outdent << nl << "}";
 }
-void CPrinter::print(AST::SimulateStatement &stmt) {
+void CPrinter::print(const AST::SimulateStatement &stmt) {
   std::string tLabel = makeAnonLabel();
   *this << "for (int " << tLabel << " = 0; "
         << tLabel << " < " << *stmt.timestepsExpr << "; "
@@ -278,13 +270,13 @@ void CPrinter::print(AST::SimulateStatement &stmt) {
   *this << outdent << nl << "}";
   // TODO Cleanup memory
 }
-void CPrinter::print(AST::SimpleType &type) {
+void CPrinter::print(const AST::SimpleType &type) {
   *this << type.resolved;
 }
-void CPrinter::print(AST::ArrayType &type) {
+void CPrinter::print(const AST::ArrayType &type) {
   *this << type.resolved;
 }
-void CPrinter::print(AST::AgentMember &member) {
+void CPrinter::print(const AST::AgentMember &member) {
   *this << *member.type << " " << member.name << ";";
 }
 
@@ -299,7 +291,7 @@ static void printTypeIdentifier(CPrinter &p, Type type) {
     default: assert(0);
   }
 }
-void CPrinter::print(AST::AgentDeclaration &decl) {
+void CPrinter::print(const AST::AgentDeclaration &decl) {
   *this << "typedef struct {" << indent
         << *decl.members << outdent << nl
         << "} " << decl.name << ";" << nl;
@@ -314,10 +306,10 @@ void CPrinter::print(AST::AgentDeclaration &decl) {
   }
   *this << "{ TYPE_END, sizeof(" << decl.name << "), NULL }" << outdent << nl << "};" << nl;
 }
-void CPrinter::print(AST::ConstDeclaration &decl) {
+void CPrinter::print(const AST::ConstDeclaration &decl) {
   *this << *decl.type << " " << *decl.var << " = " << *decl.expr << ";";
 }
-void CPrinter::print(AST::Script &script) {
+void CPrinter::print(const AST::Script &script) {
   *this << "#include \"libabl.h\"" << nl << nl;
 
   // First declare all agents

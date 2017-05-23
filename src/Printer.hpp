@@ -14,35 +14,35 @@ struct Printer {
     return str.str();
   }
 
-  virtual void print(AST::Var &) = 0;
-  virtual void print(AST::Literal &) = 0;
-  virtual void print(AST::VarExpression &) = 0;
-  virtual void print(AST::UnaryOpExpression &) = 0;
-  virtual void print(AST::BinaryOpExpression &) = 0;
-  virtual void print(AST::Arg &) = 0;
-  virtual void print(AST::CallExpression &) = 0;
-  virtual void print(AST::MemberAccessExpression &) = 0;
-  virtual void print(AST::TernaryExpression &) = 0;
-  virtual void print(AST::MemberInitEntry &) = 0;
-  virtual void print(AST::AgentCreationExpression &) = 0;
-  virtual void print(AST::NewArrayExpression &) = 0;
-  virtual void print(AST::ExpressionStatement &) = 0;
-  virtual void print(AST::AssignStatement &) = 0;
-  virtual void print(AST::AssignOpStatement &) = 0;
-  virtual void print(AST::BlockStatement &) = 0;
-  virtual void print(AST::VarDeclarationStatement &) = 0;
-  virtual void print(AST::IfStatement &) = 0;
-  virtual void print(AST::ForStatement &) = 0;
-  virtual void print(AST::SimulateStatement &) = 0;
-  virtual void print(AST::ReturnStatement &) = 0;
-  virtual void print(AST::SimpleType &) = 0;
-  virtual void print(AST::ArrayType &) = 0;
-  virtual void print(AST::Param &) = 0;
-  virtual void print(AST::FunctionDeclaration &) = 0;
-  virtual void print(AST::AgentMember &) = 0;
-  virtual void print(AST::AgentDeclaration &) = 0;
-  virtual void print(AST::ConstDeclaration &) = 0;
-  virtual void print(AST::Script &) = 0;
+  virtual void print(const AST::Var &) = 0;
+  virtual void print(const AST::Literal &) = 0;
+  virtual void print(const AST::VarExpression &) = 0;
+  virtual void print(const AST::UnaryOpExpression &) = 0;
+  virtual void print(const AST::BinaryOpExpression &) = 0;
+  virtual void print(const AST::Arg &) = 0;
+  virtual void print(const AST::CallExpression &) = 0;
+  virtual void print(const AST::MemberAccessExpression &) = 0;
+  virtual void print(const AST::TernaryExpression &) = 0;
+  virtual void print(const AST::MemberInitEntry &) = 0;
+  virtual void print(const AST::AgentCreationExpression &) = 0;
+  virtual void print(const AST::NewArrayExpression &) = 0;
+  virtual void print(const AST::ExpressionStatement &) = 0;
+  virtual void print(const AST::AssignStatement &) = 0;
+  virtual void print(const AST::AssignOpStatement &) = 0;
+  virtual void print(const AST::BlockStatement &) = 0;
+  virtual void print(const AST::VarDeclarationStatement &) = 0;
+  virtual void print(const AST::IfStatement &) = 0;
+  virtual void print(const AST::ForStatement &) = 0;
+  virtual void print(const AST::SimulateStatement &) = 0;
+  virtual void print(const AST::ReturnStatement &) = 0;
+  virtual void print(const AST::SimpleType &) = 0;
+  virtual void print(const AST::ArrayType &) = 0;
+  virtual void print(const AST::Param &) = 0;
+  virtual void print(const AST::FunctionDeclaration &) = 0;
+  virtual void print(const AST::AgentMember &) = 0;
+  virtual void print(const AST::AgentDeclaration &) = 0;
+  virtual void print(const AST::ConstDeclaration &) = 0;
+  virtual void print(const AST::Script &) = 0;
 
   static Printer &indent(Printer &p) {
     p.indentLevel++;
@@ -58,7 +58,7 @@ struct Printer {
     return p;
   }
 
-  Printer &operator <<(AST::Node &node) {
+  Printer &operator <<(const AST::Node &node) {
     node.print(*this); return *this;
   }
 
@@ -75,7 +75,7 @@ struct Printer {
   }
 
   template<typename T>
-  typename std::enable_if<!std::is_convertible<T, AST::Node &>::value, Printer &>::type
+  typename std::enable_if<!std::is_convertible<T, const AST::Node &>::value, Printer &>::type
   operator <<(T &&a) {
     str << a; return *this;
   }

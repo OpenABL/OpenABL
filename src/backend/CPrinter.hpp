@@ -11,24 +11,24 @@ struct CPrinter : public GenericPrinter {
   CPrinter(AST::Script &script)
     : GenericPrinter(script), script(script) {}
 
-  void print(AST::UnaryOpExpression &);
-  void print(AST::BinaryOpExpression &);
-  void print(AST::CallExpression &);
-  void print(AST::MemberInitEntry &);
-  void print(AST::AgentCreationExpression &);
-  void print(AST::NewArrayExpression &);
-  void print(AST::MemberAccessExpression &);
-  void print(AST::AssignStatement &);
-  void print(AST::AssignOpStatement &);
-  void print(AST::VarDeclarationStatement &);
-  void print(AST::ForStatement &);
-  void print(AST::SimulateStatement &);
-  void print(AST::SimpleType &);
-  void print(AST::ArrayType &);
-  void print(AST::AgentMember &);
-  void print(AST::AgentDeclaration &);
-  void print(AST::ConstDeclaration &);
-  void print(AST::Script &);
+  void print(const AST::UnaryOpExpression &);
+  void print(const AST::BinaryOpExpression &);
+  void print(const AST::CallExpression &);
+  void print(const AST::MemberInitEntry &);
+  void print(const AST::AgentCreationExpression &);
+  void print(const AST::NewArrayExpression &);
+  void print(const AST::MemberAccessExpression &);
+  void print(const AST::AssignStatement &);
+  void print(const AST::AssignOpStatement &);
+  void print(const AST::VarDeclarationStatement &);
+  void print(const AST::ForStatement &);
+  void print(const AST::SimulateStatement &);
+  void print(const AST::SimpleType &);
+  void print(const AST::ArrayType &);
+  void print(const AST::AgentMember &);
+  void print(const AST::AgentDeclaration &);
+  void print(const AST::ConstDeclaration &);
+  void print(const AST::Script &);
 
 private:
   AST::Script &script;

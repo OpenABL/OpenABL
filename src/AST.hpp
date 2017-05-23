@@ -24,7 +24,7 @@ struct Node {
   Node(Location loc) : loc{loc} {}
 
   virtual void accept(Visitor &) = 0;
-  virtual void print(Printer &) = 0;
+  virtual void print(Printer &) const = 0;
   virtual ~Node() {}
 };
 
@@ -36,7 +36,7 @@ struct Var : public Node {
     : Node{loc}, name{name} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 using VarPtr = std::unique_ptr<Var>;
@@ -56,7 +56,7 @@ struct Literal : public Expression {
   Literal(Location loc) : Expression{loc} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 using LiteralPtr = std::unique_ptr<Literal>;
@@ -96,7 +96,7 @@ struct VarExpression : public Expression {
     : Expression{loc}, var{var} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 enum class UnaryOp {
@@ -124,7 +124,7 @@ struct UnaryOpExpression : public Expression {
     : Expression{loc}, op{op}, expr{expr} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 enum class BinaryOp {
@@ -183,7 +183,7 @@ struct BinaryOpExpression : public Expression {
     : Expression{loc}, op{op}, left{left}, right{right} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct Arg : public Node {
@@ -194,7 +194,7 @@ struct Arg : public Node {
     : Node{loc}, expr{expr}, outExpr{outExpr} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 using ArgPtr = std::unique_ptr<Arg>;
@@ -219,7 +219,7 @@ struct CallExpression : public Expression {
     : Expression{loc}, name{name}, args{args}, kind{Kind::USER} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 
   bool isBuiltin() const { return kind == Kind::BUILTIN; }
   bool isCtor() const { return kind == Kind::CTOR; }
@@ -233,7 +233,7 @@ struct MemberAccessExpression : public Expression {
     : Expression{loc}, expr{expr}, member{member} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct TernaryExpression : public Expression {
@@ -245,7 +245,7 @@ struct TernaryExpression : public Expression {
     : Expression{loc}, condExpr{condExpr}, ifExpr{ifExpr}, elseExpr{elseExpr} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct MemberInitEntry : public Node {
@@ -256,7 +256,7 @@ struct MemberInitEntry : public Node {
     : Node{loc}, name{name}, expr{expr} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 using MemberInitEntryPtr = std::unique_ptr<MemberInitEntry>;
@@ -271,7 +271,7 @@ struct AgentCreationExpression : public Expression {
     : Expression{loc}, name{name}, members{members} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct NewArrayExpression : public Expression {
@@ -282,7 +282,7 @@ struct NewArrayExpression : public Expression {
     : Expression{loc}, elemType{elemType}, sizeExpr{sizeExpr} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct Statement : public Node {
@@ -300,7 +300,7 @@ struct ExpressionStatement : public Statement {
     : Statement{loc}, expr{expr} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct AssignStatement : public Statement {
@@ -311,7 +311,7 @@ struct AssignStatement : public Statement {
     : Statement{loc}, left{left}, right{right} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct AssignOpStatement : public Statement {
@@ -323,7 +323,7 @@ struct AssignOpStatement : public Statement {
     : Statement{loc}, op{op}, left{left}, right{right} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct BlockStatement : public Statement {
@@ -333,7 +333,7 @@ struct BlockStatement : public Statement {
     : Statement{loc}, stmts{stmts} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct VarDeclarationStatement : public Statement {
@@ -345,7 +345,7 @@ struct VarDeclarationStatement : public Statement {
     : Statement{loc}, type{type}, var{var}, initializer{initializer} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct IfStatement : public Statement {
@@ -357,7 +357,7 @@ struct IfStatement : public Statement {
     : Statement{loc}, condExpr{condExpr}, ifStmt{ifStmt}, elseStmt{elseStmt} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct ForStatement : public Statement {
@@ -379,7 +379,7 @@ struct ForStatement : public Statement {
     : Statement{loc}, type{type}, var{var}, expr{expr}, stmt{stmt}, kind{Kind::NORMAL} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 
   bool isRange() const { return kind == Kind::RANGE; }
   std::pair<Expression &, Expression &> getRange() const {
@@ -412,7 +412,7 @@ struct SimulateStatement : public Statement {
     : Statement{loc}, timestepsExpr{timestepsExpr}, stepFuncs{stepFuncs} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct ReturnStatement : public Statement {
@@ -422,7 +422,7 @@ struct ReturnStatement : public Statement {
     : Statement{loc}, expr{expr} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct Type : public Node {
@@ -438,7 +438,7 @@ struct SimpleType : public Type {
     : Type{loc}, name{name} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct ArrayType : public Type {
@@ -448,7 +448,7 @@ struct ArrayType : public Type {
     : Type{loc}, type{type} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct Param : public Node {
@@ -460,7 +460,7 @@ struct Param : public Node {
     : Node{loc}, type{type}, var{var}, outVar{outVar} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 using ParamPtr = std::unique_ptr<Param>;
@@ -503,7 +503,7 @@ struct FunctionDeclaration : public Declaration {
   }
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 struct AgentMember : public Node {
@@ -515,7 +515,7 @@ struct AgentMember : public Node {
     : Node{loc}, isPosition{isPosition}, type{type}, name{name} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 using AgentMemberPtr = std::unique_ptr<AgentMember>;
@@ -530,7 +530,7 @@ struct AgentDeclaration : public Declaration {
     : Declaration{loc}, name{name}, members{members} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 
   AgentMember *getPositionMember() const {
     for (AgentMemberPtr &member : *members) {
@@ -551,7 +551,7 @@ struct ConstDeclaration : public Declaration {
     : Declaration{loc}, type{type}, var{var}, expr{expr} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 /* AST root node */
@@ -568,7 +568,7 @@ struct Script : public Node {
     : Node{loc}, decls{decls} {}
 
   void accept(Visitor &);
-  void print(Printer &);
+  void print(Printer &) const;
 };
 
 }

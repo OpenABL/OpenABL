@@ -5,15 +5,15 @@ namespace OpenABL {
 // TODO Deduplicate with FlameGPUPrinter!
 // This is a lot of copy&paste
 
-void FlamePrinter::print(AST::MemberInitEntry &) {}
-void FlamePrinter::print(AST::AgentCreationExpression &) {}
-void FlamePrinter::print(AST::NewArrayExpression &) {}
-void FlamePrinter::print(AST::SimulateStatement &) {}
-void FlamePrinter::print(AST::ArrayType &) {}
-void FlamePrinter::print(AST::AgentMember &) {}
-void FlamePrinter::print(AST::AgentDeclaration &) {}
+void FlamePrinter::print(const AST::MemberInitEntry &) {}
+void FlamePrinter::print(const AST::AgentCreationExpression &) {}
+void FlamePrinter::print(const AST::NewArrayExpression &) {}
+void FlamePrinter::print(const AST::SimulateStatement &) {}
+void FlamePrinter::print(const AST::ArrayType &) {}
+void FlamePrinter::print(const AST::AgentMember &) {}
+void FlamePrinter::print(const AST::AgentDeclaration &) {}
 
-void FlamePrinter::print(AST::SimpleType &type) {
+void FlamePrinter::print(const AST::SimpleType &type) {
   Type t = type.resolved;
   *this << t;
 }
@@ -47,7 +47,7 @@ static void printBinaryOp(FlamePrinter &p, AST::BinaryOp op,
 
   p << "(" << left << " " << AST::getBinaryOpSigil(op) << " " << right << ")";
 }
-void FlamePrinter::print(AST::UnaryOpExpression &expr) {
+void FlamePrinter::print(const AST::UnaryOpExpression &expr) {
   Type t = expr.expr->type;
   if (t.isVec()) {
     if (expr.op == AST::UnaryOp::PLUS) {
@@ -65,11 +65,11 @@ void FlamePrinter::print(AST::UnaryOpExpression &expr) {
 
   GenericPrinter::print(expr);
 }
-void FlamePrinter::print(AST::BinaryOpExpression &expr) {
+void FlamePrinter::print(const AST::BinaryOpExpression &expr) {
   printBinaryOp(*this, expr.op, *expr.left, *expr.right);
 }
 
-void FlamePrinter::print(AST::AssignStatement &stmt) {
+void FlamePrinter::print(const AST::AssignStatement &stmt) {
   if (auto memAcc = dynamic_cast<AST::MemberAccessExpression *>(&*stmt.left)) {
     if (memAcc->expr->type.isAgent()) {
       // TODO We're assuming here that this is a write to the "out" variable (obviously wrong)
@@ -91,13 +91,13 @@ void FlamePrinter::print(AST::AssignStatement &stmt) {
   GenericPrinter::print(stmt);
 }
 
-void FlamePrinter::print(AST::AssignOpStatement &stmt) {
+void FlamePrinter::print(const AST::AssignOpStatement &stmt) {
   *this << *stmt.left << " = ";
   printBinaryOp(*this, stmt.op, *stmt.left, *stmt.right);
   *this << ";";
 }
 
-static void printTypeCtor(FlamePrinter &p, AST::CallExpression &expr) {
+static void printTypeCtor(FlamePrinter &p, const AST::CallExpression &expr) {
   Type t = expr.type;
   if (t.isVec()) {
     size_t numArgs = expr.args->size();
@@ -113,7 +113,7 @@ static void printTypeCtor(FlamePrinter &p, AST::CallExpression &expr) {
     p << "(" << t << ") " << *(*expr.args)[0];
   }
 }
-static void printBuiltin(FlamePrinter &p, AST::CallExpression &expr) {
+static void printBuiltin(FlamePrinter &p, const AST::CallExpression &expr) {
   const FunctionSignature &sig = expr.calledSig;
   // TODO
   /*if (sig.name == "add") {
@@ -131,7 +131,7 @@ static void printBuiltin(FlamePrinter &p, AST::CallExpression &expr) {
   p.printArgs(expr);
   p << ")";
 }
-void FlamePrinter::print(AST::CallExpression &expr) {
+void FlamePrinter::print(const AST::CallExpression &expr) {
   if (expr.isCtor()) {
     printTypeCtor(*this, expr);
   } else if (expr.isBuiltin()) {
@@ -143,7 +143,7 @@ void FlamePrinter::print(AST::CallExpression &expr) {
   }
 }
 
-void FlamePrinter::print(AST::MemberAccessExpression &expr) {
+void FlamePrinter::print(const AST::MemberAccessExpression &expr) {
   if (expr.type.isVec()) {
     *this << *expr.expr << "_" << expr.member;
   } else if (expr.expr->type.isAgent()) {
@@ -195,7 +195,7 @@ static void extractAgentMembers(
   }
 }
 
-void FlamePrinter::print(AST::ForStatement &stmt) {
+void FlamePrinter::print(const AST::ForStatement &stmt) {
   if (stmt.isNear()) {
     assert(currentFunc);
     const std::string &msgName = currentFunc->inMsgName;
@@ -220,7 +220,7 @@ void FlamePrinter::print(AST::ForStatement &stmt) {
   assert(0);
 }
 
-void FlamePrinter::print(AST::Script &script) {
+void FlamePrinter::print(const AST::Script &script) {
   *this << "#include \"header.h\"\n"
         << "#include \"libabl.h\"\n\n";
 

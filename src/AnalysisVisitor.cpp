@@ -488,6 +488,12 @@ void AnalysisVisitor::leave(AST::BinaryOpExpression &expr) {
   if (expr.type.isInvalid()) {
     err << "Type mismatch (" << expr.left->type << " "
         << getBinaryOpSigil(expr.op) << " " << expr.right->type << ")" << expr.loc;
+    return;
+  }
+
+  // Normalize scalar * vector to vector * scalar
+  if (expr.op == AST::BinaryOp::MUL && expr.right->type.isVec()) {
+    std::swap(expr.left, expr.right);
   }
 };
 

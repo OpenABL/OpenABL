@@ -12,26 +12,26 @@ namespace OpenABL {
 struct GenericPrinter : public Printer {
   GenericPrinter(AST::Script &script) : script(script) {}
 
-  virtual void print(AST::Var &);
-  virtual void print(AST::Literal &);
-  virtual void print(AST::VarExpression &);
-  virtual void print(AST::UnaryOpExpression &);
-  virtual void print(AST::BinaryOpExpression &);
-  virtual void print(AST::TernaryExpression &);
-  virtual void print(AST::MemberAccessExpression &);
-  virtual void print(AST::Arg &);
-  virtual void print(AST::ExpressionStatement &);
-  virtual void print(AST::AssignStatement &);
-  virtual void print(AST::AssignOpStatement &);
-  virtual void print(AST::BlockStatement &);
-  virtual void print(AST::IfStatement &);
-  virtual void print(AST::VarDeclarationStatement &);
-  virtual void print(AST::ReturnStatement &);
-  virtual void print(AST::ConstDeclaration &);
-  virtual void print(AST::Param &);
-  virtual void print(AST::FunctionDeclaration &);
+  virtual void print(const AST::Var &);
+  virtual void print(const AST::Literal &);
+  virtual void print(const AST::VarExpression &);
+  virtual void print(const AST::UnaryOpExpression &);
+  virtual void print(const AST::BinaryOpExpression &);
+  virtual void print(const AST::TernaryExpression &);
+  virtual void print(const AST::MemberAccessExpression &);
+  virtual void print(const AST::Arg &);
+  virtual void print(const AST::ExpressionStatement &);
+  virtual void print(const AST::AssignStatement &);
+  virtual void print(const AST::AssignOpStatement &);
+  virtual void print(const AST::BlockStatement &);
+  virtual void print(const AST::IfStatement &);
+  virtual void print(const AST::VarDeclarationStatement &);
+  virtual void print(const AST::ReturnStatement &);
+  virtual void print(const AST::ConstDeclaration &);
+  virtual void print(const AST::Param &);
+  virtual void print(const AST::FunctionDeclaration &);
 
-  void printArgs(AST::CallExpression &);
+  void printArgs(const AST::CallExpression &);
 
 private:
   AST::Script &script;

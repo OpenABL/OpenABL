@@ -2,16 +2,16 @@
 
 namespace OpenABL {
 
-void FlameGPUPrinter::print(AST::MemberInitEntry &) {}
-void FlameGPUPrinter::print(AST::AgentCreationExpression &) {}
-void FlameGPUPrinter::print(AST::NewArrayExpression &) {}
-void FlameGPUPrinter::print(AST::SimulateStatement &) {}
-void FlameGPUPrinter::print(AST::ArrayType &) {}
-void FlameGPUPrinter::print(AST::AgentMember &) {}
-void FlameGPUPrinter::print(AST::AgentDeclaration &) {}
-void FlameGPUPrinter::print(AST::ConstDeclaration &) {}
+void FlameGPUPrinter::print(const AST::MemberInitEntry &) {}
+void FlameGPUPrinter::print(const AST::AgentCreationExpression &) {}
+void FlameGPUPrinter::print(const AST::NewArrayExpression &) {}
+void FlameGPUPrinter::print(const AST::SimulateStatement &) {}
+void FlameGPUPrinter::print(const AST::ArrayType &) {}
+void FlameGPUPrinter::print(const AST::AgentMember &) {}
+void FlameGPUPrinter::print(const AST::AgentDeclaration &) {}
+void FlameGPUPrinter::print(const AST::ConstDeclaration &) {}
 
-void FlameGPUPrinter::print(AST::SimpleType &type) {
+void FlameGPUPrinter::print(const AST::SimpleType &type) {
   Type t = type.resolved;
   switch (t.getTypeId()) {
     case Type::VOID:
@@ -31,7 +31,7 @@ void FlameGPUPrinter::print(AST::SimpleType &type) {
   }
 }
 
-static void printTypeCtor(FlameGPUPrinter &p, AST::CallExpression &expr) {
+static void printTypeCtor(FlameGPUPrinter &p, const AST::CallExpression &expr) {
   Type t = expr.type;
   if (t.isVec()) {
     if (t.getTypeId() == Type::VEC2) {
@@ -46,7 +46,7 @@ static void printTypeCtor(FlameGPUPrinter &p, AST::CallExpression &expr) {
     p << "(" << t << ") " << *(*expr.args)[0];
   }
 }
-void FlameGPUPrinter::print(AST::CallExpression &expr) {
+void FlameGPUPrinter::print(const AST::CallExpression &expr) {
   if (expr.isCtor()) {
     printTypeCtor(*this, expr);
   } else if (expr.isBuiltin()) {
@@ -59,7 +59,7 @@ void FlameGPUPrinter::print(AST::CallExpression &expr) {
   }
 }
 
-void FlameGPUPrinter::print(AST::MemberAccessExpression &expr) {
+void FlameGPUPrinter::print(const AST::MemberAccessExpression &expr) {
   if (expr.type.isVec()) {
     *this << *expr.expr << "_" << expr.member;
   } else if (expr.type.isAgent()) {
@@ -101,7 +101,7 @@ static void extractAgentMembers(
   }
 }
 
-void FlameGPUPrinter::print(AST::ForStatement &stmt) {
+void FlameGPUPrinter::print(const AST::ForStatement &stmt) {
   if (stmt.isNear()) {
     assert(currentFunc);
     const std::string &msgName = currentFunc->inMsgName;
@@ -131,7 +131,7 @@ void FlameGPUPrinter::print(AST::ForStatement &stmt) {
   assert(0);
 }
 
-void FlameGPUPrinter::print(AST::Script &script) {
+void FlameGPUPrinter::print(const AST::Script &script) {
   *this << "#ifndef _FUNCTIONS_H_\n"
            "#define _FUNCTIONS_H_\n\n"
            "#include \"header.h\"\n\n";
