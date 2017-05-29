@@ -1,0 +1,8 @@
+agent Agent {
+  float a;
+  float b;
+}
+
+void main() {
+  Agent foo = Agent { a: 42.0 };
+}

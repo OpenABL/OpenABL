@@ -18,8 +18,7 @@ static std::string generateAgentCode(AST::Script &script, AST::AgentDeclaration 
 
 void MasonBackend::generate(
     AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
-  (void) assetDir;
-
+  copyFile(assetDir + "/mason/Util.java", outputDir + "/Util.java");
   writeToFile(outputDir + "/Sim.java", generateMainCode(script));
 
   for (AST::AgentDeclaration *agent : script.agents) {
