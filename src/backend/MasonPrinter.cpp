@@ -36,22 +36,18 @@ void MasonPrinter::print(const AST::SimpleType &type) {
 }
 
 void MasonPrinter::print(const AST::VarExpression &expr) {
-  const ScopeEntry &entry = script.scope.get(expr.var->id);
+  VarId id = expr.var->id;
+  const ScopeEntry &entry = script.scope.get(id);
   if (entry.isGlobal) {
     *this << "Sim." << *expr.var;
   } else {
-    *this << *expr.var;
-  }
-}
+    if (id == currentInVar || id == currentOutVar) {
+      // TODO Correct mapping for "out" variable
+      *this << "this";
+      return;
+    }
 
-void MasonPrinter::print(const AST::MemberAccessExpression &expr) {
-  if (expr.expr->type.isAgent()) {
-    // TODO Right now this simply refers to "this", which is obviously
-    // incorrect. Correct mapping of the in/out variables, near agents etc
-    // needs to be implemented here
-    *this << "this." << expr.member;
-  } else {
-    GenericPrinter::print(expr);
+    *this << *expr.var;
   }
 }
 
@@ -184,11 +180,17 @@ void MasonPrinter::print(const AST::ConstDeclaration &decl) {
 
 void MasonPrinter::print(const AST::FunctionDeclaration &decl) {
   if (decl.isStep) {
+    const AST::Param &param = decl.stepParam();
+    currentInVar = param.var->id;
+    currentOutVar = param.outVar->id;
+
     *this << "public void " << decl.name << "(SimState state) {" << indent << nl
           << "Sim _sim = (Sim) state;"
           << *decl.stmts
           << outdent << nl << "}";
-    // TODO
+    
+    currentInVar.reset();
+    currentOutVar.reset();
   } else {
     assert(0); // TODO
   }

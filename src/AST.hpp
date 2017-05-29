@@ -501,9 +501,14 @@ struct FunctionDeclaration : public Declaration {
 
   bool isMain() const { return name == "main"; }
 
+  AST::Param &stepParam() const {
+    assert(isStep);
+    return *(*this->params)[0];
+  }
+
   AST::AgentDeclaration &stepAgent() const {
     assert(isStep);
-    return *(*this->params)[0]->type->resolved.getAgentDecl();
+    return *stepParam().type->resolved.getAgentDecl();
   }
 
   void accept(Visitor &);

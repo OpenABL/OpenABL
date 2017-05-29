@@ -13,7 +13,6 @@ struct MasonPrinter : public GenericPrinter {
   void print(const AST::UnaryOpExpression &);
   void print(const AST::BinaryOpExpression &);
   void print(const AST::CallExpression &);
-  void print(const AST::MemberAccessExpression &);
   void print(const AST::MemberInitEntry &);
   void print(const AST::AgentCreationExpression &);
   void print(const AST::NewArrayExpression &);
@@ -33,6 +32,10 @@ struct MasonPrinter : public GenericPrinter {
 
 private:
   AST::Script &script;
+
+  // Current input and output variables inside a step function
+  VarId currentInVar;
+  VarId currentOutVar;
 };
 
 }
