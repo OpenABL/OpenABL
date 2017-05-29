@@ -16,7 +16,6 @@ struct MasonPrinter : public GenericPrinter {
   void print(const AST::MemberInitEntry &);
   void print(const AST::AgentCreationExpression &);
   void print(const AST::NewArrayExpression &);
-  void print(const AST::ExpressionStatement &);
   void print(const AST::AssignOpStatement &);
   void print(const AST::VarDeclarationStatement &);
   void print(const AST::ForStatement &);

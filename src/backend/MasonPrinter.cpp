@@ -3,10 +3,7 @@
 namespace OpenABL {
 
 void MasonPrinter::print(const AST::MemberInitEntry &) {}
-void MasonPrinter::print(const AST::AgentCreationExpression &) {}
 void MasonPrinter::print(const AST::NewArrayExpression &) {}
-void MasonPrinter::print(const AST::ExpressionStatement &) {}
-void MasonPrinter::print(const AST::SimulateStatement &) {}
 void MasonPrinter::print(const AST::ArrayType &) {}
 void MasonPrinter::print(const AST::Param &) {}
 
@@ -100,22 +97,32 @@ static void printTypeCtor(MasonPrinter &p, const AST::CallExpression &expr) {
     p << "(" << t << ") " << *expr.getArg(0).expr;
   }
 }
-static void printBuiltin(MasonPrinter &p, const AST::CallExpression &expr) {
-  if (expr.name == "dist") {
-    p << expr.getArg(0) << ".distance(" << expr.getArg(1) << ")";
-  } else {
-    // TODO Handle other builtins
-    const FunctionSignature &sig = expr.calledSig;
-    p << sig.name << "(";
-    p.printArgs(expr);
-    p << ")";
-  }
-}
 void MasonPrinter::print(const AST::CallExpression &expr) {
   if (expr.isCtor()) {
     printTypeCtor(*this, expr);
   } else if (expr.isBuiltin()) {
-    printBuiltin(*this, expr);
+    if (expr.name == "dist") {
+      *this << expr.getArg(0) << ".distance(" << expr.getArg(1) << ")";
+    } else if (expr.name == "add") {
+      std::string aLabel = makeAnonLabel();
+      const AST::Arg &arg = expr.getArg(0);
+      // TODO Place in environment
+      *this << arg.expr->type << " " << aLabel << " = " << arg << ";" << nl
+            << "schedule.scheduleRepeating(new Steppable() {" << indent << nl
+            << "public void step(SimState state) {" << indent << nl
+            << aLabel << ".move_point(state);" // TODO
+            << outdent << nl << "}"
+            << outdent << nl << "})";
+    } else if (expr.name == "save") {
+      // TODO Handle save
+      *this << "//save()";
+    } else {
+      // TODO Handle other builtins
+      const FunctionSignature &sig = expr.calledSig;
+      *this << sig.name << "(";
+      printArgs(expr);
+      *this << ")";
+    }
   } else {
     *this << "Sim." << expr.name << "(";
     this->printArgs(expr);
@@ -146,6 +153,11 @@ void MasonPrinter::print(const AST::UnaryOpExpression &expr) {
   GenericPrinter::print(expr);
 }
 
+void MasonPrinter::print(const AST::AgentCreationExpression &expr) {
+  // TODO
+  *this << "new " << expr.name << "()";
+}
+
 void MasonPrinter::print(const AST::VarDeclarationStatement &stmt) {
   *this << *stmt.type << " " << *stmt.var;
   if (stmt.initializer) {
@@ -156,7 +168,7 @@ void MasonPrinter::print(const AST::VarDeclarationStatement &stmt) {
 
 void MasonPrinter::print(const AST::ForStatement &stmt) {
   if (stmt.isNear()) {
-    // TODO Nearest neighbor loop
+    // TODO Nearest neighbor loop -- currently over all objects
     AST::AgentDeclaration *agentDecl = stmt.type->resolved.getAgentDecl();
     std::string iLabel = makeAnonLabel();
     *this << "Bag _bag = _sim.env.getAllObjects();" << nl
@@ -167,9 +179,15 @@ void MasonPrinter::print(const AST::ForStatement &stmt) {
           << *stmt.stmt
           << outdent << nl << "}";
   } else if (stmt.isRange()) {
-    // TODO Range loop
+    std::string eLabel = makeAnonLabel();
+    auto range = stmt.getRange();
+    *this << "for (int " << *stmt.var << " = " << range.first
+          << ", " << eLabel << " = " << range.second << "; "
+          << *stmt.var << " < " << eLabel << "; ++" << *stmt.var << ") "
+          << *stmt.stmt;
   } else {
     // TODO Ordinary collection loop
+    assert(0);
   }
 }
 
@@ -229,6 +247,10 @@ void MasonPrinter::print(const AST::AgentDeclaration &decl) {
   *this << outdent << nl << "}";
 }
 
+void MasonPrinter::print(const AST::SimulateStatement &) {
+  // TODO
+}
+
 void MasonPrinter::print(const AST::Script &script) {
   *this << "import sim.engine.*;" << nl
         << "import sim.util.*;" << nl
@@ -245,12 +267,18 @@ void MasonPrinter::print(const AST::Script &script) {
         << "super(seed);"
         << outdent << nl << "}" << nl << nl
         << "public void start() {" << indent << nl
-        << "super.start();"
-        // TODO Agent initialization here
-        << outdent << nl << "}" << nl
-        << "public static void main(String[] args) {" << indent << nl
-        << "doLoop(Sim.class, args);" << nl
-        << "System.exit(0);"
+        << "super.start();";
+
+  // TODO This needs to be split in start + end
+  AST::FunctionDeclaration *mainFunc = script.mainFunc;
+  if (mainFunc) {
+    *this << *mainFunc->stmts;
+  }
+
+  *this << outdent << nl << "}" << nl
+        << "public static void main(String[] args) {" << indent
+        << nl << "doLoop(Sim.class, args);"
+        << nl << "System.exit(0);"
         << outdent << nl << "}"
         << outdent << nl << "}";
 }
