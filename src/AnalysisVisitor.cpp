@@ -549,6 +549,17 @@ void AnalysisVisitor::leave(AST::AgentCreationExpression &expr) {
           << " from expression of type " << exprType << entry->expr->loc;
       return;
     }
+
+    expr.memberMap.insert({ entry->name, &*entry->expr });
+  }
+
+  // Make sure all members were initialized
+  for (AST::AgentMemberPtr &member : *agent.members) {
+    if (expr.memberMap.find(member->name) == expr.memberMap.end()) {
+      err << "Agent member \"" << member->name
+          << "\" has not been initialized" << expr.loc;
+      return;
+    }
   }
 
   expr.type = { Type::AGENT, &agent };

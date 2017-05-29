@@ -271,6 +271,9 @@ struct AgentCreationExpression : public Expression {
   std::string name;
   MemberInitListPtr members;
 
+  // Computed during analysis
+  std::map<std::string, Expression *> memberMap;
+
   AgentCreationExpression(std::string name, MemberInitList *members, Location loc)
     : Expression{loc}, name{name}, members{members} {}
 

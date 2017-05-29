@@ -154,8 +154,20 @@ void MasonPrinter::print(const AST::UnaryOpExpression &expr) {
 }
 
 void MasonPrinter::print(const AST::AgentCreationExpression &expr) {
-  // TODO
-  *this << "new " << expr.name << "()";
+  AST::AgentDeclaration *agent = expr.type.getAgentDecl();
+  bool first = true;
+
+  *this << "new " << expr.name << "(";
+  for (AST::AgentMemberPtr &member : *agent->members) {
+    auto it = expr.memberMap.find(member->name);
+    assert(it != expr.memberMap.end());
+    AST::Expression &initExpr = *it->second;
+
+    if (!first) *this << ", ";
+    first = false;
+    *this << initExpr;
+  }
+  *this <<")";
 }
 
 void MasonPrinter::print(const AST::VarDeclarationStatement &stmt) {
