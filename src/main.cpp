@@ -138,10 +138,10 @@ int main(int argc, char **argv) {
 
   OpenABL::AST::Script &script = *ctx.script;
 
-  int retval = 0;
-  OpenABL::ErrorStream err([&retval](const OpenABL::Error &err) {
+  int numErrors = 0;
+  OpenABL::ErrorStream err([&numErrors](const OpenABL::Error &err) {
     std::cerr << err.msg << " on line " << err.loc.begin.line << std::endl;
-    retval = 1;
+    numErrors++;
   });
 
   OpenABL::BuiltinFunctions funcs;
@@ -150,8 +150,14 @@ int main(int argc, char **argv) {
   OpenABL::AnalysisVisitor visitor(script, err, funcs);
   script.accept(visitor);
 
+  if (numErrors > 0) {
+    // There were errors, abort
+    return 1;
+  }
+
   if (options.lintOnly) {
-    return retval;
+    // Linting only, don't try to generate output
+    return 0;
   }
 
   if (!OpenABL::createDirectory(options.outputDir)) {
@@ -176,5 +182,5 @@ int main(int argc, char **argv) {
   backend.generate(script, options.outputDir, options.assetDir);
 
   fclose(file);
-  return retval;
+  return 0;
 }
