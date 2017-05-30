@@ -235,13 +235,19 @@ void MasonPrinter::print(const AST::ConstDeclaration &decl) {
 void MasonPrinter::print(const AST::FunctionDeclaration &decl) {
   if (decl.isStep) {
     const AST::Param &param = decl.stepParam();
+    AST::AgentDeclaration &agent = decl.stepAgent();
+    AST::AgentMember *posMember = agent.getPositionMember();
+
     currentInVar = param.var->id;
     currentOutVar = param.outVar->id;
 
     *this << "public void " << decl.name << "(SimState state) {" << indent << nl
           << "Sim _sim = (Sim) state;"
-          << *decl.stmts
-          << outdent << nl << "}";
+          << *decl.stmts;
+    if (posMember) {
+      *this << nl << "_sim.env.setObjectLocation(this, this." << posMember->name << ");";
+    }
+    *this << outdent << nl << "}";
     
     currentInVar.reset();
     currentOutVar.reset();
