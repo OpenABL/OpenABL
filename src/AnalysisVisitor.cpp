@@ -209,7 +209,13 @@ void AnalysisVisitor::enter(AST::ForStatement &stmt) {
         return;
       }
 
-      currentFunc->accessedAgent = declType.getAgentDecl();
+      AST::AgentDeclaration *agent = declType.getAgentDecl();
+      if (!agent->getPositionMember()) {
+        err << "Cannot use for-near loop on agent without position member" << stmt.loc;
+        return;
+      }
+
+      currentFunc->accessedAgent = agent;
       stmt.kind = AST::ForStatement::Kind::NEAR;
 
       // Collect member accesses on this variable

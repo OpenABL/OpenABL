@@ -110,13 +110,28 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
     } else if (expr.name == "add") {
       std::string aLabel = makeAnonLabel();
       const AST::Arg &arg = expr.getArg(0);
-      // TODO Place in environment
-      *this << arg.expr->type << " " << aLabel << " = " << arg << ";" << nl
-            << "schedule.scheduleRepeating(new Steppable() {" << indent << nl
-            << "public void step(SimState state) {" << indent << nl
-            << aLabel << ".move_point(state);" // TODO
-            << outdent << nl << "}"
-            << outdent << nl << "})";
+      Type type = arg.expr->type;
+      AST::AgentDeclaration *agent = type.getAgentDecl();
+      AST::AgentMember *posMember = agent->getPositionMember();
+
+      *this << type << " " << aLabel << " = " << arg << ";" << nl;
+      if (posMember) {
+        *this << "env.setObjectLocation(" << aLabel << ", "
+              << aLabel << "." << posMember->name << ");" << nl;
+      }
+
+      // TODO Not totally sure what to do here ... This will not execute the step functions
+      // in the correct order if there are multiple agent types.
+      AST::SimulateStatement *simStmt = script.simStmt;
+      for (AST::FunctionDeclaration *stepFn : simStmt->stepFuncDecls) {
+        if (&stepFn->stepAgent() == agent) {
+          *this << "schedule.scheduleRepeating(new Steppable() {" << indent << nl
+                << "public void step(SimState state) {" << indent << nl
+                << aLabel << "." << stepFn->name << "(state);"
+                << outdent << nl << "}"
+                << outdent << nl << "})";
+        }
+      }
     } else if (expr.name == "save") {
       // TODO Handle save
       *this << "//save()";
@@ -184,10 +199,15 @@ void MasonPrinter::print(const AST::VarDeclarationStatement &stmt) {
 
 void MasonPrinter::print(const AST::ForStatement &stmt) {
   if (stmt.isNear()) {
-    // TODO Nearest neighbor loop -- currently over all objects
     AST::AgentDeclaration *agentDecl = stmt.type->resolved.getAgentDecl();
     std::string iLabel = makeAnonLabel();
-    *this << "Bag _bag = _sim.env.getAllObjects();" << nl
+    AST::Expression &nearAgent = stmt.getNearAgent();
+    AST::AgentDeclaration *nearAgentDecl = nearAgent.type.getAgentDecl();
+    AST::Expression &nearRadius = stmt.getNearRadius();
+
+    *this << "Bag _bag = _sim.env.getNeighborsWithinDistance("
+          << nearAgent << "." << nearAgentDecl->getPositionMember()->name
+          << ", " << nearRadius << ");" << nl
           << "for (int " << iLabel << " = 0; " << iLabel << " < _bag.size(); "
           << iLabel << "++) {" << indent << nl
           << agentDecl->name << " " << *stmt.var << " = "
