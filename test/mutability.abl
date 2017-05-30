@@ -8,6 +8,12 @@ void step_fn(Agent in -> out) {
   in.pos = float2(0);
 }
 
+// This is allowed
+void inc_pos(float2 pos) {
+  pos.x += 1;
+  pos.y += 1;
+}
+
 void main() {
   pi = 4.0;
   pi += 1.0;

@@ -183,7 +183,9 @@ void AnalysisVisitor::leave(AST::VarDeclarationStatement &decl) {
 };
 
 void AnalysisVisitor::leave(AST::Param &param) {
-  declareVar(*param.var, param.type->resolved, true, false);
+  // If an in -> out structgure is used, "in" is immutable
+  bool isImmutable = param.outVar != nullptr;
+  declareVar(*param.var, param.type->resolved, isImmutable, false);
   if (param.outVar) {
     declareVar(*param.outVar, param.type->resolved, false, false);
   }
