@@ -126,17 +126,19 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
               << aLabel << "." << posMember->name << ");" << nl;
       }
 
-      // TODO Not totally sure what to do here ... This will not execute the step functions
-      // in the correct order if there are multiple agent types.
       AST::SimulateStatement *simStmt = script.simStmt;
+      unsigned num = 0;
       for (AST::FunctionDeclaration *stepFn : simStmt->stepFuncDecls) {
         if (&stepFn->stepAgent() == agent) {
-          *this << "schedule.scheduleRepeating(new Steppable() {" << indent << nl
+          // Schedule according to ordering given by "num"
+          *this << "schedule.scheduleRepeating(0., "
+                << num << ", new Steppable() {" << indent << nl
                 << "public void step(SimState state) {" << indent << nl
                 << aLabel << "." << stepFn->name << "(state);"
                 << outdent << nl << "}"
                 << outdent << nl << "})";
         }
+        num++;
       }
     } else if (expr.name == "save") {
       // TODO Handle save
