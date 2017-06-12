@@ -108,6 +108,8 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
   } else if (expr.isBuiltin()) {
     if (expr.name == "dist") {
       *this << expr.getArg(0) << ".distance(" << expr.getArg(1) << ")";
+    } else if (expr.name == "length") {
+      *this << expr.getArg(0) << ".length()";
     } else if (expr.name == "random") {
       *this << "Util.random(random, ";
       printArgs(expr);
