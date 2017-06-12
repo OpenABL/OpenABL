@@ -76,22 +76,28 @@ void MasonPrinter::print(const AST::BinaryOpExpression &expr) {
   printBinaryOp(*this, expr.op, *expr.left, * expr.right);
 }
 
+static void printVecCtorArgs(MasonPrinter &p, const AST::CallExpression &expr) {
+  Type t = expr.type;
+  int vecWidth = t.getTypeId() == Type::VEC2 ? 2 : 3;
+  size_t numArgs = expr.args->size();
+  if (numArgs == 1) {
+    // TODO Multiple evaluation
+    const AST::Expression &arg = *expr.getArg(0).expr;
+    p << arg << ", " << arg;
+    if (vecWidth == 3) {
+      p << ", " << arg;
+    }
+  } else {
+    p.printArgs(expr);
+  }
+}
+
 static void printTypeCtor(MasonPrinter &p, const AST::CallExpression &expr) {
   Type t = expr.type;
   if (t.isVec()) {
     int vecWidth = t.getTypeId() == Type::VEC2 ? 2 : 3;
     p << "new Double" << vecWidth << "D(";
-    size_t numArgs = expr.args->size();
-    if (numArgs == 1) {
-      // TODO Multiple evaluation
-      const AST::Expression &arg = *expr.getArg(0).expr;
-      p << arg << ", " << arg;
-      if (vecWidth == 3) {
-        p << ", " << arg;
-      }
-    } else {
-      p.printArgs(expr);
-    }
+    printVecCtorArgs(p, expr);
     p << ")";
   } else {
     p << "(" << t << ") " << *expr.getArg(0).expr;
@@ -303,9 +309,21 @@ void MasonPrinter::print(const AST::Script &script) {
     *this << *decl << nl;
   }
 
-  // TODO Replace dummy bounds
-  *this << "public Continuous2D env = new Continuous2D(1.0, 100, 100);" << nl << nl
-        << "public Sim(long seed) {" << indent << nl
+  // TODO Replace dummy granularity
+  if (script.envDecl) {
+    AST::CallExpression &expr = *dynamic_cast<AST::CallExpression *>(&*script.envDecl->sizeExpr);
+    if (expr.type.getTypeId() == Type::VEC2) {
+      *this << "public Continuous2D env = new Continuous2D(1.0, ";
+      printVecCtorArgs(*this, expr);
+      *this << ");" << nl << nl;
+    } else {
+      *this << "public Continuous3D env = new Continuous3D(1.0, ";
+      printVecCtorArgs(*this, expr);
+      *this << ");" << nl << nl;
+    }
+  }
+
+  *this << "public Sim(long seed) {" << indent << nl
         << "super(seed);"
         << outdent << nl << "}" << nl << nl
         << "public void start() {" << indent << nl

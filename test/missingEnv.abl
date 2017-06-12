@@ -1,0 +1,3 @@
+agent Agent {
+  position float2 pos;
+}

@@ -1,5 +1,5 @@
 agent Agent {
-  position float2 pos;
+  float2 pos;
 }
 
 float pi = 3.14;

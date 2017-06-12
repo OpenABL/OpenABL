@@ -53,6 +53,11 @@ static Options parseCliOptions(int argc, char **argv) {
       return options;
     }
 
+    if (arg == "--lint-only") {
+      options.lintOnly = true;
+      continue;
+    }
+
     if (i + 1 == argc) {
       std::cerr << "Missing argument for option \"" << arg << "\"" << std::endl;
       return {};
@@ -65,8 +70,6 @@ static Options parseCliOptions(int argc, char **argv) {
       options.outputDir = argv[++i];
     } else if (arg == "-A" || arg == "--asset-dir") {
       options.assetDir = argv[++i];
-    } else if (arg == "--lint-only") {
-      options.lintOnly = true;
     } else {
       std::cerr << "Unknown option \"" << arg << "\"" << std::endl;
       return {};

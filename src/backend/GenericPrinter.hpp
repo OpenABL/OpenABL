@@ -33,6 +33,11 @@ struct GenericPrinter : public Printer {
 
   void printArgs(const AST::CallExpression &);
 
+  virtual void print(const AST::EnvironmentDeclaration &) {
+    // Often not used explicitly
+    assert(0);
+  }
+
 private:
   AST::Script &script;
 };

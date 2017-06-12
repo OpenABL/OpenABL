@@ -40,6 +40,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void enter(AST::AgentMember &);
   void enter(AST::AgentDeclaration &);
   void enter(AST::ConstDeclaration &);
+  void enter(AST::EnvironmentDeclaration &);
   void enter(AST::Script &);
   void leave(AST::Var &);
   void leave(AST::Literal &);
@@ -69,6 +70,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void leave(AST::AgentMember &);
   void leave(AST::AgentDeclaration &);
   void leave(AST::ConstDeclaration &);
+  void leave(AST::EnvironmentDeclaration &);
   void leave(AST::Script &);
 
 private:

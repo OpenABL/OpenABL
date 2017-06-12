@@ -96,6 +96,7 @@ void AnalysisVisitor::enter(AST::Script &) {};
 void AnalysisVisitor::enter(AST::VarExpression &) {};
 void AnalysisVisitor::enter(AST::VarDeclarationStatement &) {};
 void AnalysisVisitor::enter(AST::Param &) {};
+void AnalysisVisitor::enter(AST::EnvironmentDeclaration &) {};
 void AnalysisVisitor::leave(AST::Var &) {};
 void AnalysisVisitor::leave(AST::Arg &) {};
 void AnalysisVisitor::leave(AST::MemberInitEntry &) {};
@@ -105,7 +106,6 @@ void AnalysisVisitor::leave(AST::SimpleType &) {};
 void AnalysisVisitor::leave(AST::ArrayType &) {};
 void AnalysisVisitor::leave(AST::AgentMember &) {};
 void AnalysisVisitor::leave(AST::AgentDeclaration &) {};
-void AnalysisVisitor::leave(AST::Script &) {};
 
 void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
   pushVarScope();
@@ -167,6 +167,22 @@ void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
         << " to global of type " << declType << decl.expr->loc;
   }
 };
+
+void AnalysisVisitor::leave(AST::EnvironmentDeclaration &decl) {
+  if (script.envDecl) {
+    err << "Script can only contain a single environment specification" << decl.loc;
+    return;
+  }
+
+  const AST::Expression &sizeExpr = *decl.sizeExpr;
+  if (!sizeExpr.type.isVec()) {
+    err << "Environment size must be float2 or float3" << decl.loc;
+    return;
+  }
+
+  script.envDecl = &decl;
+};
+
 void AnalysisVisitor::leave(AST::VarDeclarationStatement &decl) {
   declareVar(*decl.var, decl.type->resolved, false, false);
   if (decl.initializer) {
@@ -721,6 +737,23 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
 
   // TODO check sig, verify, handle
   expr.kind = AST::CallExpression::Kind::USER;
+};
+
+void AnalysisVisitor::leave(AST::Script &script) {
+  for (AST::AgentDeclaration *agent : script.agents) {
+    AST::AgentMember *member = agent->getPositionMember();
+    if (member) {
+      if (!script.envDecl) {
+        err << "An environment {} declaration is required to use position members" << member->loc;
+        return;
+      }
+      if (member->type->resolved != script.envDecl->sizeExpr->type) {
+        err << "Dimensionality of position member does not match environment dimension"
+            << member->loc;
+        return;
+      }
+    }
+  }
 };
 
 }

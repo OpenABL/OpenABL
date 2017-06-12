@@ -34,6 +34,7 @@ struct Visitor {
   virtual void enter(AgentMember &) {};
   virtual void enter(AgentDeclaration &) {};
   virtual void enter(ConstDeclaration &) {};
+  virtual void enter(EnvironmentDeclaration &) {};
   virtual void enter(Script &) {};
 
   virtual void leave(Var &) {};
@@ -64,6 +65,7 @@ struct Visitor {
   virtual void leave(AgentMember &) {};
   virtual void leave(AgentDeclaration &) {};
   virtual void leave(ConstDeclaration &) {};
+  virtual void leave(EnvironmentDeclaration &) {};
   virtual void leave(Script &) {};
 };
 

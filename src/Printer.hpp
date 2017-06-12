@@ -42,6 +42,7 @@ struct Printer {
   virtual void print(const AST::AgentMember &) = 0;
   virtual void print(const AST::AgentDeclaration &) = 0;
   virtual void print(const AST::ConstDeclaration &) = 0;
+  virtual void print(const AST::EnvironmentDeclaration &) = 0;
   virtual void print(const AST::Script &) = 0;
 
   static Printer &indent(Printer &p) {

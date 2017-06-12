@@ -212,6 +212,12 @@ void ConstDeclaration::accept(Visitor &visitor) {
   visitor.leave(*this);
 }
 
+void EnvironmentDeclaration::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  sizeExpr->accept(visitor);
+  visitor.leave(*this);
+}
+
 void Script::accept(Visitor &visitor) {
   visitor.enter(*this);
   for (DeclarationPtr &decl : *decls) {
@@ -248,6 +254,7 @@ void FunctionDeclaration::print(Printer &printer) const { printer.print(*this); 
 void AgentMember::print(Printer &printer) const { printer.print(*this); }
 void AgentDeclaration::print(Printer &printer) const { printer.print(*this); }
 void ConstDeclaration::print(Printer &printer) const { printer.print(*this); }
+void EnvironmentDeclaration::print(Printer &printer) const { printer.print(*this); }
 void Script::print(Printer &printer) const { printer.print(*this); }
 
 }

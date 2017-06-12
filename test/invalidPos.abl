@@ -1,0 +1,5 @@
+agent Agent {
+  position float3 pos;
+}
+
+environment { float2(1.0, 1.0) }

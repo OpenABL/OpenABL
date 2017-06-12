@@ -33,6 +33,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 
   AGENT
   ELSE
+  ENVIRONMENT
   IF
   FOR
   NEW
@@ -129,7 +130,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 %type <OpenABL::AST::StatementList *> statement_list;
 %type <OpenABL::AST::MemberInitEntry *> member_init_entry;
 %type <OpenABL::AST::MemberInitList *> member_init_list non_empty_member_init_list;
-%type <OpenABL::AST::Declaration *> declaration func_decl agent_decl const_decl;
+%type <OpenABL::AST::Declaration *> declaration func_decl agent_decl const_decl env_decl;
 %type <OpenABL::AST::DeclarationList *> declaration_list;
 %type <OpenABL::AST::IdentList *> ident_list;
 %type <OpenABL::AST::Expression *> expression;
@@ -145,6 +146,7 @@ declaration_list: %empty { $$ = new DeclarationList(); }
 declaration: agent_decl { $$ = $1; }
            | func_decl { $$ = $1; }
            | const_decl { $$ = $1; }
+		   | env_decl { $$ = $1; }
            ;
 
 agent_decl: AGENT IDENTIFIER LBRACE agent_member_list RBRACE
@@ -174,6 +176,9 @@ param: type var { $$ = new Param($1, $2, nullptr, @$); }
 
 const_decl: type var ASSIGN expression SEMI
               { $$ = new ConstDeclaration($1, $2, $4, @$); };
+
+env_decl: ENVIRONMENT LBRACE expression RBRACE
+		    { $$ = new EnvironmentDeclaration($3, @$); };
 
 literal: BOOL { $$ = new BoolLiteral($1, @$); }
        | INT { $$ = new IntLiteral($1, @$); }
