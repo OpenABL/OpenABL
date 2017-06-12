@@ -5,7 +5,6 @@ namespace OpenABL {
 void MasonPrinter::print(const AST::MemberInitEntry &) {}
 void MasonPrinter::print(const AST::NewArrayExpression &) {}
 void MasonPrinter::print(const AST::ArrayType &) {}
-void MasonPrinter::print(const AST::Param &) {}
 
 void MasonPrinter::print(const AST::SimpleType &type) {
   switch (type.resolved.getTypeId()) {
@@ -260,7 +259,9 @@ void MasonPrinter::print(const AST::FunctionDeclaration &decl) {
     currentInVar.reset();
     currentOutVar.reset();
   } else {
-    assert(0); // TODO
+    *this << "public static " << *decl.returnType << " " << decl.name << "(";
+    printParams(decl);
+    *this << ") {" << indent << *decl.stmts << outdent << nl << "}";
   }
 }
 
@@ -341,8 +342,16 @@ void MasonPrinter::print(const AST::Script &script) {
         << "public static void main(String[] args) {" << indent
         << nl << "doLoop(Sim.class, args);"
         << nl << "System.exit(0);"
-        << outdent << nl << "}"
         << outdent << nl << "}";
+
+  // Print non-step, non-main functions
+  for (const AST::FunctionDeclaration *decl : script.funcs) {
+    if (!decl->isStep && !decl->isMain()) {
+      *this << nl << nl << *decl;
+    }
+  }
+
+  *this << outdent << nl << "}";
 }
 
 }

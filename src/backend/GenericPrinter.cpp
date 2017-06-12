@@ -106,6 +106,16 @@ void GenericPrinter::print(const AST::Param &param) {
     *this << ", " << *param.type << " " << *param.outVar;
   }
 }
+
+void GenericPrinter::printParams(const AST::FunctionDeclaration &decl) {
+  bool first = true;
+  for (const AST::ParamPtr &param : *decl.params) {
+    if (!first) *this << ", ";
+    first = false;
+    *this << *param;
+  }
+}
+
 void GenericPrinter::print(const AST::FunctionDeclaration &decl) {
   if (decl.returnType) {
     *this << *decl.returnType;
@@ -113,12 +123,7 @@ void GenericPrinter::print(const AST::FunctionDeclaration &decl) {
     *this << "void";
   }
   *this << " " << decl.name << "(";
-  bool first = true;
-  for (const AST::ParamPtr &param : *decl.params) {
-    if (!first) *this << ", ";
-    first = false;
-    *this << *param;
-  }
+  printParams(decl);
   *this << ") {" << indent;
   *this << *decl.stmts << outdent << nl << "}";
 }

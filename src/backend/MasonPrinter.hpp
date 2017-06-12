@@ -22,7 +22,6 @@ struct MasonPrinter : public GenericPrinter {
   void print(const AST::SimulateStatement &);
   void print(const AST::SimpleType &);
   void print(const AST::ArrayType &);
-  void print(const AST::Param &);
   void print(const AST::FunctionDeclaration &);
   void print(const AST::AgentMember &);
   void print(const AST::AgentDeclaration &);

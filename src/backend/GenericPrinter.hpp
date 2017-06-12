@@ -32,6 +32,7 @@ struct GenericPrinter : public Printer {
   virtual void print(const AST::FunctionDeclaration &);
 
   void printArgs(const AST::CallExpression &);
+  void printParams(const AST::FunctionDeclaration &);
 
   virtual void print(const AST::EnvironmentDeclaration &) {
     // Often not used explicitly
