@@ -102,6 +102,11 @@ struct Type {
     return agent;
   }
 
+  unsigned getVecLen() const {
+    assert(isVec());
+    return type == VEC2 ? 2 : 3;
+  }
+
   bool isInvalid() const { return type == INVALID; }
   bool isVoid() const { return type == VOID; }
   bool isArray() const { return type == ARRAY; }

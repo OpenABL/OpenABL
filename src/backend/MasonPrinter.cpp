@@ -158,6 +158,37 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
   }
 }
 
+void MasonPrinter::print(const AST::AssignStatement &stmt) {
+  if (auto *access = dynamic_cast<const AST::MemberAccessExpression *>(&*stmt.left)) {
+    if (access->expr->type.isVec()) {
+      // Assignment to vector component
+      // Convert into creation of new DoubleND, because it is immmutable
+      unsigned vecLen = access->expr->type.getVecLen();
+      *this << *access->expr << " = new Double" << vecLen << "D(";
+      std::array<const char *, 3> members {{ "x", "y", vecLen == 3 ? "z" : nullptr }};
+      bool first = true;
+      for (const char *member : members) {
+        if (!member) continue;
+
+        if (!first) {
+          *this << ", ";
+        }
+        first = false;
+
+        if (access->member == member) {
+          *this << *stmt.right;
+        } else {
+          *this << *access->expr << "." << member;
+        }
+      }
+      *this << ");";
+      return;
+    }
+  }
+
+  GenericPrinter::print(stmt);
+}
+
 void MasonPrinter::print(const AST::AssignOpStatement &stmt) {
   *this << *stmt.left << " = ";
   printBinaryOp(*this, stmt.op, *stmt.left, *stmt.right);
