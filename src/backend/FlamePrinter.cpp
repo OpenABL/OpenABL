@@ -241,13 +241,9 @@ void FlamePrinter::print(const AST::Script &script) {
       // This is an automatically generated "output" function
       *this << "int " << func.name << "() {" << indent
             << nl << "add_" << msgName << "_message(";
-      bool first = true;
-      for (const AST::AgentMember *member : msg->members) {
-        const std::string &name = member->name;
-        if (!first) *this << ", ";
-        first = false;
-
+      printCommaSeparated(msg->members, [&](const AST::AgentMember *member) {
         // TODO reuse pushMembers() code?
+        const std::string &name = member->name;
         switch (member->type->resolved.getTypeId()) {
           case Type::VEC2:
             *this << "get_" << name << "_x(), "
@@ -261,7 +257,7 @@ void FlamePrinter::print(const AST::Script &script) {
           default:
             *this << "get_" << name << "()";
         }
-      }
+      });
       *this << ");" << nl << "return 0;" << outdent << nl << "}\n\n";
     } else {
       // For now assuming there is a partition matrix

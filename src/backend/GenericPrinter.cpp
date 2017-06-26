@@ -56,12 +56,9 @@ void GenericPrinter::print(const AST::Arg &arg) {
 }
 
 void GenericPrinter::printArgs(const AST::CallExpression &expr) {
-  bool first = true;
-  for (const AST::ArgPtr &arg : *expr.args) {
-    if (!first) *this << ", ";
-    first = false;
+  printCommaSeparated(*expr.args, [&](const AST::ArgPtr &arg) {
     *this << *arg;
-  }
+  });
 }
 
 void GenericPrinter::print(const AST::ExpressionStatement &stmt) {
@@ -108,12 +105,9 @@ void GenericPrinter::print(const AST::Param &param) {
 }
 
 void GenericPrinter::printParams(const AST::FunctionDeclaration &decl) {
-  bool first = true;
-  for (const AST::ParamPtr &param : *decl.params) {
-    if (!first) *this << ", ";
-    first = false;
+  printCommaSeparated(*decl.params, [&](const AST::ParamPtr &param) {
     *this << *param;
-  }
+  });
 }
 
 void GenericPrinter::print(const AST::FunctionDeclaration &decl) {

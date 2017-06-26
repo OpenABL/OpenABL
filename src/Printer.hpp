@@ -45,6 +45,19 @@ struct Printer {
   virtual void print(const AST::EnvironmentDeclaration &) = 0;
   virtual void print(const AST::Script &) = 0;
 
+  template<typename T, typename Fn>
+  void printCommaSeparated(const std::vector<T> &vec, Fn fn) {
+    bool first = true;
+    for (const T &elem : vec) {
+      if (!first) {
+        *this << ", ";
+      }
+      first = false;
+
+      fn(elem);
+    }
+  }
+
   static Printer &indent(Printer &p) {
     p.indentLevel++;
     return p;

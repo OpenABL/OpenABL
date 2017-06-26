@@ -166,19 +166,13 @@ void MasonPrinter::print(const AST::AssignStatement &stmt) {
       Type vecType = access->expr->type;
       unsigned vecLen = vecType.getVecLen();
       *this << *access->expr << " = new Double" << vecLen << "D(";
-      bool first = true;
-      for (const std::string &member : vecType.getVecMembers()) {
-        if (!first) {
-          *this << ", ";
-        }
-        first = false;
-
+      printCommaSeparated(vecType.getVecMembers(), [&](const std::string &member) {
         if (access->member == member) {
           *this << *stmt.right;
         } else {
           *this << *access->expr << "." << member;
         }
-      }
+      });
       *this << ");";
       return;
     }
@@ -212,18 +206,13 @@ void MasonPrinter::print(const AST::UnaryOpExpression &expr) {
 
 void MasonPrinter::print(const AST::AgentCreationExpression &expr) {
   AST::AgentDeclaration *agent = expr.type.getAgentDecl();
-  bool first = true;
 
   *this << "new " << expr.name << "(";
-  for (AST::AgentMemberPtr &member : *agent->members) {
+  printCommaSeparated(*agent->members, [&](const AST::AgentMemberPtr &member) {
     auto it = expr.memberMap.find(member->name);
     assert(it != expr.memberMap.end());
-    AST::Expression &initExpr = *it->second;
-
-    if (!first) *this << ", ";
-    first = false;
-    *this << initExpr;
-  }
+    *this << *it->second;
+  });
   *this <<")";
 }
 
@@ -308,12 +297,9 @@ void MasonPrinter::print(const AST::AgentDeclaration &decl) {
 
   // Print constructor
   *this << "public " << decl.name << "(";
-  bool first = true;
-  for (AST::AgentMemberPtr &member : *decl.members) {
-    if (!first) *this << ", ";
-    first = false;
+  printCommaSeparated(*decl.members, [&](const AST::AgentMemberPtr &member) {
     *this << *member->type << " " << member->name;
-  }
+  });
   *this << ") {" << indent;
   for (AST::AgentMemberPtr &member : *decl.members) {
     *this << nl << "this." << member->name << " = " << member->name << ";";
