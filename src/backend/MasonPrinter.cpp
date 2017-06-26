@@ -77,13 +77,13 @@ void MasonPrinter::print(const AST::BinaryOpExpression &expr) {
 
 static void printVecCtorArgs(MasonPrinter &p, const AST::CallExpression &expr) {
   Type t = expr.type;
-  int vecWidth = t.getTypeId() == Type::VEC2 ? 2 : 3;
+  int vecLen = t.getVecLen();
   size_t numArgs = expr.args->size();
   if (numArgs == 1) {
     // TODO Multiple evaluation
     const AST::Expression &arg = *expr.getArg(0).expr;
     p << arg << ", " << arg;
-    if (vecWidth == 3) {
+    if (vecLen == 3) {
       p << ", " << arg;
     }
   } else {
@@ -94,8 +94,8 @@ static void printVecCtorArgs(MasonPrinter &p, const AST::CallExpression &expr) {
 static void printTypeCtor(MasonPrinter &p, const AST::CallExpression &expr) {
   Type t = expr.type;
   if (t.isVec()) {
-    int vecWidth = t.getTypeId() == Type::VEC2 ? 2 : 3;
-    p << "new Double" << vecWidth << "D(";
+    int vecLen = t.getVecLen();
+    p << "new Double" << vecLen << "D(";
     printVecCtorArgs(p, expr);
     p << ")";
   } else {
@@ -348,15 +348,10 @@ void MasonPrinter::print(const AST::Script &script) {
   // TODO Replace dummy granularity
   if (script.envDecl) {
     AST::CallExpression &expr = *dynamic_cast<AST::CallExpression *>(&*script.envDecl->sizeExpr);
-    if (expr.type.getTypeId() == Type::VEC2) {
-      *this << "public Continuous2D env = new Continuous2D(1.0, ";
-      printVecCtorArgs(*this, expr);
-      *this << ");" << nl << nl;
-    } else {
-      *this << "public Continuous3D env = new Continuous3D(1.0, ";
-      printVecCtorArgs(*this, expr);
-      *this << ");" << nl << nl;
-    }
+    int vecLen = expr.type.getVecLen();
+    *this << "public Continuous" << vecLen << "D env = new Continuous" << vecLen << "D(1.0, ";
+    printVecCtorArgs(*this, expr);
+    *this << ");" << nl << nl;
   }
 
   *this << "public Sim(long seed) {" << indent << nl

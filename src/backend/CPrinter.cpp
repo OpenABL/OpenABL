@@ -35,7 +35,7 @@ static void printBinaryOp(CPrinter &p, AST::BinaryOp op,
   Type r = right.type;
   if (l.isVec() || r.isVec()) {
     Type v = l.isVec() ? l : r;
-    p << (v.getTypeId() == Type::VEC2 ? "float2_" : "float3_");
+    p << "float" << v.getVecLen() << "_";
     switch (op) {
       case AST::BinaryOp::ADD: p << "add"; break;
       case AST::BinaryOp::SUB: p << "sub"; break;
@@ -75,11 +75,8 @@ static void printTypeCtor(CPrinter &p, const AST::CallExpression &expr) {
   Type t = expr.type;
   if (t.isVec()) {
     size_t numArgs = expr.args->size();
-    if (t.getTypeId() == Type::VEC2) {
-      p << (numArgs == 1 ? "float2_fill" : "float2_create");
-    } else {
-      p << (numArgs == 1 ? "float3_fill" : "float3_create");
-    }
+    p << "float" << t.getVecLen() << "_"
+      << (numArgs == 1 ? "fill" : "create");
     p << "(";
     p.printArgs(expr);
     p << ")";

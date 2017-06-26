@@ -34,11 +34,7 @@ void FlameGPUPrinter::print(const AST::SimpleType &type) {
 static void printTypeCtor(FlameGPUPrinter &p, const AST::CallExpression &expr) {
   Type t = expr.type;
   if (t.isVec()) {
-    if (t.getTypeId() == Type::VEC2) {
-      p << "glm::vec2";
-    } else {
-      p << "glm::vec3";
-    }
+    p << "glm::vec" << t.getVecLen();
     p << "(";
     p.printArgs(expr);
     p << ")";
