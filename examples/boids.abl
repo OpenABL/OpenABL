@@ -22,16 +22,14 @@ environment { float3(1.0, 1.0, 1.0) }
 
 // This function looks somewhat weird to me, but let's take it as-is
 float3 boundPosition(float3 pos) {
-  pos.x = pos.x < min_pos ? max_pos : pos.x;
-  pos.x = pos.x > max_pos ? min_pos : pos.x;
-
-  pos.y = pos.y < min_pos ? max_pos : pos.y;
-  pos.y = pos.y > max_pos ? min_pos : pos.y;
-
-  pos.z = pos.z < min_pos ? max_pos : pos.z;
-  pos.z = pos.z > max_pos ? min_pos : pos.z;
-
-  return pos;
+  return float3(
+    pos.x < min_pos ? max_pos :
+    pos.x > max_pos ? min_pos : pos.x,
+    pos.y < min_pos ? max_pos :
+    pos.y > max_pos ? min_pos : pos.y,
+    pos.z < min_pos ? max_pos :
+    pos.z > max_pos ? min_pos : pos.z
+  );
 }
 
 void update_boid(Boid in->out) {
