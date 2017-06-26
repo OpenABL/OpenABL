@@ -6,6 +6,9 @@ namespace OpenABL {
 
 uint32_t VarId::max_id;
 
+const std::vector<std::string> Type::vec2Members { "x", "y" };
+const std::vector<std::string> Type::vec3Members { "x", "y", "z" };
+
 static const char *getTypeIdStr(Type::TypeId t) {
   switch (t) {
     case Type::INVALID: return "INVALID";

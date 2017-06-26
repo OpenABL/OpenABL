@@ -107,6 +107,11 @@ struct Type {
     return type == VEC2 ? 2 : 3;
   }
 
+  std::vector<std::string> getVecMembers() const {
+    assert(isVec());
+    return type == VEC2 ? vec2Members : vec3Members;
+  }
+
   bool isInvalid() const { return type == INVALID; }
   bool isVoid() const { return type == VOID; }
   bool isArray() const { return type == ARRAY; }
@@ -125,6 +130,9 @@ struct Type {
   }
 
 private:
+  static const std::vector<std::string> vec2Members;
+  static const std::vector<std::string> vec3Members;
+
   bool isCompatibleWith(const Type &other, bool allowPromotion) const {
     if (type != other.type) {
       if (allowPromotion && type == INT32) {

@@ -163,13 +163,11 @@ void MasonPrinter::print(const AST::AssignStatement &stmt) {
     if (access->expr->type.isVec()) {
       // Assignment to vector component
       // Convert into creation of new DoubleND, because it is immmutable
-      unsigned vecLen = access->expr->type.getVecLen();
+      Type vecType = access->expr->type;
+      unsigned vecLen = vecType.getVecLen();
       *this << *access->expr << " = new Double" << vecLen << "D(";
-      std::array<const char *, 3> members {{ "x", "y", vecLen == 3 ? "z" : nullptr }};
       bool first = true;
-      for (const char *member : members) {
-        if (!member) continue;
-
+      for (const std::string &member : vecType.getVecMembers()) {
         if (!first) {
           *this << ", ";
         }

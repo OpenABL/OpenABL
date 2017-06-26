@@ -29,15 +29,7 @@ static void printBinaryOp(FlamePrinter &p, AST::BinaryOp op,
       case AST::BinaryOp::ADD: p << "add"; break;
       case AST::BinaryOp::SUB: p << "sub"; break;
       case AST::BinaryOp::DIV: p << "div_scalar"; break;
-      case AST::BinaryOp::MUL:
-        p << "mul_scalar";
-        if (r.isVec()) {
-          // Normalize to right multiplication
-          // TODO Move into analysis
-          p << "(" << right << ", " << left << ")";
-          return;
-        }
-        break;
+      case AST::BinaryOp::MUL: p << "mul_scalar"; break;
       default:
         assert(0);
     }
@@ -76,11 +68,10 @@ void FlamePrinter::print(const AST::AssignStatement &stmt) {
       // Write to agent member (convert to set_* call)
       const std::string &name = memAcc->member;
       if (memAcc->type.isVec()) {
-        // TODO Prevent double evaluation of RHS?
-        *this << "set_" << name << "_x(" << *stmt.right << ".x);" << nl;
-        *this << "set_" << name << "_y(" << *stmt.right << ".y);";
-        if (memAcc->type.getTypeId() == Type::VEC3) {
-          *this << nl << "set_" << name << "_z(" << *stmt.right << ".z);";
+        for (const std::string &member : memAcc->type.getVecMembers()) {
+          // TODO Prevent double evaluation of RHS?
+          *this << "set_" << name << "_" << member
+                << "(" << *stmt.right << "." << member << ");" << nl;
         }
       } else {
         *this << "set_" << name << "(" << *stmt.right << ");";
