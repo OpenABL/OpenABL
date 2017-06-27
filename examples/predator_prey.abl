@@ -18,15 +18,13 @@ void update_prey(Prey in -> out) {
   int predNum = 0;
   for (Predator pred : near(in, radius)) {
     predPos += pred.pos;
-	predNum += 1;
+    predNum += 1;
   }
 
   out.pos = in.pos + in.dir;
   if (predNum != 0) {
     // Move in direction away from predators
-    predPos /= predNum;
-	float3 predDir = predPos - in.pos;
-	out.dir = -predDir / length(predDir);
+    out.dir = normalize(in.pos - predPos / predNum);
   } else {
     out.dir = in.dir;
   }
@@ -41,7 +39,7 @@ void main() {
 
   simulate(100) {
     update_prey,
-	update_predator
+    update_predator
   }
 
   save("agents.out");

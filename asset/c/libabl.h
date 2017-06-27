@@ -128,6 +128,13 @@ static inline float dist_float3(float3 a, float3 b) {
 	return length_float3(float3_sub(a, b));
 }
 
+static inline float2 normalize_float2(float2 v) {
+	return float2_div_scalar(v, length_float2(v));
+}
+static inline float3 normalize_float3(float3 v) {
+	return float3_div_scalar(v, length_float3(v));
+}
+
 /*
  * Random numbers
  */
