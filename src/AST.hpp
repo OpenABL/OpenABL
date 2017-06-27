@@ -567,10 +567,13 @@ struct ConstDeclaration : public Declaration {
 };
 
 struct EnvironmentDeclaration : public Declaration {
-  ExpressionPtr sizeExpr;
+  MemberInitListPtr members;
 
-  EnvironmentDeclaration(Expression *sizeExpr, Location loc)
-    : Declaration{loc}, sizeExpr{sizeExpr} {}
+  // Populated during analysis
+  const Expression *sizeExpr = nullptr;
+
+  EnvironmentDeclaration(MemberInitList *members, Location loc)
+    : Declaration{loc}, members{members} {}
 
   void accept(Visitor &);
   void print(Printer &) const;
@@ -586,8 +589,9 @@ struct Script : public Node {
   std::vector<ConstDeclaration *> consts;
   std::vector<FunctionDeclaration *> funcs;
   SimulateStatement *simStmt = nullptr;
-  EnvironmentDeclaration *envDecl = nullptr;
   FunctionDeclaration *mainFunc = nullptr;
+
+  const EnvironmentDeclaration *envDecl = nullptr;
 
   Script(DeclarationList *decls, Location loc)
     : Node{loc}, decls{decls} {}

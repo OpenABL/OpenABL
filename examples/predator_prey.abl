@@ -9,7 +9,7 @@ agent Prey {
 
 float radius = 5.0;
 
-environment { float3(100, 100, 100) }
+environment { size: float3(100, 100, 100) }
 
 // TODO Use a real model here
 void update_prey(Prey in -> out) {

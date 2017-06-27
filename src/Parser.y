@@ -177,7 +177,7 @@ param: type var { $$ = new Param($1, $2, nullptr, @$); }
 const_decl: type var ASSIGN expression SEMI
               { $$ = new ConstDeclaration($1, $2, $4, @$); };
 
-env_decl: ENVIRONMENT LBRACE expression RBRACE
+env_decl: ENVIRONMENT LBRACE member_init_list RBRACE
 		    { $$ = new EnvironmentDeclaration($3, @$); };
 
 literal: BOOL { $$ = new BoolLiteral($1, @$); }

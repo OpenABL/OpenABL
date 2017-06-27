@@ -214,7 +214,9 @@ void ConstDeclaration::accept(Visitor &visitor) {
 
 void EnvironmentDeclaration::accept(Visitor &visitor) {
   visitor.enter(*this);
-  sizeExpr->accept(visitor);
+  for (MemberInitEntryPtr &member : *members) {
+    member->accept(visitor);
+  }
   visitor.leave(*this);
 }
 

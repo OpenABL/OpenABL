@@ -174,10 +174,18 @@ void AnalysisVisitor::leave(AST::EnvironmentDeclaration &decl) {
     return;
   }
 
-  const AST::Expression &sizeExpr = *decl.sizeExpr;
-  if (!sizeExpr.type.isVec()) {
-    err << "Environment size must be float2 or float3" << decl.loc;
-    return;
+  for (const AST::MemberInitEntryPtr &member : *decl.members) {
+    if (member->name == "size") {
+      const AST::Expression &sizeExpr = *member->expr;
+      if (!sizeExpr.type.isVec()) {
+        err << "Environment size must be float2 or float3" << decl.loc;
+        return;
+      }
+      decl.sizeExpr = &sizeExpr;
+    } else {
+      err << "Unknown environment member \"" << member->name << "\"" << member->loc;
+      return;
+    }
   }
 
   script.envDecl = &decl;
@@ -743,8 +751,9 @@ void AnalysisVisitor::leave(AST::Script &script) {
   for (AST::AgentDeclaration *agent : script.agents) {
     AST::AgentMember *member = agent->getPositionMember();
     if (member) {
-      if (!script.envDecl) {
-        err << "An environment {} declaration is required to use position members" << member->loc;
+      if (!script.envDecl || !script.envDecl->sizeExpr) {
+        err << "An environment { size } declaration is required to use position members"
+            << member->loc;
         return;
       }
       if (member->type->resolved != script.envDecl->sizeExpr->type) {

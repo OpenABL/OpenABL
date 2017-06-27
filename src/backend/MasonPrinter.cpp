@@ -332,8 +332,9 @@ void MasonPrinter::print(const AST::Script &script) {
   }
 
   // TODO Replace dummy granularity
-  if (script.envDecl) {
-    AST::CallExpression &expr = *dynamic_cast<AST::CallExpression *>(&*script.envDecl->sizeExpr);
+  if (script.envDecl && script.envDecl->sizeExpr) {
+    const AST::CallExpression &expr =
+      *dynamic_cast<const AST::CallExpression *>(&*script.envDecl->sizeExpr);
     int vecLen = expr.type.getVecLen();
     *this << "public Continuous" << vecLen << "D env = new Continuous" << vecLen << "D(1.0, ";
     printVecCtorArgs(*this, expr);

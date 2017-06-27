@@ -18,7 +18,7 @@ float match_scale = 1.25;
 
 // TODO The environment in this example goes from -0.5 to 0.5 rather than from 0.0 to 1.0
 // Might it be better to specify min/max instead of size?
-environment { float3(1.0, 1.0, 1.0) }
+environment { size: float3(1.0, 1.0, 1.0) }
 
 // This function looks somewhat weird to me, but let's take it as-is
 float3 boundPosition(float3 pos) {
