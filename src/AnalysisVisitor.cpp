@@ -107,8 +107,6 @@ void AnalysisVisitor::leave(AST::Var &) {};
 void AnalysisVisitor::leave(AST::Arg &) {};
 void AnalysisVisitor::leave(AST::MemberInitEntry &) {};
 void AnalysisVisitor::leave(AST::ExpressionStatement &) {};
-void AnalysisVisitor::leave(AST::IfStatement &) {};
-void AnalysisVisitor::leave(AST::WhileStatement &) {};
 void AnalysisVisitor::leave(AST::SimpleType &) {};
 void AnalysisVisitor::leave(AST::ArrayType &) {};
 void AnalysisVisitor::leave(AST::AgentMember &) {};
@@ -289,6 +287,22 @@ void AnalysisVisitor::leave(AST::ForStatement &stmt) {
 
   stmt.kind = AST::ForStatement::Kind::NORMAL;
 };
+
+void AnalysisVisitor::leave(AST::IfStatement &stmt) {
+  Type t = stmt.condExpr->type;
+  if (!t.isBool()) {
+    err << "if() condition must be bool, but received " << t << stmt.condExpr->loc;
+    return;
+  }
+}
+
+void AnalysisVisitor::leave(AST::WhileStatement &stmt) {
+  Type t = stmt.expr->type;
+  if (!t.isBool()) {
+    err << "while() condition must be bool, but received " << t << stmt.expr->loc;
+    return;
+  }
+}
 
 bool isStepFunction(const AST::FunctionDeclaration &fn) {
     if (fn.params->size() != 1) {
