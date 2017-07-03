@@ -1,4 +1,9 @@
+int glob = 42;
+
 void main() {
   int a = 1;
   int a = 2;
+
+  // Redeclaring a global locally is allowed
+  int glob = 24;
 }

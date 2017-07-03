@@ -57,7 +57,12 @@ Type AnalysisVisitor::resolveAstType(AST::Type &type) {
 void AnalysisVisitor::declareVar(AST::Var &var, Type type, bool isConst, bool isGlobal) {
   auto it = varMap.find(var.name);
   if (it != varMap.end()) {
-    err << "Cannot redeclare variable \"" << var.name << "\"" << var.loc;
+    const ScopeEntry &entry = scope.get(it->second);
+    // Allow a local variable to shadow a global variable, but nothing else
+    if (!entry.isGlobal || isGlobal) {
+      err << "Cannot redeclare variable \"" << var.name << "\"" << var.loc;
+      return;
+    }
   }
 
   var.id = VarId::make();
