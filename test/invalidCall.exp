@@ -1,0 +1,2 @@
+Function foo expects 1 parameters, but 0 were given on line 6
+Argument 0 to function foo has type float3 but int expected on line 7

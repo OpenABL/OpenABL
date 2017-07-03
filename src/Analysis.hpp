@@ -121,6 +121,7 @@ struct Type {
   bool isNumOrVec() const { return isNum() || isVec(); }
   bool isInt() const { return type == INT32; }
   bool isFloat() const { return type == FLOAT32; }
+  bool isBool() const { return type == BOOL; }
 
   bool isGenericAgent() const {
     return type == AGENT && agent == nullptr;

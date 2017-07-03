@@ -469,6 +469,11 @@ static Type getBinaryOpType(AST::BinaryOp op, Type l, Type r) {
       }
       return l;
     case AST::BinaryOp::MOD:
+    case AST::BinaryOp::BITWISE_OR:
+    case AST::BinaryOp::BITWISE_AND:
+    case AST::BinaryOp::BITWISE_XOR:
+    case AST::BinaryOp::SHIFT_LEFT:
+    case AST::BinaryOp::SHIFT_RIGHT:
       if (!l.isInt() || !r.isInt()) {
         return { Type::INVALID };
       }
@@ -483,14 +488,19 @@ static Type getBinaryOpType(AST::BinaryOp op, Type l, Type r) {
         return { Type::INVALID };
       }
       return { Type:: BOOL };
+    case AST::BinaryOp::LOGICAL_OR:
+    case AST::BinaryOp::LOGICAL_AND:
+      if (!l.isBool() || !l.isBool()) {
+        return { Type::INVALID };
+      }
+      return { Type:: BOOL };
     case AST::BinaryOp::RANGE:
       if (!l.isInt() || !r.isInt()) {
         return { Type::INVALID };
       }
       return { Type::ARRAY, Type::INT32 };
-    default:
-      return { Type::INVALID };
   }
+  assert(0);
 }
 
 static Type getUnaryOpType(AST::UnaryOp op, Type t) {
@@ -649,7 +659,7 @@ void AnalysisVisitor::leave(AST::MemberAccessExpression &expr) {
   }
 };
 
-static std::vector<Type> getArgTypes(AST::CallExpression &expr) {
+static std::vector<Type> getArgTypes(const AST::CallExpression &expr) {
   std::vector<Type> types;
   for (AST::ArgPtr &arg : *expr.args) {
     types.push_back(arg->expr->type);
@@ -743,8 +753,26 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
     return;
   }
 
-  // TODO check sig, verify, handle
+  const AST::FunctionDeclaration *decl = it->second;
+  if (expr.args->size() != decl->params->size()) {
+    err << "Function " << decl->name << " expects " << decl->params->size()
+        << " parameters, but " << expr.args->size() << " were given" << expr.loc;
+    return;
+  }
+
+  size_t num = expr.args->size();
+  for (size_t i = 0; i < num; i++) {
+    const AST::Arg &arg = *(*expr.args)[i];
+    const AST::Param &param = *(*decl->params)[i];
+    if (!arg.expr->type.isPromotableTo(param.type->resolved)) {
+      err << "Argument " << i << " to function " << decl->name << " has type "
+          << arg.expr->type << " but " << param.type->resolved << " expected" << arg.loc;
+      return;
+    }
+  }
+
   expr.kind = AST::CallExpression::Kind::USER;
+  expr.type = decl->returnType->resolved;
 };
 
 void AnalysisVisitor::leave(AST::Script &script) {

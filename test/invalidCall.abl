@@ -1,0 +1,8 @@
+int foo(int bar) {
+  return bar;
+}
+
+void main() {
+  int a = foo();
+  int b = foo(float3(0));
+}
