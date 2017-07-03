@@ -134,6 +134,13 @@ void IfStatement::accept(Visitor &visitor) {
   visitor.leave(*this);
 }
 
+void WhileStatement::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  expr->accept(visitor);
+  stmt->accept(visitor);
+  visitor.leave(*this);
+}
+
 void ForStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
   type->accept(visitor);
@@ -246,6 +253,7 @@ void AssignOpStatement::print(Printer &printer) const { printer.print(*this); }
 void BlockStatement::print(Printer &printer) const { printer.print(*this); }
 void VarDeclarationStatement::print(Printer &printer) const { printer.print(*this); }
 void IfStatement::print(Printer &printer) const { printer.print(*this); }
+void WhileStatement::print(Printer &printer) const { printer.print(*this); }
 void ForStatement::print(Printer &printer) const { printer.print(*this); }
 void SimulateStatement::print(Printer &printer) const { printer.print(*this); }
 void ReturnStatement::print(Printer &printer) const { printer.print(*this); }

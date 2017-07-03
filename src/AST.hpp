@@ -367,6 +367,17 @@ struct IfStatement : public Statement {
   void print(Printer &) const;
 };
 
+struct WhileStatement : public Statement {
+  ExpressionPtr expr;
+  StatementPtr stmt;
+
+  WhileStatement(Expression *expr, Statement *stmt, Location loc)
+    : Statement{loc}, expr{expr}, stmt{stmt} {}
+
+  void accept(Visitor &);
+  void print(Printer &) const;
+};
+
 struct ForStatement : public Statement {
   enum class Kind {
     NORMAL, // For loop over an array          for (Agent agent : agents)

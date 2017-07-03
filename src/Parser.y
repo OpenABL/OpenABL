@@ -40,6 +40,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   POSITION
   RETURN
   SIMULATE
+  WHILE
 
   ADD
   SUB
@@ -207,6 +208,8 @@ statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
              { $$ = new IfStatement($3, $5, $7, @$); }
          | FOR LPAREN type var COLON expression RPAREN statement
              { $$ = new ForStatement($3, $4, $6, $8, @$); }
+         | WHILE LPAREN expression RPAREN statement
+             { $$ = new WhileStatement($3, $5, @$); }
          | RETURN expression SEMI
              { $$ = new ReturnStatement($2, @$); }
          | RETURN SEMI

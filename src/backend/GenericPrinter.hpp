@@ -25,6 +25,7 @@ struct GenericPrinter : public Printer {
   virtual void print(const AST::AssignOpStatement &);
   virtual void print(const AST::BlockStatement &);
   virtual void print(const AST::IfStatement &);
+  virtual void print(const AST::WhileStatement &);
   virtual void print(const AST::VarDeclarationStatement &);
   virtual void print(const AST::ReturnStatement &);
   virtual void print(const AST::ConstDeclaration &);

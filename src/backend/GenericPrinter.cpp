@@ -75,8 +75,12 @@ void GenericPrinter::print(const AST::AssignOpStatement &stmt) {
 void GenericPrinter::print(const AST::BlockStatement &stmt) {
   *this << "{" << indent << *stmt.stmts << outdent << nl << "}";
 }
+
 void GenericPrinter::print(const AST::IfStatement &stmt) {
   *this << "if (" << *stmt.condExpr << ") " << *stmt.ifStmt;
+}
+void GenericPrinter::print(const AST::WhileStatement &stmt) {
+  *this << "while (" << *stmt.expr << ") " << *stmt.stmt;
 }
 
 void GenericPrinter::print(const AST::VarDeclarationStatement &stmt) {

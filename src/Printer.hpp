@@ -32,6 +32,7 @@ struct Printer {
   virtual void print(const AST::BlockStatement &) = 0;
   virtual void print(const AST::VarDeclarationStatement &) = 0;
   virtual void print(const AST::IfStatement &) = 0;
+  virtual void print(const AST::WhileStatement &) = 0;
   virtual void print(const AST::ForStatement &) = 0;
   virtual void print(const AST::SimulateStatement &) = 0;
   virtual void print(const AST::ReturnStatement &) = 0;

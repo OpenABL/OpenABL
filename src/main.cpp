@@ -19,6 +19,7 @@ void registerBuiltinFunctions(BuiltinFunctions &funcs) {
   funcs.add("random", "random_float", { Type::FLOAT32, Type::FLOAT32 }, Type::FLOAT32);
   funcs.add("random", "random_float2", { Type::VEC2, Type::VEC2 }, Type::VEC2);
   funcs.add("random", "random_float3", { Type::VEC3, Type::VEC3 }, Type::VEC3);
+  funcs.add("round", "round", { Type::FLOAT32 }, Type::FLOAT32);
 
   // Agent specific functions
   funcs.add("add", "add", { Type::AGENT }, Type::VOID);

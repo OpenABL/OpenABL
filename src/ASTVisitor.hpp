@@ -24,6 +24,7 @@ struct Visitor {
   virtual void enter(BlockStatement &) {};
   virtual void enter(VarDeclarationStatement &) {};
   virtual void enter(IfStatement &) {};
+  virtual void enter(WhileStatement &) {};
   virtual void enter(ForStatement &) {};
   virtual void enter(SimulateStatement &) {};
   virtual void enter(ReturnStatement &) {};
@@ -55,6 +56,7 @@ struct Visitor {
   virtual void leave(BlockStatement &) {};
   virtual void leave(VarDeclarationStatement &) {};
   virtual void leave(IfStatement &) {};
+  virtual void leave(WhileStatement &) {};
   virtual void leave(ForStatement &) {};
   virtual void leave(SimulateStatement &) {};
   virtual void leave(ReturnStatement &) {};

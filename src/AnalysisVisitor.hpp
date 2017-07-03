@@ -30,6 +30,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void enter(AST::BlockStatement &);
   void enter(AST::VarDeclarationStatement &);
   void enter(AST::IfStatement &);
+  void enter(AST::WhileStatement &);
   void enter(AST::ForStatement &);
   void enter(AST::SimulateStatement &);
   void enter(AST::ReturnStatement &);
@@ -60,6 +61,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void leave(AST::BlockStatement &);
   void leave(AST::VarDeclarationStatement &);
   void leave(AST::IfStatement &);
+  void leave(AST::WhileStatement &);
   void leave(AST::ForStatement &);
   void leave(AST::SimulateStatement &);
   void leave(AST::ReturnStatement &);
