@@ -259,6 +259,9 @@ struct BuiltinFunctions {
            std::vector<Type> argTypes, Type returnType) {
     funcs[name].signatures.push_back({ sigName, argTypes, returnType });
   }
+  void add(const std::string &name, std::vector<Type> argTypes, Type returnType) {
+    add(name, name, argTypes, returnType);
+  }
 
   BuiltinFunction *getByName(const std::string &name) {
     auto it = funcs.find(name);

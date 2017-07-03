@@ -19,12 +19,25 @@ void registerBuiltinFunctions(BuiltinFunctions &funcs) {
   funcs.add("random", "random_float", { Type::FLOAT32, Type::FLOAT32 }, Type::FLOAT32);
   funcs.add("random", "random_float2", { Type::VEC2, Type::VEC2 }, Type::VEC2);
   funcs.add("random", "random_float3", { Type::VEC3, Type::VEC3 }, Type::VEC3);
-  funcs.add("round", "round", { Type::FLOAT32 }, Type::FLOAT32);
+
+  funcs.add("sin", { Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("cos", { Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("tan", { Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("sinh", { Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("cosh", { Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("tanh", { Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("asin", { Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("acos", { Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("atan", { Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("expr", { Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("log", { Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("sqrt", { Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("round", { Type::FLOAT32 }, Type::FLOAT32);
 
   // Agent specific functions
-  funcs.add("add", "add", { Type::AGENT }, Type::VOID);
-  funcs.add("near", "near", { Type::AGENT, Type::FLOAT32 }, { Type::ARRAY, Type::AGENT });
-  funcs.add("save", "save", { Type::STRING }, Type::VOID);
+  funcs.add("add", { Type::AGENT }, Type::VOID);
+  funcs.add("near", { Type::AGENT, Type::FLOAT32 }, { Type::ARRAY, Type::AGENT });
+  funcs.add("save", { Type::STRING }, Type::VOID);
 }
 
 std::map<std::string, std::unique_ptr<Backend>> getBackends() {
