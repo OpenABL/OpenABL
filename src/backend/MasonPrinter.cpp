@@ -28,7 +28,8 @@ static void printType(Printer &p, Type type) {
       p << "Double3D";
       return;
     case Type::ARRAY:
-      p << type.getBaseType() << "[]";
+      printType(p, type.getBaseType());
+      p << "[]";
       return;
     default:
       assert(0); // TODO

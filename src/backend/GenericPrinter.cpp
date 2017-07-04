@@ -23,7 +23,7 @@ void GenericPrinter::print(const AST::Literal &lit) {
   } else if (const AST::FloatLiteral *flit = dynamic_cast<const AST::FloatLiteral *>(&lit)) {
     *this << flit->value;
   } else if (const AST::BoolLiteral *blit = dynamic_cast<const AST::BoolLiteral *>(&lit)) {
-    *this << blit->value;
+    *this << (blit->value ? "true" : "false");
   } else if (const AST::StringLiteral *slit = dynamic_cast<const AST::StringLiteral *>(&lit)) {
     printStringLiteral(*this, slit->value);
   } else {
