@@ -855,6 +855,11 @@ void AnalysisVisitor::leave(AST::Script &script) {
       }
     }
   }
+
+  if (!script.mainFunc) {
+    err << "Script must have a main function" << AST::Location{};
+    return;
+  }
 };
 
 }
