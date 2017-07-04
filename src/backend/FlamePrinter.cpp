@@ -9,7 +9,6 @@ void FlamePrinter::print(const AST::MemberInitEntry &) {}
 void FlamePrinter::print(const AST::AgentCreationExpression &) {}
 void FlamePrinter::print(const AST::NewArrayExpression &) {}
 void FlamePrinter::print(const AST::SimulateStatement &) {}
-void FlamePrinter::print(const AST::ArrayType &) {}
 void FlamePrinter::print(const AST::AgentMember &) {}
 void FlamePrinter::print(const AST::AgentDeclaration &) {}
 

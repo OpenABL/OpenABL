@@ -270,9 +270,6 @@ void CPrinter::print(const AST::SimulateStatement &stmt) {
 void CPrinter::print(const AST::SimpleType &type) {
   *this << type.resolved;
 }
-void CPrinter::print(const AST::ArrayType &type) {
-  *this << type.resolved;
-}
 void CPrinter::print(const AST::AgentMember &member) {
   *this << *member.type << " " << member.name << ";";
 }

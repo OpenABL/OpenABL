@@ -37,7 +37,6 @@ struct AnalysisVisitor : public AST::Visitor {
   void enter(AST::SimulateStatement &);
   void enter(AST::ReturnStatement &);
   void enter(AST::SimpleType &);
-  void enter(AST::ArrayType &);
   void enter(AST::Param &);
   void enter(AST::FunctionDeclaration &);
   void enter(AST::AgentMember &);
@@ -70,7 +69,6 @@ struct AnalysisVisitor : public AST::Visitor {
   void leave(AST::SimulateStatement &);
   void leave(AST::ReturnStatement &);
   void leave(AST::SimpleType &);
-  void leave(AST::ArrayType &);
   void leave(AST::Param &);
   void leave(AST::FunctionDeclaration &);
   void leave(AST::AgentMember &);

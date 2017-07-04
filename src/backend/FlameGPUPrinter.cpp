@@ -6,7 +6,6 @@ void FlameGPUPrinter::print(const AST::MemberInitEntry &) {}
 void FlameGPUPrinter::print(const AST::AgentCreationExpression &) {}
 void FlameGPUPrinter::print(const AST::NewArrayExpression &) {}
 void FlameGPUPrinter::print(const AST::SimulateStatement &) {}
-void FlameGPUPrinter::print(const AST::ArrayType &) {}
 void FlameGPUPrinter::print(const AST::AgentMember &) {}
 void FlameGPUPrinter::print(const AST::AgentDeclaration &) {}
 void FlameGPUPrinter::print(const AST::ConstDeclaration &) {}

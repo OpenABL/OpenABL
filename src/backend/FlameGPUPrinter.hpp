@@ -20,7 +20,6 @@ struct FlameGPUPrinter : public GenericPrinter {
   void print(const AST::ForStatement &);
   void print(const AST::SimulateStatement &);
   void print(const AST::SimpleType &);
-  void print(const AST::ArrayType &);
   void print(const AST::AgentMember &);
   void print(const AST::AgentDeclaration &);
   void print(const AST::ConstDeclaration &);

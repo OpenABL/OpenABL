@@ -31,7 +31,6 @@ struct Visitor {
   virtual void enter(SimulateStatement &) {};
   virtual void enter(ReturnStatement &) {};
   virtual void enter(SimpleType &) {};
-  virtual void enter(ArrayType &) {};
   virtual void enter(Param &) {};
   virtual void enter(FunctionDeclaration &) {};
   virtual void enter(AgentMember &) {};
@@ -65,7 +64,6 @@ struct Visitor {
   virtual void leave(SimulateStatement &) {};
   virtual void leave(ReturnStatement &) {};
   virtual void leave(SimpleType &) {};
-  virtual void leave(ArrayType &) {};
   virtual void leave(Param &) {};
   virtual void leave(FunctionDeclaration &) {};
   virtual void leave(AgentMember &) {};

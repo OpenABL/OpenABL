@@ -480,16 +480,6 @@ struct SimpleType : public Type {
   void print(Printer &) const;
 };
 
-struct ArrayType : public Type {
-  TypePtr type;
-
-  ArrayType(Type *type, Location loc)
-    : Type{loc}, type{type} {}
-
-  void accept(Visitor &);
-  void print(Printer &) const;
-};
-
 struct Param : public Node {
   TypePtr type;
   VarPtr var;

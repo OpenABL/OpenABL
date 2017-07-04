@@ -41,14 +41,6 @@ Type AnalysisVisitor::resolveAstType(AST::Type &type) {
       }
       return { Type::AGENT, it->second };
     }
-  } else if (AST::ArrayType *t = dynamic_cast<AST::ArrayType *>(&type)) {
-    Type baseType = resolveAstType(*t->type);
-    if (baseType.isArray()) {
-      err << "Arrays may only be nested to one level" << type.loc;
-      return { Type::INVALID };
-    }
-
-    return { Type::ARRAY, baseType };
   } else {
     assert(0);
   }
@@ -111,7 +103,6 @@ void AnalysisVisitor::leave(AST::MemberInitEntry &) {}
 void AnalysisVisitor::leave(AST::ArrayInitExpression &) {}
 void AnalysisVisitor::leave(AST::ExpressionStatement &) {}
 void AnalysisVisitor::leave(AST::SimpleType &) {}
-void AnalysisVisitor::leave(AST::ArrayType &) {}
 void AnalysisVisitor::leave(AST::AgentMember &) {}
 void AnalysisVisitor::leave(AST::AgentDeclaration &) {}
 
@@ -144,9 +135,6 @@ void AnalysisVisitor::leave(AST::BlockStatement &) {
 };
 
 void AnalysisVisitor::enter(AST::SimpleType &type) {
-  type.resolved = resolveAstType(type);
-};
-void AnalysisVisitor::enter(AST::ArrayType &type) {
   type.resolved = resolveAstType(type);
 };
 

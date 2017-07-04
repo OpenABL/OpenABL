@@ -182,12 +182,6 @@ void SimpleType::accept(Visitor &visitor) {
   visitor.leave(*this);
 }
 
-void ArrayType::accept(Visitor &visitor) {
-  visitor.enter(*this);
-  type->accept(visitor);
-  visitor.leave(*this);
-}
-
 void Param::accept(Visitor &visitor) {
   visitor.enter(*this);
   type->accept(visitor);
@@ -275,7 +269,6 @@ void ForStatement::print(Printer &printer) const { printer.print(*this); }
 void SimulateStatement::print(Printer &printer) const { printer.print(*this); }
 void ReturnStatement::print(Printer &printer) const { printer.print(*this); }
 void SimpleType::print(Printer &printer) const { printer.print(*this); }
-void ArrayType::print(Printer &printer) const { printer.print(*this); }
 void Param::print(Printer &printer) const { printer.print(*this); }
 void FunctionDeclaration::print(Printer &printer) const { printer.print(*this); }
 void AgentMember::print(Printer &printer) const { printer.print(*this); }

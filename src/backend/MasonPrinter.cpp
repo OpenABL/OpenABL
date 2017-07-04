@@ -4,7 +4,6 @@ namespace OpenABL {
 
 void MasonPrinter::print(const AST::MemberInitEntry &) {}
 void MasonPrinter::print(const AST::NewArrayExpression &) {}
-void MasonPrinter::print(const AST::ArrayType &) {}
 
 void MasonPrinter::print(const AST::SimpleType &type) {
   switch (type.resolved.getTypeId()) {

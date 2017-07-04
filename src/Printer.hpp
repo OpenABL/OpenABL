@@ -39,7 +39,6 @@ struct Printer {
   virtual void print(const AST::SimulateStatement &) = 0;
   virtual void print(const AST::ReturnStatement &) = 0;
   virtual void print(const AST::SimpleType &) = 0;
-  virtual void print(const AST::ArrayType &) = 0;
   virtual void print(const AST::Param &) = 0;
   virtual void print(const AST::FunctionDeclaration &) = 0;
   virtual void print(const AST::AgentMember &) = 0;
