@@ -30,16 +30,30 @@ for file in $DIR/examples/*abl; do
 
   TARGET_DIR=$TMP_DIR/$baseName
   mkdir -p $TARGET_DIR
+
+  # Lint-only test
   $DIR/OpenABL --lint-only -i $file > $TARGET_DIR/lint.out
   if [ $? -ne 0 ]; then
     echo "LINT-FAIL $TARGET_DIR/lint.out"
     cat $TARGET_DIR/lint.out
-    break
+    continue
   fi
 
   for backend in c flame flamegpu mason; do
-	echo "BACKEND $backend"
+    echo "BACKEND $backend"
     mkdir -p $TARGET_DIR/$backend
+
+    # Codegen test
     $DIR/OpenABL -i $file -o $TARGET_DIR/$backend -b $backend
+    if [ $? -ne 0 ]; then
+      echo "CODEGEN-FAIL for backend $backend"
+      continue
+    fi
+
+    # Build test
+    if [ -f $TARGET_DIR/$backend/build.sh ]; then
+      echo "BUILD"
+      (cd $TARGET_DIR/$backend && ./build.sh)
+    fi
   done
 done
