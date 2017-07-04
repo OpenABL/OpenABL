@@ -41,19 +41,27 @@ for file in $DIR/examples/*abl; do
 
   for backend in c flame flamegpu mason; do
     echo "BACKEND $backend"
-    mkdir -p $TARGET_DIR/$backend
+
+    BACKEND_DIR=$TARGET_DIR/$backend
+    mkdir -p $BACKEND_DIR
 
     # Codegen test
-    $DIR/OpenABL -i $file -o $TARGET_DIR/$backend -b $backend
+    $DIR/OpenABL -i $file -o $BACKEND_DIR -b $backend
     if [ $? -ne 0 ]; then
       echo "CODEGEN-FAIL for backend $backend"
       continue
     fi
 
     # Build test
-    if [ -f $TARGET_DIR/$backend/build.sh ]; then
+    if [ -f $BACKEND_DIR/build.sh ]; then
       echo "BUILD"
-      (cd $TARGET_DIR/$backend && ./build.sh)
+      pushd $BACKEND_DIR
+      ./build.sh > build.log
+      if [ $? -ne 0 ]; then
+        echo "BUILD-FAIL $BACKEND_DIR/build.log"
+        cat build.log
+      fi
+      popd
     fi
   done
 done

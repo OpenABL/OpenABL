@@ -111,8 +111,11 @@ void FlameBackend::generate(
 
   writeToFile(outputDir + "/XMLModelFile.xml", createXmlModel(script, model));
   writeToFile(outputDir + "/functions.c", createFunctionsFile(script, model));
+
   copyFile(assetDir + "/c/libabl.h", outputDir + "/libabl.h");
   copyFile(assetDir + "/c/libabl.c", outputDir + "/libabl.c");
+  copyFile(assetDir + "/flame/build.sh", outputDir + "/build.sh");
+  makeFileExecutable(outputDir + "/build.sh");
 }
 
 }

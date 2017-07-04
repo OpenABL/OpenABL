@@ -31,7 +31,7 @@ void update_prey(Prey in -> out) {
 }
 void update_predator(Predator in -> out) {
   // TODO
-  out = in;
+  // out = in;
 }
 
 void main() {
