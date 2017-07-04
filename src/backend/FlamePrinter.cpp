@@ -14,7 +14,12 @@ void FlamePrinter::print(const AST::AgentDeclaration &) {}
 
 void FlamePrinter::print(const AST::SimpleType &type) {
   Type t = type.resolved;
-  *this << t;
+  if (t.isArray()) {
+    // Print only the base type
+    *this << t.getBaseType();
+  } else {
+    *this << t;
+  }
 }
 
 static void printBinaryOp(FlamePrinter &p, AST::BinaryOp op,

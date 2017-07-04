@@ -5,29 +5,37 @@ namespace OpenABL {
 void MasonPrinter::print(const AST::MemberInitEntry &) {}
 void MasonPrinter::print(const AST::NewArrayExpression &) {}
 
-void MasonPrinter::print(const AST::SimpleType &type) {
-  switch (type.resolved.getTypeId()) {
+static void printType(Printer &p, Type type) {
+  switch (type.getTypeId()) {
     case Type::BOOL:
     case Type::INT32:
-      *this << type.resolved;
+      p << type;
       return;
     case Type::FLOAT32:
       // TODO Use doubles, because that's what Mason uses.
       // Need to figure out what semantics we want to have here.
-      *this << "double";
+      p << "double";
       return;
     case Type::STRING:
-      *this << "String";
+      p << "String";
       return;
     case Type::VEC2:
-      *this << "Double2D";
+      p << "Double2D";
       return;
     case Type::VEC3:
-      *this << "Double3D";
+      p << "Double3D";
+      return;
+    case Type::ARRAY:
+      // Print base type only
+      p << type.getBaseType();
       return;
     default:
       assert(0); // TODO
   }
+}
+
+void MasonPrinter::print(const AST::SimpleType &type) {
+  printType(*this, type.resolved);
 }
 
 void MasonPrinter::print(const AST::VarExpression &expr) {

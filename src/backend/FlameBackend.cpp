@@ -85,6 +85,7 @@ static std::string createXmlModel(AST::Script &script, const FlameModel &model) 
     { "environment", {
       { "functionFiles", {
         { "file", {{ "functions.c" }} },
+        { "file", {{ "libabl.c" }} },
       }}
     }},
     { "agents", agents },
@@ -111,6 +112,7 @@ void FlameBackend::generate(
   writeToFile(outputDir + "/XMLModelFile.xml", createXmlModel(script, model));
   writeToFile(outputDir + "/functions.c", createFunctionsFile(script, model));
   copyFile(assetDir + "/c/libabl.h", outputDir + "/libabl.h");
+  copyFile(assetDir + "/c/libabl.c", outputDir + "/libabl.c");
 }
 
 }
