@@ -1,0 +1,194 @@
+/* Incomplete Keratinocyte model adapted from.
+ * https://github.com/FLAMEGPU/FLAMEGPU/blob/master/examples/Keratinocyte/src/model
+ */
+
+// XXX finish porting the model
+// XXX add support for required language features: agent addition, structs (?)
+
+agent Keratinocyte {
+  int type;
+  position float3 pos;
+  float3 force;
+  int num_xy_bonds;
+  int num_z_bonds;
+  int num_stem_bonds;
+  int cycle;
+  float diff_noise_factor;
+  int dead_ticks;
+  int contact_inhibited_ticks;
+  float motility;
+  float dir;
+  float movement;
+}
+
+float SURFACE_WIDTH = 500;
+float K_WIDTH = 20;
+float FORCE_IRADIUS = 10;
+float BASEMENT_MAX_Z = 5;
+
+int CYCLE_LENGTH[] = { 120, 60, 0, 0, 120 };
+
+float FORCE_REP = 0.5;
+float FORCE_DAMPENER = 0.4;
+float SUBSTRATE_FORCE[] = { 0.3, 0.1, 0.2, 0.1, 0.3 };
+float DOWNWARD_FORCE[] = { 0.1, 0.6, 0.3, 0.6, 0.1 };
+float FORCE_MATRIX[] = {
+  0.06, 0.01, 0.01, 0.01, 0.0, 
+  0.01, 0.01, 0.01, 0.01, 0.0,  
+  0.01, 0.01, 0.06, 0.01, 0.0,  
+  0.01, 0.01, 0.01, 0.08, 0.0,  
+  0.01, 0.01, 0.01, 0.08, 0.0,
+}; 
+
+float calcium_level = 1.3;
+
+// Enum?
+int K_TYPE_STEM  = 0;
+int K_TYPE_TA    = 1;
+int K_TYPE_COMM  = 2;
+int K_TYPE_CORN  = 3;
+int K_TYPE_HACAT = 4;
+
+environment { size: float3(SURFACE_WIDTH) }
+
+bool on_substrate_surface(float z) {
+  return z < BASEMENT_MAX_Z;
+}
+
+int get_max_num_bonds(float calcium_level) {
+  return 6;
+}
+
+bool divide(int type, int cycle) {
+  return (type == K_TYPE_STEM || type == K_TYPE_TA || type == K_TYPE_HACAT)
+      && cycle > CYCLE_LENGTH[type];
+}
+
+float get_new_coord(float old_coord, bool pos_only) {
+  float coord = 0;
+  while (coord == 0) {
+    coord = random(0, K_WIDTH / 10);
+  }
+
+  if (!pos_only && coord >= 0.5) {
+    coord = -coord;
+  }
+
+  return old_coord + coord;
+}
+
+int start_new_cycle_position(int type) {
+  float cycle_fraction = CYCLE_LENGTH[type] / 4;
+  float pos = random(0, cycle_fraction);
+  return int(round(pos));
+}
+
+float ellipse_radius(float major_radius, float minor_radius, float theta) {
+  float a_squ = major_radius * major_radius;
+  float b_squ = minor_radius * minor_radius;
+  float sin_theta = sin(theta);
+  float sin_theta_squ = sin_theta * sin_theta;
+  float cos_theta = cos(theta);
+  float cos_theta_squ = cos_theta * cos_theta;
+  float r_squ = (a_squ * b_squ) / (a_squ * sin_theta_squ  + b_squ * cos_theta_squ);
+  float r = sqrt(r_squ);
+  return r;
+}
+
+void cycle(Keratinocyte in -> out) {
+  int contacts = in.num_xy_bonds + in.num_z_bonds;
+
+  // Touching a wall counts as two contacts
+  if (in.pos.x == 0 || in.pos.x == SURFACE_WIDTH) {
+    contacts += 2;
+  }
+  if (in.pos.y == 0 || in.pos.y == SURFACE_WIDTH) {
+    contacts += 2;
+  }
+
+  if (contacts < get_max_num_bonds(calcium_level)) {
+    // cell comes out of G0
+    out.cycle = in.cycle + 1;
+    out.contact_inhibited_ticks = 0;
+  } else {
+    // cell enters G0
+    out.contact_inhibited_ticks = in.contact_inhibited_ticks + 1;
+  }
+
+  if (divide(in.type, in.cycle)) {
+    // XXX Add new agent
+  }
+}
+
+// XXX bunch of stuff here
+
+void resolve_forces(Keratinocyte in -> out) {
+  float3 new_force = in.force;
+  int num_xy_bonds = 0;
+  int num_z_bonds = 0;
+  int num_stem_bonds = 0;
+
+  for (Keratinocyte other : near(in, K_WIDTH + FORCE_IRADIUS)) {
+    float distance = dist(in.pos, other.pos);
+    float separation_distance = distance - K_WIDTH;
+    if (other.pos.z >= in.pos.z) {
+      if (other.pos.z - in.pos.z > K_WIDTH/2) {
+        num_z_bonds += 1;
+      } else {
+        num_xy_bonds += 1;
+      }
+      if (other.type == K_TYPE_STEM) {
+        num_stem_bonds += 1;
+      }
+
+      float force;
+      if (separation_distance > 0) {
+        force = FORCE_MATRIX[in.type + 5*other.type];
+      } else {
+        force = FORCE_REP;
+      }
+
+      if (on_substrate_surface(in.pos.z)) {
+        force *= DOWNWARD_FORCE[in.type];
+      }
+      force *= FORCE_DAMPENER;
+
+      new_force += force * (other.pos - in.pos) * separation_distance / distance;
+    }
+  }
+
+  if (in.pos.z < K_WIDTH * 1.5) {
+    new_force.z -= SUBSTRATE_FORCE[in.type];
+  }
+
+  out.num_xy_bonds = num_xy_bonds;
+  out.num_z_bonds = num_z_bonds;
+  out.num_stem_bonds = num_stem_bonds;
+
+  // XXX Clarify whether writing to out.pos and then reading/adjust it is fine
+  float3 new_pos = in.pos + new_force;
+
+  // XXX Bounding should be doable more nicely
+  if (new_pos.x < 0) {
+    new_pos.x = 0;
+  }
+  if (new_pos.y < 0) {
+    new_pos.y = 0;
+  }
+  if (new_pos.z < 0) {
+    new_pos.z = 0;
+  }
+  if (new_pos.x > SURFACE_WIDTH) {
+    new_pos.x = SURFACE_WIDTH;
+  }
+  if (new_pos.y > SURFACE_WIDTH) {
+    new_pos.y = SURFACE_WIDTH;
+  }
+
+  out.pos = new_pos;
+  out.movement = length(new_pos);
+}
+
+void main() {
+  simulate(100) { cycle, resolve_forces }
+}
