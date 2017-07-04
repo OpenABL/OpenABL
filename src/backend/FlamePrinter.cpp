@@ -172,6 +172,10 @@ static void extractMember(
       p << ", " << acc(fromVar, name + "_z");
     }
     p << ");";
+
+    // Variable might not be used, suppress warning
+    // TODO We should try to avoid generating it in the first place
+    p <<" (void) " << toVar << "_" << name << ";";
   }
 }
 

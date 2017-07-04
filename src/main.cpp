@@ -29,7 +29,7 @@ void registerBuiltinFunctions(BuiltinFunctions &funcs) {
   funcs.add("asin", { Type::FLOAT32 }, Type::FLOAT32);
   funcs.add("acos", { Type::FLOAT32 }, Type::FLOAT32);
   funcs.add("atan", { Type::FLOAT32 }, Type::FLOAT32);
-  funcs.add("expr", { Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("exp", { Type::FLOAT32 }, Type::FLOAT32);
   funcs.add("log", { Type::FLOAT32 }, Type::FLOAT32);
   funcs.add("sqrt", { Type::FLOAT32 }, Type::FLOAT32);
   funcs.add("round", { Type::FLOAT32 }, Type::FLOAT32);

@@ -538,7 +538,7 @@ static Type getBinaryOpType(AST::BinaryOp op, Type l, Type r) {
       return { Type:: BOOL };
     case AST::BinaryOp::LOGICAL_OR:
     case AST::BinaryOp::LOGICAL_AND:
-      if (!l.isBool() || !l.isBool()) {
+      if (!l.isBool() || !r.isBool()) {
         return { Type::INVALID };
       }
       return { Type:: BOOL };
@@ -574,6 +574,9 @@ static Type getUnaryOpType(AST::UnaryOp op, Type t) {
 }
 
 void AnalysisVisitor::leave(AST::BinaryOpExpression &expr) {
+  SKIP_INVALID(expr.left->type);
+  SKIP_INVALID(expr.right->type);
+
   expr.type = getBinaryOpType(expr.op, expr.left->type, expr.right->type);
   if (expr.type.isInvalid()) {
     err << "Type mismatch (" << expr.left->type << " "
@@ -588,6 +591,8 @@ void AnalysisVisitor::leave(AST::BinaryOpExpression &expr) {
 };
 
 void AnalysisVisitor::leave(AST::UnaryOpExpression &expr) {
+  SKIP_INVALID(expr.expr->type);
+
   expr.type = getUnaryOpType(expr.op, expr.expr->type);
   if (expr.type.isInvalid()) {
     err << "Type mismatch: Applying unary operator \"" << getUnaryOpSigil(expr.op)
@@ -598,6 +603,9 @@ void AnalysisVisitor::leave(AST::UnaryOpExpression &expr) {
 void AnalysisVisitor::leave(AST::TernaryExpression &expr) {
   Type ifType = expr.ifExpr->type;
   Type elseType = expr.elseExpr->type;
+  SKIP_INVALID(ifType);
+  SKIP_INVALID(elseType);
+
   if (ifType.isPromotableTo(elseType)) {
     expr.type = elseType;
   } else if (elseType.isPromotableTo(ifType)) {

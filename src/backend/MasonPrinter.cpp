@@ -8,8 +8,10 @@ void MasonPrinter::print(const AST::NewArrayExpression &) {}
 static void printType(Printer &p, Type type) {
   switch (type.getTypeId()) {
     case Type::BOOL:
+      p << "boolean";
+      return;
     case Type::INT32:
-      p << type;
+      p << "int";
       return;
     case Type::FLOAT32:
       // TODO Use doubles, because that's what Mason uses.
@@ -26,8 +28,7 @@ static void printType(Printer &p, Type type) {
       p << "Double3D";
       return;
     case Type::ARRAY:
-      // Print base type only
-      p << type.getBaseType();
+      p << type.getBaseType() << "[]";
       return;
     default:
       assert(0); // TODO
@@ -110,20 +111,31 @@ static void printTypeCtor(MasonPrinter &p, const AST::CallExpression &expr) {
   }
 }
 void MasonPrinter::print(const AST::CallExpression &expr) {
+  const std::string &name = expr.name;
   if (expr.isCtor()) {
     printTypeCtor(*this, expr);
   } else if (expr.isBuiltin()) {
-    if (expr.name == "dist") {
+    if (name == "dist") {
       *this << expr.getArg(0) << ".distance(" << expr.getArg(1) << ")";
-    } else if (expr.name == "length") {
+    } else if (name == "length") {
       *this << expr.getArg(0) << ".length()";
-    } else if (expr.name == "normalize") {
+    } else if (name == "normalize") {
       *this << expr.getArg(0) << ".normalize()";
-    } else if (expr.name == "random") {
+    } else if (name == "random") {
       *this << "Util.random(random, ";
       printArgs(expr);
       *this << ")";
-    } else if (expr.name == "add") {
+    } else if (name == "sin" || name == "cos" || name == "tan"
+            || name == "sinh" || name == "cosh" || name == "tanh"
+            || name == "asin" || name == "acos" || name == "atan"
+            || name == "exp" || name == "log" || name == "sqrt"
+            || name == "round"
+    ) {
+      // Basic math functions
+      *this << "java.lang.Math." << name << "(";
+      printArgs(expr);
+      *this << ")";
+    } else if (name == "add") {
       std::string aLabel = makeAnonLabel();
       const AST::Arg &arg = expr.getArg(0);
       Type type = arg.expr->type;
@@ -150,7 +162,7 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
         }
         num++;
       }
-    } else if (expr.name == "save") {
+    } else if (name == "save") {
       // TODO Handle save
       *this << "//save()";
     } else {

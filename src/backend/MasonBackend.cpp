@@ -18,12 +18,15 @@ static std::string generateAgentCode(AST::Script &script, AST::AgentDeclaration 
 
 void MasonBackend::generate(
     AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
-  copyFile(assetDir + "/mason/Util.java", outputDir + "/Util.java");
   writeToFile(outputDir + "/Sim.java", generateMainCode(script));
 
   for (AST::AgentDeclaration *agent : script.agents) {
     writeToFile(outputDir + "/" + agent->name + ".java", generateAgentCode(script, *agent));
   }
+
+  copyFile(assetDir + "/mason/Util.java", outputDir + "/Util.java");
+  copyFile(assetDir + "/mason/build.sh", outputDir + "/build.sh");
+  makeFileExecutable(outputDir + "/build.sh");
 }
 
 }
