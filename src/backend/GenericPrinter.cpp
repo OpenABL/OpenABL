@@ -89,6 +89,9 @@ void GenericPrinter::print(const AST::BlockStatement &stmt) {
 
 void GenericPrinter::print(const AST::IfStatement &stmt) {
   *this << "if (" << *stmt.condExpr << ") " << *stmt.ifStmt;
+  if (stmt.elseStmt) {
+    *this << " else " << *stmt.elseStmt;
+  }
 }
 void GenericPrinter::print(const AST::WhileStatement &stmt) {
   *this << "while (" << *stmt.expr << ") " << *stmt.stmt;

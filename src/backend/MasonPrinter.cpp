@@ -185,6 +185,7 @@ void MasonPrinter::print(const AST::AssignStatement &stmt) {
     if (access->expr->type.isVec()) {
       // Assignment to vector component
       // Convert into creation of new DoubleND, because it is immmutable
+      // TODO Automatic conversion to MutableDoubleND would be nice
       Type vecType = access->expr->type;
       unsigned vecLen = vecType.getVecLen();
       *this << *access->expr << " = new Double" << vecLen << "D(";
@@ -204,6 +205,24 @@ void MasonPrinter::print(const AST::AssignStatement &stmt) {
 }
 
 void MasonPrinter::print(const AST::AssignOpStatement &stmt) {
+  if (auto *access = dynamic_cast<const AST::MemberAccessExpression *>(&*stmt.left)) {
+    if (access->expr->type.isVec()) {
+      // Assignment to vector component, same as above
+      // Some copy-paste here, as the code is hard to combine elegantly
+      Type vecType = access->expr->type;
+      unsigned vecLen = vecType.getVecLen();
+      *this << *access->expr << " = new Double" << vecLen << "D(";
+      printCommaSeparated(vecType.getVecMembers(), [&](const std::string &member) {
+        *this << *access->expr << "." << member;
+        if (access->member == member) {
+          *this << " " << getBinaryOpSigil(stmt.op) << " " << *stmt.right;
+        }
+      });
+      *this << ");";
+      return;
+    }
+  }
+
   *this << *stmt.left << " = ";
   printBinaryOp(*this, stmt.op, *stmt.left, *stmt.right);
   *this << ";";
