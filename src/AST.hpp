@@ -292,6 +292,16 @@ struct AgentCreationExpression : public Expression {
   void print(Printer &) const;
 };
 
+struct ArrayInitExpression : public Expression {
+  ExpressionListPtr exprs;
+
+  ArrayInitExpression(ExpressionList *exprs, Location loc)
+    : Expression{loc}, exprs{exprs} {}
+
+  void accept(Visitor &);
+  void print(Printer &) const;
+};
+
 struct NewArrayExpression : public Expression {
   TypePtr elemType;
   ExpressionPtr sizeExpr;
@@ -580,9 +590,10 @@ struct ConstDeclaration : public Declaration {
   TypePtr type;
   VarPtr var;
   ExpressionPtr expr;
+  bool isArray;
 
-  ConstDeclaration(Type *type, Var *var, Expression *expr, Location loc)
-    : Declaration{loc}, type{type}, var{var}, expr{expr} {}
+  ConstDeclaration(Type *type, Var *var, Expression *expr, bool isArray, Location loc)
+    : Declaration{loc}, type{type}, var{var}, expr{expr}, isArray{isArray} {}
 
   void accept(Visitor &);
   void print(Printer &) const;

@@ -86,6 +86,14 @@ void AgentCreationExpression::accept(Visitor &visitor) {
   visitor.leave(*this);
 }
 
+void ArrayInitExpression::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  for (ExpressionPtr &expr : *exprs) {
+    expr->accept(visitor);
+  }
+  visitor.leave(*this);
+}
+
 void NewArrayExpression::accept(Visitor &visitor) {
   visitor.enter(*this);
   elemType->accept(visitor);
@@ -254,6 +262,7 @@ void ArrayAccessExpression::print(Printer &printer) const { printer.print(*this)
 void TernaryExpression::print(Printer &printer) const { printer.print(*this); }
 void MemberInitEntry::print(Printer &printer) const { printer.print(*this); }
 void AgentCreationExpression::print(Printer &printer) const { printer.print(*this); }
+void ArrayInitExpression::print(Printer &printer) const { printer.print(*this); }
 void NewArrayExpression::print(Printer &printer) const { printer.print(*this); }
 void ExpressionStatement::print(Printer &printer) const { printer.print(*this); }
 void AssignStatement::print(Printer &printer) const { printer.print(*this); }

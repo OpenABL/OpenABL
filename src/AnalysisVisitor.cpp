@@ -90,6 +90,7 @@ void AnalysisVisitor::enter(AST::ArrayAccessExpression &) {}
 void AnalysisVisitor::enter(AST::TernaryExpression &) {}
 void AnalysisVisitor::enter(AST::MemberInitEntry &) {}
 void AnalysisVisitor::enter(AST::AgentCreationExpression &) {}
+void AnalysisVisitor::enter(AST::ArrayInitExpression &) {}
 void AnalysisVisitor::enter(AST::NewArrayExpression &) {}
 void AnalysisVisitor::enter(AST::ExpressionStatement &) {}
 void AnalysisVisitor::enter(AST::AssignStatement &) {}
@@ -107,6 +108,7 @@ void AnalysisVisitor::enter(AST::EnvironmentDeclaration &) {}
 void AnalysisVisitor::leave(AST::Var &) {}
 void AnalysisVisitor::leave(AST::Arg &) {}
 void AnalysisVisitor::leave(AST::MemberInitEntry &) {}
+void AnalysisVisitor::leave(AST::ArrayInitExpression &) {}
 void AnalysisVisitor::leave(AST::ExpressionStatement &) {}
 void AnalysisVisitor::leave(AST::SimpleType &) {}
 void AnalysisVisitor::leave(AST::ArrayType &) {}

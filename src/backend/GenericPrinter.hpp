@@ -20,6 +20,7 @@ struct GenericPrinter : public Printer {
   virtual void print(const AST::TernaryExpression &);
   virtual void print(const AST::MemberAccessExpression &);
   virtual void print(const AST::ArrayAccessExpression &);
+  virtual void print(const AST::ArrayInitExpression &);
   virtual void print(const AST::Arg &);
   virtual void print(const AST::ExpressionStatement &);
   virtual void print(const AST::AssignStatement &);

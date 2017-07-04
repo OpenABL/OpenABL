@@ -26,6 +26,7 @@ struct Printer {
   virtual void print(const AST::TernaryExpression &) = 0;
   virtual void print(const AST::MemberInitEntry &) = 0;
   virtual void print(const AST::AgentCreationExpression &) = 0;
+  virtual void print(const AST::ArrayInitExpression &) = 0;
   virtual void print(const AST::NewArrayExpression &) = 0;
   virtual void print(const AST::ExpressionStatement &) = 0;
   virtual void print(const AST::AssignStatement &) = 0;

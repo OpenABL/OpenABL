@@ -51,6 +51,14 @@ void GenericPrinter::print(const AST::ArrayAccessExpression &expr) {
   *this << *expr.arrayExpr << "[" << *expr.offsetExpr << "]";
 }
 
+void GenericPrinter::print(const AST::ArrayInitExpression &expr) {
+  *this << "{ ";
+  printCommaSeparated(*expr.exprs, [&](const AST::ExpressionPtr &expr) {
+    *this << *expr;
+  });
+  *this << " }";
+}
+
 void GenericPrinter::print(const AST::Arg &arg) {
   *this << *arg.expr;
   if (arg.outExpr) {

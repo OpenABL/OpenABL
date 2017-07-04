@@ -62,7 +62,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   SEMI
   LPAREN
   RPAREN
-  LBRACKET
+  LBRACKET 
   RBRACKET
   LBRACE
   RBRACE
@@ -119,7 +119,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 %type <long> INT;
 %type <double> FLOAT;
 
-%type <bool> opt_position;
+%type <bool> opt_position is_array;
 %type <OpenABL::AST::Var *> var;
 %type <OpenABL::AST::Literal *> literal;
 %type <OpenABL::AST::Type *> type;
@@ -135,7 +135,8 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 %type <OpenABL::AST::Declaration *> declaration func_decl agent_decl const_decl env_decl;
 %type <OpenABL::AST::DeclarationList *> declaration_list;
 %type <OpenABL::AST::IdentList *> ident_list;
-%type <OpenABL::AST::Expression *> expression;
+%type <OpenABL::AST::Expression *> expression array_initializer initializer;
+%type <OpenABL::AST::ExpressionList *> expression_list;
 %type <OpenABL::AST::Statement *> statement;
 
 %%
@@ -176,8 +177,22 @@ var: IDENTIFIER { $$ = new Var($1, @$); }
 param: type var { $$ = new Param($1, $2, nullptr, @$); }
      | type var ARROW var { $$ = new Param($1, $2, $4, @$); };
 
-const_decl: type var ASSIGN expression SEMI
-              { $$ = new ConstDeclaration($1, $2, $4, @$); };
+is_array: %empty { $$ = false; }
+		| LBRACKET RBRACKET { $$ = true; };
+
+opt_comma: %empty | COMMA;
+
+expression_list: expression { $$ = new ExpressionList(); $$->emplace_back($1); }
+			   | expression_list COMMA expression { $1->emplace_back($3); $$ = $1; }
+
+array_initializer: LBRACE expression_list opt_comma RBRACE
+				     { $$ = new ArrayInitExpression($2, @$); };
+
+initializer: expression { $$ = $1; }
+		   | array_initializer { $$ = $1; };
+
+const_decl: type var is_array ASSIGN initializer SEMI
+              { $$ = new ConstDeclaration($1, $2, $5, $3, @$); };
 
 env_decl: ENVIRONMENT LBRACE member_init_list RBRACE
 		    { $$ = new EnvironmentDeclaration($3, @$); };

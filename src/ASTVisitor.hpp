@@ -18,6 +18,7 @@ struct Visitor {
   virtual void enter(TernaryExpression &) {};
   virtual void enter(MemberInitEntry &) {};
   virtual void enter(AgentCreationExpression &) {};
+  virtual void enter(ArrayInitExpression &) {};
   virtual void enter(NewArrayExpression &) {};
   virtual void enter(ExpressionStatement &) {};
   virtual void enter(AssignStatement &) {};
@@ -51,6 +52,7 @@ struct Visitor {
   virtual void leave(TernaryExpression &) {};
   virtual void leave(MemberInitEntry &) {};
   virtual void leave(AgentCreationExpression &) {};
+  virtual void leave(ArrayInitExpression &) {};
   virtual void leave(NewArrayExpression &) {};
   virtual void leave(ExpressionStatement &) {};
   virtual void leave(AssignStatement &) {};
