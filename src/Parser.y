@@ -107,6 +107,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 %left ADD SUB
 %left MUL DIV MOD
 %right NOT BITWISE_NOT
+%left LBRACKET
 %left DOT
 
 /* Handling dangling else */
@@ -187,8 +188,7 @@ literal: BOOL { $$ = new BoolLiteral($1, @$); }
        | STRING { $$ = new StringLiteral($1, @$); }
        ;
 
-type: IDENTIFIER { $$ = new SimpleType($1, @$); }
-    | type LBRACKET RBRACKET { $$ = new ArrayType($1, @$); };
+type: IDENTIFIER { $$ = new SimpleType($1, @$); };
 
 statement_list: %empty { $$ = new StatementList(); }
               | statement_list statement { $1->emplace_back($2); $$ = $1; };
@@ -270,6 +270,7 @@ expression: var { $$ = new VarExpression($1, @$); }
           | IDENTIFIER LBRACE member_init_list RBRACE
               { $$ = new AgentCreationExpression($1, $3, @$); }
           | expression DOT IDENTIFIER { $$ = new MemberAccessExpression($1, $3, @$); }
+          | expression LBRACKET expression RBRACKET { $$ = new ArrayAccessExpression($1, $3, @$); }
           | expression QM expression COLON expression
               { $$ = new TernaryExpression($1, $3, $5, @$); }
           | NEW type LBRACKET expression RBRACKET { $$ = new NewArrayExpression($2, $4, @$); }

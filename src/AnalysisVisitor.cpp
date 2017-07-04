@@ -79,38 +79,39 @@ void AnalysisVisitor::popVarScope() {
   varMapStack.pop();
 };
 
-void AnalysisVisitor::enter(AST::Var &) {};
-void AnalysisVisitor::enter(AST::Literal &) {};
-void AnalysisVisitor::enter(AST::UnaryOpExpression &) {};
-void AnalysisVisitor::enter(AST::BinaryOpExpression &) {};
-void AnalysisVisitor::enter(AST::Arg &) {};
-void AnalysisVisitor::enter(AST::CallExpression &) {};
-void AnalysisVisitor::enter(AST::MemberAccessExpression &) {};
-void AnalysisVisitor::enter(AST::TernaryExpression &) {};
-void AnalysisVisitor::enter(AST::MemberInitEntry &) {};
-void AnalysisVisitor::enter(AST::AgentCreationExpression &) {};
-void AnalysisVisitor::enter(AST::NewArrayExpression &) {};
-void AnalysisVisitor::enter(AST::ExpressionStatement &) {};
-void AnalysisVisitor::enter(AST::AssignStatement &) {};
-void AnalysisVisitor::enter(AST::AssignOpStatement &) {};
-void AnalysisVisitor::enter(AST::IfStatement &) {};
-void AnalysisVisitor::enter(AST::WhileStatement &) {};
-void AnalysisVisitor::enter(AST::SimulateStatement &) {};
-void AnalysisVisitor::enter(AST::ReturnStatement &) {};
-void AnalysisVisitor::enter(AST::AgentMember &) {};
-void AnalysisVisitor::enter(AST::Script &) {};
-void AnalysisVisitor::enter(AST::VarExpression &) {};
-void AnalysisVisitor::enter(AST::VarDeclarationStatement &) {};
-void AnalysisVisitor::enter(AST::Param &) {};
-void AnalysisVisitor::enter(AST::EnvironmentDeclaration &) {};
-void AnalysisVisitor::leave(AST::Var &) {};
-void AnalysisVisitor::leave(AST::Arg &) {};
-void AnalysisVisitor::leave(AST::MemberInitEntry &) {};
-void AnalysisVisitor::leave(AST::ExpressionStatement &) {};
-void AnalysisVisitor::leave(AST::SimpleType &) {};
-void AnalysisVisitor::leave(AST::ArrayType &) {};
-void AnalysisVisitor::leave(AST::AgentMember &) {};
-void AnalysisVisitor::leave(AST::AgentDeclaration &) {};
+void AnalysisVisitor::enter(AST::Var &) {}
+void AnalysisVisitor::enter(AST::Literal &) {}
+void AnalysisVisitor::enter(AST::UnaryOpExpression &) {}
+void AnalysisVisitor::enter(AST::BinaryOpExpression &) {}
+void AnalysisVisitor::enter(AST::Arg &) {}
+void AnalysisVisitor::enter(AST::CallExpression &) {}
+void AnalysisVisitor::enter(AST::MemberAccessExpression &) {}
+void AnalysisVisitor::enter(AST::ArrayAccessExpression &) {}
+void AnalysisVisitor::enter(AST::TernaryExpression &) {}
+void AnalysisVisitor::enter(AST::MemberInitEntry &) {}
+void AnalysisVisitor::enter(AST::AgentCreationExpression &) {}
+void AnalysisVisitor::enter(AST::NewArrayExpression &) {}
+void AnalysisVisitor::enter(AST::ExpressionStatement &) {}
+void AnalysisVisitor::enter(AST::AssignStatement &) {}
+void AnalysisVisitor::enter(AST::AssignOpStatement &) {}
+void AnalysisVisitor::enter(AST::IfStatement &) {}
+void AnalysisVisitor::enter(AST::WhileStatement &) {}
+void AnalysisVisitor::enter(AST::SimulateStatement &) {}
+void AnalysisVisitor::enter(AST::ReturnStatement &) {}
+void AnalysisVisitor::enter(AST::AgentMember &) {}
+void AnalysisVisitor::enter(AST::Script &) {}
+void AnalysisVisitor::enter(AST::VarExpression &) {}
+void AnalysisVisitor::enter(AST::VarDeclarationStatement &) {}
+void AnalysisVisitor::enter(AST::Param &) {}
+void AnalysisVisitor::enter(AST::EnvironmentDeclaration &) {}
+void AnalysisVisitor::leave(AST::Var &) {}
+void AnalysisVisitor::leave(AST::Arg &) {}
+void AnalysisVisitor::leave(AST::MemberInitEntry &) {}
+void AnalysisVisitor::leave(AST::ExpressionStatement &) {}
+void AnalysisVisitor::leave(AST::SimpleType &) {}
+void AnalysisVisitor::leave(AST::ArrayType &) {}
+void AnalysisVisitor::leave(AST::AgentMember &) {}
+void AnalysisVisitor::leave(AST::AgentDeclaration &) {}
 
 void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
   pushVarScope();
@@ -679,6 +680,10 @@ void AnalysisVisitor::leave(AST::MemberAccessExpression &expr) {
     }
   }
 };
+
+void AnalysisVisitor::leave(AST::ArrayAccessExpression &) {
+  // TODO
+}
 
 static std::vector<Type> getArgTypes(const AST::CallExpression &expr) {
   std::vector<Type> types;

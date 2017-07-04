@@ -240,6 +240,17 @@ struct MemberAccessExpression : public Expression {
   void print(Printer &) const;
 };
 
+struct ArrayAccessExpression : public Expression {
+  ExpressionPtr arrayExpr;
+  ExpressionPtr offsetExpr;
+
+  ArrayAccessExpression(Expression *arrayExpr, Expression *offsetExpr, Location loc)
+    : Expression{loc}, arrayExpr{arrayExpr}, offsetExpr{offsetExpr} {}
+
+  void accept(Visitor &);
+  void print(Printer &) const;
+};
+
 struct TernaryExpression : public Expression {
   ExpressionPtr condExpr;
   ExpressionPtr ifExpr;

@@ -22,7 +22,9 @@ set(OpenABL_SOURCES
 find_package(BISON 3.0)
 find_package(FLEX 2.5)
 
-BISON_TARGET(Parser src/Parser.y ${CMAKE_CURRENT_BINARY_DIR}/Parser.cpp)
+BISON_TARGET(Parser src/Parser.y
+	${CMAKE_CURRENT_BINARY_DIR}/Parser.cpp
+	VERBOSE ${CMAKE_CURRENT_BINARY_DIR}/Parser.output)
 FLEX_TARGET(Lexer src/Lexer.l ${CMAKE_CURRENT_BINARY_DIR}/Lexer.cpp)
 ADD_FLEX_BISON_DEPENDENCY(Lexer Parser)
 

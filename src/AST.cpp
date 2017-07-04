@@ -57,6 +57,13 @@ void MemberAccessExpression::accept(Visitor &visitor) {
   visitor.leave(*this);
 }
 
+void ArrayAccessExpression::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  arrayExpr->accept(visitor);
+  offsetExpr->accept(visitor);
+  visitor.leave(*this);
+}
+
 void TernaryExpression::accept(Visitor &visitor) {
   visitor.enter(*this);
   condExpr->accept(visitor);
@@ -243,6 +250,7 @@ void BinaryOpExpression::print(Printer &printer) const { printer.print(*this); }
 void Arg::print(Printer &printer) const { printer.print(*this); }
 void CallExpression::print(Printer &printer) const { printer.print(*this); }
 void MemberAccessExpression::print(Printer &printer) const { printer.print(*this); }
+void ArrayAccessExpression::print(Printer &printer) const { printer.print(*this); }
 void TernaryExpression::print(Printer &printer) const { printer.print(*this); }
 void MemberInitEntry::print(Printer &printer) const { printer.print(*this); }
 void AgentCreationExpression::print(Printer &printer) const { printer.print(*this); }

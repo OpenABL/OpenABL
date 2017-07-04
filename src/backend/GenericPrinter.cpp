@@ -47,6 +47,9 @@ void GenericPrinter::print(const AST::TernaryExpression &expr) {
 void GenericPrinter::print(const AST::MemberAccessExpression &expr) {
   *this << *expr.expr << "." << expr.member;
 }
+void GenericPrinter::print(const AST::ArrayAccessExpression &expr) {
+  *this << *expr.arrayExpr << "[" << *expr.offsetExpr << "]";
+}
 
 void GenericPrinter::print(const AST::Arg &arg) {
   *this << *arg.expr;
