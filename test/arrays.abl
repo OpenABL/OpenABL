@@ -1,0 +1,10 @@
+int A1[] = 42;
+int A2[] = { true, false };
+int A3[] = { 1, 2, 3 };
+
+void main() {
+  int x = 42;
+  x[7];
+  A3[42.0];
+  A3[0];
+}

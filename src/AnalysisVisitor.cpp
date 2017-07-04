@@ -150,17 +150,53 @@ void AnalysisVisitor::enter(AST::ArrayType &type) {
   type.resolved = resolveAstType(type);
 };
 
-bool isConstantExpression(const AST::Expression &expr) {
+static bool isConstantExpression(const AST::Expression &expr) {
   if (dynamic_cast<const AST::Literal *>(&expr)) {
     return true;
   } else if (dynamic_cast<const AST::UnaryOpExpression *>(&expr)) {
     return true;
+  } else if (auto *arr = dynamic_cast<const AST::ArrayInitExpression *>(&expr)) {
+    for (const AST::ExpressionPtr &expr : *arr->exprs) {
+      if (!isConstantExpression(*expr)) {
+        return false;
+      }
+    }
+    return true;
   }
+
   // TODO Other expressions
   return false;
 }
 
+static bool handleArrayInitializer(ErrorStream &err, AST::Expression &expr, Type elemType) {
+  const auto *init = dynamic_cast<const AST::ArrayInitExpression *>(&expr);
+  if (!init) {
+    err << "Array must be initialized using array initializer" << expr.loc;
+    return false;
+  }
+
+  for (const AST::ExpressionPtr &expr : *init->exprs) {
+    if (!expr->type.isPromotableTo(elemType)) {
+      err << "Element of type " << expr->type
+          << " inside initializer for array of type " << elemType << expr->loc;
+      return false;
+    }
+  }
+
+  expr.type = { Type::ARRAY, elemType };
+  return true;
+}
+
 void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
+  if (decl.isArray) {
+    Type elemType = decl.type->resolved;
+    decl.type->resolved = { Type::ARRAY, elemType };
+
+    if (!handleArrayInitializer(err, *decl.expr, elemType)) {
+      return;
+    }
+  }
+
   declareVar(*decl.var, decl.type->resolved, true, true);
 
   if (!isConstantExpression(*decl.expr)) {
@@ -683,8 +719,20 @@ void AnalysisVisitor::leave(AST::MemberAccessExpression &expr) {
   }
 };
 
-void AnalysisVisitor::leave(AST::ArrayAccessExpression &) {
-  // TODO
+void AnalysisVisitor::leave(AST::ArrayAccessExpression &expr) {
+  Type arrayT = expr.arrayExpr->type;
+  if (!arrayT.isArray()) {
+    err << "Can only index into arrays" << expr.arrayExpr->loc;
+    return;
+  }
+
+  Type offsetT = expr.offsetExpr->type;
+  if (!offsetT.isInt()) {
+    err << "Array offset must be an integer" << expr.offsetExpr->loc;
+    return;
+  }
+
+  expr.type = arrayT.getBaseType();
 }
 
 static std::vector<Type> getArgTypes(const AST::CallExpression &expr) {

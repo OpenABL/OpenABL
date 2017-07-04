@@ -1,0 +1,4 @@
+Array must be initialized using array initializer on line 1
+Element of type bool inside initializer for array of type int on line 2
+Can only index into arrays on line 7
+Array offset must be an integer on line 8

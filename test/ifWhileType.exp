@@ -1,0 +1,2 @@
+if() condition must be bool, but received int on line 2
+while() condition must be bool, but received float on line 3
