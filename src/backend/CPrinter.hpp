@@ -26,7 +26,6 @@ struct CPrinter : public GenericPrinter {
   void print(const AST::SimpleType &);
   void print(const AST::AgentMember &);
   void print(const AST::AgentDeclaration &);
-  void print(const AST::ConstDeclaration &);
   void print(const AST::Script &);
 
 private:

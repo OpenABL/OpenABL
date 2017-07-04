@@ -5,7 +5,8 @@ namespace OpenABL {
 
 static void printType(Printer &s, Type type) {
   if (type.isArray()) {
-    s << "dyn_array*";
+    // Print only the base type
+    s << type.getBaseType();
   } else if (type.isAgent()) {
     s << type.getAgentDecl()->name << '*';
   } else {
@@ -20,7 +21,8 @@ static CPrinter &operator<<(CPrinter &s, Type type) {
 
 static void printStorageType(Printer &s, Type type) {
   if (type.isArray()) {
-    s << "dyn_array";
+    // Print only the base type
+    s << type.getBaseType();
   } else {
     s << type;
   }
@@ -299,9 +301,6 @@ void CPrinter::print(const AST::AgentDeclaration &decl) {
           << "), \"" << member->name << "\" }," << nl;
   }
   *this << "{ TYPE_END, sizeof(" << decl.name << "), NULL }" << outdent << nl << "};" << nl;
-}
-void CPrinter::print(const AST::ConstDeclaration &decl) {
-  *this << *decl.type << " " << *decl.var << " = " << *decl.expr << ";";
 }
 void CPrinter::print(const AST::Script &script) {
   *this << "#include \"libabl.h\"" << nl << nl;

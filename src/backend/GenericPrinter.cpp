@@ -109,7 +109,9 @@ void GenericPrinter::print(const AST::ReturnStatement &stmt) {
   }
 }
 void GenericPrinter::print(const AST::ConstDeclaration &decl) {
-  *this << *decl.type << " " << *decl.var << " = " << *decl.expr << ";";
+  *this << *decl.type << " " << *decl.var
+        << (decl.isArray ? "[]" : "")
+        << " = " << *decl.expr << ";";
 }
 
 void GenericPrinter::print(const AST::Param &param) {
