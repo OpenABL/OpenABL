@@ -5,6 +5,43 @@ namespace OpenABL {
 // XXX: The following code is just copy & pasted from MasonPrinter to have an example of
 //      how to extend the code
 
+void DMasonPrinter::print(const AST::AgentDeclaration &decl) {
+  inAgent = true;
+
+  *this << "import sim.engine.*;" << nl
+        << "import sim.util.*;" << nl << nl
+        << "public class " << decl.name << " implements Steppable {" << indent
+        << *decl.members << nl << nl;
+
+  // Print constructor
+  *this << "public " << decl.name << "(";
+  printCommaSeparated(*decl.members, [&](const AST::AgentMemberPtr &member) {
+    *this << *member->type << " " << member->name;
+  });
+  *this << ") {" << indent;
+  for (AST::AgentMemberPtr &member : *decl.members) {
+    *this << nl << "this." << member->name << " = " << member->name << ";";
+  }
+  *this << outdent << nl << "}" << nl;
+
+  // Print main step functions that dispatches to sub-steps
+  *this << "public void step(SimState state) {" << indent;
+  for (const AST::FunctionDeclaration *stepFn : script.simStmt->stepFuncDecls) {
+    if (&stepFn->stepAgent() == &decl) {
+      *this << nl << stepFn->name << "(state);";
+    }
+  }
+  *this << outdent << nl << "}";
+
+  for (AST::FunctionDeclaration *fn : script.funcs) {
+    if (fn->isStep && &fn->stepAgent() == &decl) {
+      *this << nl << nl << *fn;
+    }
+  }
+
+  *this << outdent << nl << "}";
+}
+
 static void printVecCtorArgs(MasonPrinter &p, const AST::CallExpression &expr) {
   Type t = expr.type;
   int vecLen = t.getVecLen();

@@ -10,6 +10,7 @@ struct DMasonPrinter : public MasonPrinter {
     : MasonPrinter(script) {}
 
   // TODO Overridden methods are declared here
+  void print(const AST::AgentDeclaration &);
   void print(const AST::Script &);
 };
 
