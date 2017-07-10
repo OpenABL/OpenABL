@@ -7,7 +7,7 @@ struct MasonPrinter : public GenericPrinter {
   using GenericPrinter::print;
 
   MasonPrinter(AST::Script &script)
-    : GenericPrinter(script), script(script) {}
+    : GenericPrinter(script) {}
 
   void print(const AST::VarExpression &);
   void print(const AST::UnaryOpExpression &);
@@ -28,9 +28,7 @@ struct MasonPrinter : public GenericPrinter {
   void print(const AST::ConstDeclaration &);
   void print(const AST::Script &);
 
-private:
-  AST::Script &script;
-
+protected:
   // Current input and output variables inside a step function
   VarId currentInVar;
   VarId currentOutVar;

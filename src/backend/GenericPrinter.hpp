@@ -42,7 +42,7 @@ struct GenericPrinter : public Printer {
     assert(0);
   }
 
-private:
+protected:
   AST::Script &script;
 };
 

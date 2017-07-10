@@ -46,6 +46,7 @@ std::map<std::string, std::unique_ptr<Backend>> getBackends() {
   backends["flame"] = std::unique_ptr<Backend>(new FlameBackend);
   backends["flamegpu"] = std::unique_ptr<Backend>(new FlameGPUBackend);
   backends["mason"] = std::unique_ptr<Backend>(new MasonBackend);
+  backends["dmason"] = std::unique_ptr<Backend>(new DMasonBackend);
   return backends;
 }
 
@@ -127,9 +128,10 @@ void printHelp() {
                "  -o, --output-dir   Output directory\n\n"
                "Available backends:\n"
                " * c        (working)\n"
-               " * flame    (partially working)\n"
+               " * flame    (mostly working)\n"
                " * flamegpu (not working)\n"
-               " * mason    (not working)"
+               " * mason    (mostly working)\n"
+               " * dmason   (not working)"
             << std::endl;
 }
 

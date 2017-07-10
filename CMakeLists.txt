@@ -17,7 +17,9 @@ set(OpenABL_SOURCES
     src/backend/FlameGPUBackend.cpp
     src/backend/FlameGPUPrinter.cpp
     src/backend/MasonBackend.cpp
-    src/backend/MasonPrinter.cpp)
+    src/backend/MasonPrinter.cpp
+	src/backend/DMasonBackend.cpp
+	src/backend/DMasonPrinter.cpp)
 
 find_package(BISON 3.0)
 find_package(FLEX 2.5)

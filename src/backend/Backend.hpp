@@ -29,4 +29,9 @@ struct MasonBackend : public Backend {
                 const std::string &assetDir);
 };
 
+struct DMasonBackend : public Backend {
+  void generate(AST::Script &script, const std::string &targetDir,
+                const std::string &assetDir);
+};
+
 }
