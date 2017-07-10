@@ -149,20 +149,9 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
               << aLabel << "." << posMember->name << ");" << nl;
       }
 
-      AST::SimulateStatement *simStmt = script.simStmt;
-      unsigned num = 0;
-      for (AST::FunctionDeclaration *stepFn : simStmt->stepFuncDecls) {
-        if (&stepFn->stepAgent() == agent) {
-          // Schedule according to ordering given by "num"
-          *this << "schedule.scheduleRepeating(0., "
-                << num << ", new Steppable() {" << indent << nl
-                << "public void step(SimState state) {" << indent << nl
-                << aLabel << "." << stepFn->name << "(state);"
-                << outdent << nl << "}"
-                << outdent << nl << "})";
-        }
-        num++;
-      }
+      // TODO There are some ordering issues here, which we ignore for now
+      // This does not fully respect the order between different agent types
+      *this << "schedule.scheduleRepeating(" << aLabel << ")";
     } else if (name == "save") {
       // TODO Handle save
       *this << "//save()";
@@ -333,7 +322,7 @@ void MasonPrinter::print(const AST::AgentMember &member) {
 void MasonPrinter::print(const AST::AgentDeclaration &decl) {
   *this << "import sim.engine.*;" << nl
         << "import sim.util.*;" << nl << nl
-        << "public class " << decl.name << " {" << indent
+        << "public class " << decl.name << " implements Steppable {" << indent
         << *decl.members << nl << nl;
 
   // Print constructor
@@ -344,6 +333,15 @@ void MasonPrinter::print(const AST::AgentDeclaration &decl) {
   *this << ") {" << indent;
   for (AST::AgentMemberPtr &member : *decl.members) {
     *this << nl << "this." << member->name << " = " << member->name << ";";
+  }
+  *this << outdent << nl << "}" << nl;
+
+  // Print main step functions that dispatches to sub-steps
+  *this << "public void step(SimState state) {" << indent;
+  for (const AST::FunctionDeclaration *stepFn : script.simStmt->stepFuncDecls) {
+    if (&stepFn->stepAgent() == &decl) {
+      *this << nl << stepFn->name << "(state);";
+    }
   }
   *this << outdent << nl << "}";
 
