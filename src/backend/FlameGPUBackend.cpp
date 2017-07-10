@@ -40,21 +40,40 @@ static XmlElems createXmlAgents(AST::Script &script, const FlameModel &model) {
         }});
       }
 
-      functions.push_back({ "gpu:function", {
+      std::vector<XmlElem> fnElems {
         { "name", {{ func.name }} },
         { "currentState", {{ "default" }} },
         { "nextState", {{ "default" }} },
-        { "inputs", inputs },
-        { "outputs", outputs },
-        { "gpu:reallocate", {{ "false" }} },
-        { "gpu:RNG", {{ "false" }} },
-      }});
+      };
+
+      // FlameGPU does not allow <inputs> and <outputs> to be empty
+      if (!inputs.empty()) {
+        fnElems.push_back({ "inputs", inputs });
+      }
+      if (!outputs.empty()) {
+        fnElems.push_back({ "outputs", outputs });
+      }
+
+      // FlameGPU is also very pedantic about order. These elements must
+      // occur after inputs and outputs...
+      fnElems.push_back({ "gpu:reallocate", {{ "false" }} });
+      fnElems.push_back({ "gpu:RNG", {{ "false" }} });
+
+      functions.push_back({ "gpu:function", fnElems });
     }
 
     xagents.push_back({ "gpu:xagent", {
       { "name", {{ decl->name }} },
       { "memory", members },
       { "functions", functions },
+      { "states", {
+        { "gpu:state", {
+          { "name", {{ "default" }} },
+        }},
+        { "initialState", {{ "default" }} },
+      }},
+      { "gpu:type", {{ "continuous" }} },
+      { "gpu:bufferSize", {{ "1024" }} }, // TODO dummy
     }});
   }
   return xagents;
@@ -75,6 +94,8 @@ static XmlElems createXmlMessages(const FlameModel &model) {
     messages.push_back({ "gpu:message", {
       { "name", {{ msg.name }} },
       { "variables", variables },
+      { "gpu:partitioningNone", {} }, // TODO dummy
+      { "gpu:bufferSize", {{ "1024" }} }, // TODO dummy
     }});
   }
   return messages;
@@ -96,7 +117,7 @@ static std::string createXmlModel(AST::Script &script, const FlameModel &model) 
   XmlElems xagents = createXmlAgents(script, model);
   XmlElems messages = createXmlMessages(model);
   XmlElems layers = createXmlLayers(model);
-  XmlElem root("gpu:model", {
+  XmlElem root("gpu:xmodel", {
     { "name", {{ "TODO" }} },
     { "gpu:environment", {
       { "gpu:functionFiles", {
@@ -121,8 +142,6 @@ static std::string createFunctionsFile(AST::Script &script, const FlameModel &mo
 
 void FlameGPUBackend::generate(
     AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
-  (void) assetDir;
-
   FlameModel model = FlameModel::generateFromScript(script);
 
   createDirectory(outputDir + "/model");
@@ -130,6 +149,7 @@ void FlameGPUBackend::generate(
 
   writeToFile(outputDir + "/model/XMLModelFile.xml", createXmlModel(script, model));
   writeToFile(outputDir + "/model/functions.c", createFunctionsFile(script, model));
+  copyFile(assetDir + "/flamegpu/Makefile", outputDir + "/Makefile");
 }
 
 }
