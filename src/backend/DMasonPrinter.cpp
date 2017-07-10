@@ -22,6 +22,8 @@ static void printVecCtorArgs(MasonPrinter &p, const AST::CallExpression &expr) {
 }
 
 void DMasonPrinter::print(const AST::Script &script) {
+  inAgent = false; // Printing main simulation code
+
   *this << "import sim.engine.*;" << nl
         << "import sim.util.*;" << nl
         << "import sim.field.continuous.*;" << nl << nl

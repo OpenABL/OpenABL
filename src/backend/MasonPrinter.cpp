@@ -111,6 +111,7 @@ static void printTypeCtor(MasonPrinter &p, const AST::CallExpression &expr) {
     p << "(" << t << ") " << *expr.getArg(0).expr;
   }
 }
+
 void MasonPrinter::print(const AST::CallExpression &expr) {
   const std::string &name = expr.name;
   if (expr.isCtor()) {
@@ -123,7 +124,7 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
     } else if (name == "normalize") {
       *this << expr.getArg(0) << ".normalize()";
     } else if (name == "random") {
-      *this << "Util.random(random, ";
+      *this << "Util.random(" << getSimVarName() << ".random, ";
       printArgs(expr);
       *this << ")";
     } else if (name == "sin" || name == "cos" || name == "tan"
@@ -163,7 +164,7 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
       *this << ")";
     }
   } else {
-    *this << "Sim." << expr.name << "(";
+    *this << getSimVarName() << "." << expr.name << "(";
     printArgs(expr);
     *this << ")";
   }
@@ -309,7 +310,7 @@ void MasonPrinter::print(const AST::FunctionDeclaration &decl) {
     currentInVar.reset();
     currentOutVar.reset();
   } else {
-    *this << "public static " << *decl.returnType << " " << decl.name << "(";
+    *this << "public " << *decl.returnType << " " << decl.name << "(";
     printParams(decl);
     *this << ") {" << indent << *decl.stmts << outdent << nl << "}";
   }
@@ -320,6 +321,8 @@ void MasonPrinter::print(const AST::AgentMember &member) {
 }
 
 void MasonPrinter::print(const AST::AgentDeclaration &decl) {
+  inAgent = true;
+
   *this << "import sim.engine.*;" << nl
         << "import sim.util.*;" << nl << nl
         << "public class " << decl.name << " implements Steppable {" << indent
@@ -359,6 +362,8 @@ void MasonPrinter::print(const AST::SimulateStatement &) {
 }
 
 void MasonPrinter::print(const AST::Script &script) {
+  inAgent = false; // Printing main simulation code
+
   *this << "import sim.engine.*;" << nl
         << "import sim.util.*;" << nl
         << "import sim.field.continuous.*;" << nl << nl
