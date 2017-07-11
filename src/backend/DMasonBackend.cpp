@@ -15,12 +15,18 @@ static std::string generateAgentCode(AST::Script &script, AST::AgentDeclaration 
   printer.print(agent);
   return printer.extractStr();
 }
+static std::string generateStubAgentCode(AST::Script &script, AST::AgentDeclaration &agent) {
+  DMasonPrinter printer(script);
+  printer.printStubAgent(agent);
+  return printer.extractStr();
+}
 
 void DMasonBackend::generate(
     AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
   writeToFile(outputDir + "/Sim.java", generateMainCode(script));
 
   for (AST::AgentDeclaration *agent : script.agents) {
+    writeToFile(outputDir + "/Remote" + agent->name + ".java", generateStubAgentCode(script, *agent));
     writeToFile(outputDir + "/" + agent->name + ".java", generateAgentCode(script, *agent));
   }
 
