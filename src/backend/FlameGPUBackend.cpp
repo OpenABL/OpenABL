@@ -91,10 +91,20 @@ static XmlElems createXmlMessages(const FlameModel &model) {
       }});
     }
 
+    XmlElems partitioningInfo {
+      { "gpu:radius", {{ "1.0" }} }, // TODO dummy
+      { "gpu:xmin", {{ "0.0" }} }, // TODO dummy
+      { "gpu:xmax", {{ "0.0" }} }, // TODO dummy
+      { "gpu:ymin", {{ "0.0" }} }, // TODO dummy
+      { "gpu:ymax", {{ "0.0" }} }, // TODO dummy
+      { "gpu:zmin", {{ "0.0" }} }, // TODO dummy
+      { "gpu:zmax", {{ "0.0" }} }, // TODO dummy
+    };
+
     messages.push_back({ "gpu:message", {
       { "name", {{ msg.name }} },
       { "variables", variables },
-      { "gpu:partitioningNone", {} }, // TODO dummy
+      { "gpu:partitioningSpatial", partitioningInfo },
       { "gpu:bufferSize", {{ "1024" }} }, // TODO dummy
     }});
   }

@@ -105,16 +105,23 @@ void FlameGPUPrinter::print(const AST::ForStatement &stmt) {
     const std::string &agentVar = (*currentFunc->func->params)[0]->var->name;
 
     std::string msgVar = msgName + "_message";
-    std::string posMember = agent.getPositionMember()->name;
+    const AST::AgentMember *posMember = agent.getPositionMember();
+    std::string posName = posMember->name;
+    int vecLen = posMember->type->resolved.getVecLen();
     *this << "xmachine_message_" << msgName << "* " << msgVar
-          << " = get_first_location_message(" << msgName + "_messages, "
-          << "partition_matrix, (float) " << agentVar << "->" << posMember << "_x, "
-          << "(float) " << agentVar << "->" << posMember << "_y, "
-          << "(float) " << agentVar << "->" << posMember << "_z);" << nl
-          << "while (" << msgVar << ") {" << indent;
+          << " = get_first_" << msgName << "_message(" << msgName + "_messages, "
+          << "partition_matrix, (float) " << agentVar << "->" << posName << "_x, "
+          << "(float) " << agentVar << "->" << posName << "_y, ";
+    // FlameGPU always does the partitioning on 3D coordinates
+    if (vecLen == 3) {
+      *this << "(float) " << agentVar << "->" << posName << "_z";
+    } else {
+      *this << "0.0";
+    }
+    *this << ");" << nl << "while (" << msgVar << ") {" << indent;
     extractMsgMembers(*this, msg, stmt.var->name);
     *this << nl << *stmt.stmt
-          << nl << msgVar << " = get_next_location_message(" << msgVar
+          << nl << msgVar << " = get_next_" << msgName << "_message(" << msgVar
           << ", " << msgName << "_messages, partition_matrix);"
           << outdent << nl << "}";
 
@@ -156,7 +163,7 @@ void FlameGPUPrinter::print(const AST::Script &script) {
             << "xmachine_message_" << msgName << "_list* "
             << msgName << "_messages) {" << indent
             << nl << "add_" << msgName << "_message("
-            << msgName << "_messages, xmemory->id";
+            << msgName << "_messages";
       for (const AST::AgentMember *member : msg->members) {
         const std::string &name = member->name;
         *this << ", ";
@@ -184,7 +191,7 @@ void FlameGPUPrinter::print(const AST::Script &script) {
       *this << "__FLAME_GPU_FUNC__ int " << func.name << "("
             << "xmachine_memory_" << func.agent->name << "* " << paramName
             << ", xmachine_message_" << msgName << "_list* "
-            << msgName << "_messages, xmachine_" << msgName
+            << msgName << "_messages, xmachine_message_" << msgName
             << "_PBM* partition_matrix) {" << indent;
       extractAgentMembers(*this, *func.agent, paramName);
       *this << *func.func->stmts

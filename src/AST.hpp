@@ -598,6 +598,11 @@ struct EnvironmentDeclaration : public Declaration {
   EnvironmentDeclaration(MemberInitList *members, Location loc)
     : Declaration{loc}, members{members} {}
 
+  int getEnvDimension() const {
+    assert(sizeExpr);
+    return sizeExpr->type.getVecLen();
+  }
+
   void accept(Visitor &);
   void print(Printer &) const;
 };
