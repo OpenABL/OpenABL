@@ -62,7 +62,23 @@ FlameModel FlameModel::generateFromScript(AST::Script &script) {
 }
 
 // Conversion to unpacked types
-static void pushMember(FlameModel::MemberList &result, const std::string &name, Type type) {
+static void pushMemberInfo(
+    FlameModel::MemberList &result, const AST::AgentMember &member, bool forGpu) {
+  const std::string &name = member.name;
+  Type type = member.type->resolved;
+
+  // FlameGPU requires that the position members are always 3D with names x, y, z
+  if (forGpu && member.isPosition) {
+    result.push_back({ "x", "float" });
+    result.push_back({ "y", "float" });
+    result.push_back({ "z", "float" });
+    // If we are in a 2D environment, technically we only need the "z" member in the
+    // message type (because FlameGPU assumes it exists), but not in the agent type.
+    // I'm including it in the agent anyway, both for simplicity and because I'm not
+    // sure about the performance implications. (TODO)
+    return;
+  }
+
   switch (type.getTypeId()) {
     case Type::INT32:
       result.push_back({ name, "int" });
@@ -85,18 +101,20 @@ static void pushMember(FlameModel::MemberList &result, const std::string &name, 
   }
 }
 
-FlameModel::MemberList FlameModel::getUnpackedMembers(const AST::AgentMemberList &members) {
+FlameModel::MemberList FlameModel::getUnpackedMembers(
+    const AST::AgentMemberList &members, bool forGpu) {
   FlameModel::MemberList result;
   for (const AST::AgentMemberPtr &member : members) {
-    pushMember(result, member->name, member->type->resolved);
+    pushMemberInfo(result, *member, forGpu);
   }
   return result;
 }
 
-FlameModel::MemberList FlameModel::getUnpackedMembers(const std::vector<const AST::AgentMember *> &members) {
+FlameModel::MemberList FlameModel::getUnpackedMembers(
+    const std::vector<const AST::AgentMember *> &members, bool forGpu) {
   FlameModel::MemberList result;
   for (const AST::AgentMember *member : members) {
-    pushMember(result, member->name, member->type->resolved);
+    pushMemberInfo(result, *member, forGpu);
   }
   return result;
 }

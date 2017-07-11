@@ -33,8 +33,7 @@ void FlameGPUPrinter::print(const AST::SimpleType &type) {
 static void printTypeCtor(FlameGPUPrinter &p, const AST::CallExpression &expr) {
   Type t = expr.type;
   if (t.isVec()) {
-    p << "glm::vec" << t.getVecLen();
-    p << "(";
+    p << "glm::vec" << t.getVecLen() << "(";
     p.printArgs(expr);
     p << ")";
   } else {
@@ -68,14 +67,18 @@ void FlameGPUPrinter::print(const AST::MemberAccessExpression &expr) {
 static void extractMember(
     FlameGPUPrinter &p, const AST::AgentMember &member,
     const std::string &fromVar, const std::string &toVar) {
-  AST::Type &type = *member.type;
+  Type type = member.type->resolved;
   const std::string &name = member.name;
-  if (type.resolved.isVec()) {
-    p << Printer::nl << type << " " << toVar << "_" << name << " = " << type << "("
-      << fromVar << "->" << name << "_x, "
-      << fromVar << "->" << name << "_y";
-    if (type.resolved.getTypeId() == Type::VEC3) {
-      p << ", " << fromVar << "->" << name << "_z";
+  if (type.isVec()) {
+    // Position members are mapped to x, y, z without prefix
+    std::string namePrefix = member.isPosition ? "" : name + "_";
+
+    p << Printer::nl << *member.type << " " << toVar << "_" << name
+      << " = " << *member.type << "("
+      << fromVar << "->" << namePrefix << "x, "
+      << fromVar << "->" << namePrefix<< "y";
+    if (type.getTypeId() == Type::VEC3) {
+      p << ", " << fromVar << "->" << namePrefix << "z";
     }
     p << ");";
   }
@@ -107,18 +110,11 @@ void FlameGPUPrinter::print(const AST::ForStatement &stmt) {
     std::string msgVar = msgName + "_message";
     const AST::AgentMember *posMember = agent.getPositionMember();
     std::string posName = posMember->name;
-    int vecLen = posMember->type->resolved.getVecLen();
     *this << "xmachine_message_" << msgName << "* " << msgVar
           << " = get_first_" << msgName << "_message(" << msgName + "_messages, "
-          << "partition_matrix, (float) " << agentVar << "->" << posName << "_x, "
-          << "(float) " << agentVar << "->" << posName << "_y, ";
-    // FlameGPU always does the partitioning on 3D coordinates
-    if (vecLen == 3) {
-      *this << "(float) " << agentVar << "->" << posName << "_z";
-    } else {
-      *this << "0.0";
-    }
-    *this << ");" << nl << "while (" << msgVar << ") {" << indent;
+          << "partition_matrix, (float) " << agentVar << "->x, "
+          << "(float) " << agentVar << "->y, (float) " << agentVar << "->z"
+          << ");" << nl << "while (" << msgVar << ") {" << indent;
     extractMsgMembers(*this, msg, stmt.var->name);
     *this << nl << *stmt.stmt
           << nl << msgVar << " = get_next_" << msgName << "_message(" << msgVar
@@ -164,24 +160,9 @@ void FlameGPUPrinter::print(const AST::Script &script) {
             << msgName << "_messages) {" << indent
             << nl << "add_" << msgName << "_message("
             << msgName << "_messages";
-      for (const AST::AgentMember *member : msg->members) {
-        const std::string &name = member->name;
-        *this << ", ";
-
-        // TODO reuse pushMembers() code?
-        switch (member->type->resolved.getTypeId()) {
-          case Type::VEC2:
-            *this << "xmemory->" << name << "_x, "
-                  << "xmemory->" << name << "_y";
-            break;
-          case Type::VEC3:
-            *this << "xmemory->" << name << "_x, "
-                  << "xmemory->" << name << "_y, "
-                  << "xmemory->" << name << "_z";
-            break;
-          default:
-            *this << "xmemory->" << name;
-        }
+      for (const auto &member : FlameModel::getUnpackedMembers(msg->members, true)) {
+        const std::string &name = member.first;
+        *this << ", xmemory->" << name;
       }
       *this << ");" << nl << "return 0;" << outdent << nl << "}\n\n";
     } else {

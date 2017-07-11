@@ -11,7 +11,7 @@ static XmlElems createXmlAgents(AST::Script &script, const FlameModel &model) {
   XmlElems xagents;
   for (const AST::AgentDeclaration *decl : script.agents) {
     XmlElems members;
-    auto unpackedMembers = FlameModel::getUnpackedMembers(*decl->members);
+    auto unpackedMembers = FlameModel::getUnpackedMembers(*decl->members, true);
     for (const FlameModel::Member &member : unpackedMembers) {
       members.push_back({ "gpu:variable", {
         { "type", {{ member.second }} },
@@ -83,7 +83,7 @@ static XmlElems createXmlMessages(const FlameModel &model) {
   XmlElems messages;
   for (const FlameModel::Message &msg : model.messages) {
     XmlElems variables;
-    auto unpackedMembers = FlameModel::getUnpackedMembers(msg.members);
+    auto unpackedMembers = FlameModel::getUnpackedMembers(msg.members, true);
     for (const FlameModel::Member &member : unpackedMembers) {
       variables.push_back({ "gpu:variable", {
         { "type", {{ member.second }} },
