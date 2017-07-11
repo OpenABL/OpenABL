@@ -220,8 +220,8 @@ void DMasonPrinter::print(const AST::CallExpression &expr) {
       Type type = arg.expr->type;
       AST::AgentDeclaration *agent = type.getAgentDecl();
       AST::AgentMember *posMember = agent->getPositionMember();
-
-      *this << type << " " << aLabel << " = new " << type << "(this,new Double2D(0,0));" << nl;
+      *this << type << " " << aLabel << " = " << arg << ";" << nl;
+      //*this << type << " " << aLabel << " = new " << type << "(this,new Double2D(0,0));" << nl;
       *this << aLabel << ".pos = env.getAvailableRandomLocation();"<< nl; 
       *this << aLabel << ".setPos("<< aLabel <<".pos);" << nl;
       if (posMember) {
@@ -245,8 +245,19 @@ void DMasonPrinter::print(const AST::CallExpression &expr) {
   } else {
     *this << getSimVarName() << "." << expr.name << "(";
     printArgs(expr);
-    *this << ")NICOLA";
+    *this << ")";
   }
+}
+void DMasonPrinter::print(const AST::AgentCreationExpression &expr) {
+  AST::AgentDeclaration *agent = expr.type.getAgentDecl();
+
+  *this << "new " << expr.name << "(this,";
+  printCommaSeparated(*agent->members, [&](const AST::AgentMemberPtr &member) {
+    auto it = expr.memberMap.find(member->name);
+    assert(it != expr.memberMap.end());
+    *this << *it->second;
+  });
+  *this <<")";
 }
 /*
 static void printVecCtorArgs(MasonPrinter &p, const AST::CallExpression &expr) {
@@ -345,6 +356,7 @@ void DMasonPrinter::print(const AST::Script &script) {
     *this << *mainFunc->stmts;
   }
 
+  *this << outdent << nl << "}" << nl;
   // Print non-step, non-main functions
   for (const AST::FunctionDeclaration *decl : script.funcs) {
     if (!decl->isStep && !decl->isMain()) {
@@ -352,8 +364,7 @@ void DMasonPrinter::print(const AST::Script &script) {
     }
   }
 
-  *this << outdent << nl << "}" << nl
-	<<"public DistributedField<Double2D> getField() {" << indent << nl
+  *this <<"public DistributedField<Double2D> getField() {" << indent << nl
         <<"return env;" << nl
         <<"}" << outdent << nl
         <<"public void addToField(RemotePositionedAgent<Double2D> rm, Double2D loc) {"<< indent << nl

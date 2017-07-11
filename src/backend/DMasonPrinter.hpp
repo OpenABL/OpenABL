@@ -16,6 +16,7 @@ struct DMasonPrinter : public MasonPrinter {
   void print(const AST::Script &);
   void print(const AST::CallExpression &);
   void print(const AST::FunctionDeclaration &);
+  void print(const AST::AgentCreationExpression &);
 };
 
 }
