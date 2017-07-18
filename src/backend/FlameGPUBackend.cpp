@@ -57,10 +57,13 @@ static XmlElems createXmlAgents(AST::Script &script, const FlameModel &model) {
         fnElems.push_back({ "outputs", outputs });
       }
 
+      bool usesRng = func.func && func.func->usesRng;
+
       // FlameGPU is also very pedantic about order. These elements must
       // occur after inputs and outputs...
       fnElems.push_back({ "gpu:reallocate", {{ "false" }} });
-      fnElems.push_back({ "gpu:RNG", {{ "false" }} });
+      fnElems.push_back({ "gpu:RNG", {{ usesRng ? "true" : "false" }} });
+
 
       functions.push_back({ "gpu:function", fnElems });
     }

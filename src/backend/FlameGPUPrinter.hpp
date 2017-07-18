@@ -25,6 +25,7 @@ struct FlameGPUPrinter : public GenericPrinter {
   void print(const AST::AgentMember &);
   void print(const AST::AgentDeclaration &);
   void print(const AST::ConstDeclaration &);
+  void print(const AST::FunctionDeclaration &);
   void print(const AST::Script &);
 
 private:

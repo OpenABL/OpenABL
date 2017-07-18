@@ -107,14 +107,17 @@ void FlameGPUPrinter::print(const AST::CallExpression &expr) {
   if (expr.isCtor()) {
     printTypeCtor(*this, expr);
   } else if (expr.isBuiltin()) {
+    if (expr.name == "random") {
+      *this << expr.calledSig.name << "(rand48, ";
+      printArgs(expr);
+      *this << ")";
+      return;
+    }
+
     if (expr.name == "dist") {
       *this << "glm::distance";
     } else if (expr.name == "normalize") {
       *this << "glm::normalize";
-    } else if (expr.name == "random") {
-      *this << expr.calledSig.name << "(rand48, ";
-      printArgs(expr);
-      *this << ")";
     } else {
       *this << expr.name;
     }
@@ -123,6 +126,9 @@ void FlameGPUPrinter::print(const AST::CallExpression &expr) {
     *this << ")";
   } else {
     *this << expr.name << "(";
+    if (expr.calledFunc->usesRng) {
+      *this << "rand48, ";
+    }
     printArgs(expr);
     *this << ")";
   }
@@ -219,6 +225,16 @@ void FlameGPUPrinter::print(const AST::ForStatement &stmt) {
   assert(0);
 }
 
+void FlameGPUPrinter::print(const AST::FunctionDeclaration &decl) {
+  *this << *decl.returnType << " " << decl.name << "(";
+  if (decl.usesRng) {
+    *this << "RNG_rand48 *rand48, ";
+  }
+  printParams(decl);
+  *this << ") {" << indent;
+  *this << *decl.stmts << outdent << nl << "}";
+}
+
 void FlameGPUPrinter::print(const AST::Script &script) {
   *this << "#ifndef _FUNCTIONS_H_\n"
            "#define _FUNCTIONS_H_\n\n"
@@ -270,6 +286,9 @@ void FlameGPUPrinter::print(const AST::Script &script) {
         *this << ", xmachine_message_" << msgName << "_list* "
               << msgName << "_messages, xmachine_message_" << msgName
               << "_PBM* partition_matrix";
+      }
+      if (func.func->usesRng) {
+        *this << ", RNG_rand48 *rand48";
       }
       *this << ") {" << indent;
       extractAgentMembers(*this, *func.agent, paramName);

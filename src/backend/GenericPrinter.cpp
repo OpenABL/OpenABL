@@ -138,12 +138,7 @@ void GenericPrinter::printParams(const AST::FunctionDeclaration &decl) {
 }
 
 void GenericPrinter::print(const AST::FunctionDeclaration &decl) {
-  if (decl.returnType) {
-    *this << *decl.returnType;
-  } else {
-    *this << "void";
-  }
-  *this << " " << decl.name << "(";
+  *this << *decl.returnType << " " << decl.name << "(";
   printParams(decl);
   *this << ") {" << indent;
   *this << *decl.stmts << outdent << nl << "}";

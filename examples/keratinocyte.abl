@@ -116,6 +116,8 @@ void cycle(Keratinocyte in -> out) {
   }
 
   if (divide(in.type, in.cycle)) {
+    // XXX Just a dummy statement to test RNG. Not part of model!
+    get_new_coord(in.pos.x, true);
     // XXX Add new agent
   }
 }

@@ -194,9 +194,7 @@ void Param::accept(Visitor &visitor) {
 
 void FunctionDeclaration::accept(Visitor &visitor) {
   visitor.enter(*this);
-  if (returnType) {
-    returnType->accept(visitor);
-  }
+  returnType->accept(visitor);
   for (ParamPtr &param : *params) {
     param->accept(visitor);
   }

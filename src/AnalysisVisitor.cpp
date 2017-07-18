@@ -845,6 +845,11 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
     expr.kind = AST::CallExpression::Kind::BUILTIN;
     expr.calledSig = sig->getConcreteSignature(argTypes);
     expr.type = expr.calledSig.returnType;
+
+    // FlameGPU needs to know
+    if (expr.name == "random") {
+      currentFunc->usesRng = true;
+    }
     return;
   }
 
@@ -874,6 +879,12 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
 
   expr.kind = AST::CallExpression::Kind::USER;
   expr.type = decl->returnType->resolved;
+  expr.calledFunc = decl;
+
+  // We might be using an RNG indirectly
+  if (decl->usesRng) {
+    currentFunc->usesRng = true;
+  }
 };
 
 void AnalysisVisitor::leave(AST::Script &script) {

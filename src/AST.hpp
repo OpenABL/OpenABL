@@ -201,6 +201,8 @@ using ArgPtr = std::unique_ptr<Arg>;
 using ArgList = std::vector<ArgPtr>;
 using ArgListPtr = std::unique_ptr<ArgList>;
 
+struct FunctionDeclaration;
+
 struct CallExpression : public Expression {
   enum class Kind {
     USER,    // Call to user function
@@ -214,6 +216,8 @@ struct CallExpression : public Expression {
   // Populated during analysis
   Kind kind;
   FunctionSignature calledSig;
+  // Only if user function is called
+  const FunctionDeclaration *calledFunc = nullptr;
 
   CallExpression(std::string name, ArgList *args, Location loc)
     : Expression{loc}, name{name}, args{args}, kind{Kind::USER} {}
@@ -436,8 +440,6 @@ struct ForStatement : public Statement {
   Expression &getNearRadius() const { return *(*getNearCall().args)[1]->expr; }
 };
 
-struct FunctionDeclaration;
-
 using IdentList = std::vector<std::string>;
 using IdentListPtr = std::unique_ptr<IdentList>;
 
@@ -518,6 +520,8 @@ struct FunctionDeclaration : public Declaration {
   AgentDeclaration *accessedAgent = nullptr;
   // Which members of the agent that we interact with are accessed
   std::set<std::string> accessedMembers;
+  // FlameGPU needs to know whether an RNG is used
+  bool usesRng = false;
 
   FunctionDeclaration(Type *returnType, std::string name,
                       ParamList *params, StatementList *stmts, Location loc)
