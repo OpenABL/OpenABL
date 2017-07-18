@@ -111,6 +111,10 @@ void FlameGPUPrinter::print(const AST::CallExpression &expr) {
       *this << "glm::distance";
     } else if (expr.name == "normalize") {
       *this << "glm::normalize";
+    } else if (expr.name == "random") {
+      *this << expr.calledSig.name << "(rand48, ";
+      printArgs(expr);
+      *this << ")";
     } else {
       *this << expr.name;
     }
@@ -218,7 +222,8 @@ void FlameGPUPrinter::print(const AST::ForStatement &stmt) {
 void FlameGPUPrinter::print(const AST::Script &script) {
   *this << "#ifndef _FUNCTIONS_H_\n"
            "#define _FUNCTIONS_H_\n\n"
-           "#include \"header.h\"\n\n";
+           "#include \"header.h\"\n"
+           "#include \"libabl_flamegpu.h\"\n\n";
 
   for (const AST::ConstDeclaration *decl : script.consts) {
     *this << *decl << nl;

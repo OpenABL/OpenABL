@@ -162,6 +162,7 @@ void FlameGPUBackend::generate(
 
   writeToFile(outputDir + "/model/XMLModelFile.xml", createXmlModel(script, model));
   writeToFile(outputDir + "/model/functions.c", createFunctionsFile(script, model));
+  copyFile(assetDir + "/flamegpu/libabl_flamegpu.h", outputDir + "/model/libabl_flamegpu.h");
   copyFile(assetDir + "/flamegpu/Makefile", outputDir + "/Makefile");
   copyFile(assetDir + "/flamegpu/build.sh", outputDir + "/build.sh");
   makeFileExecutable(outputDir + "/build.sh");
