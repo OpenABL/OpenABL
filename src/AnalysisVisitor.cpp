@@ -71,6 +71,29 @@ void AnalysisVisitor::popVarScope() {
   varMapStack.pop();
 };
 
+bool promoteTo(AST::ExpressionPtr &expr, Type type) {
+  if (expr->type == type) {
+    return true;
+  }
+
+  if (expr->type.isInt() && type.isFloat()) {
+    if (const auto *lit = dynamic_cast<AST::IntLiteral *>(&*expr)) {
+      // Convert to float literal
+      expr.reset(new AST::FloatLiteral((double) lit->value, lit->loc));
+    } else {
+      // Insert cast expression
+      auto *origExpr = expr.release();
+      auto *args = new AST::ArgList;
+      args->emplace_back(new AST::Arg(origExpr, nullptr, origExpr->loc));
+      auto *cast = new AST::CallExpression("float", args, origExpr->loc);
+      expr.reset(cast);
+    }
+    return true;
+  }
+
+  return false;
+}
+
 void AnalysisVisitor::enter(AST::Var &) {}
 void AnalysisVisitor::enter(AST::Literal &) {}
 void AnalysisVisitor::enter(AST::UnaryOpExpression &) {}
@@ -163,8 +186,8 @@ static bool handleArrayInitializer(ErrorStream &err, AST::Expression &expr, Type
     return false;
   }
 
-  for (const AST::ExpressionPtr &expr : *init->exprs) {
-    if (!expr->type.isPromotableTo(elemType)) {
+  for (AST::ExpressionPtr &expr : *init->exprs) {
+    if (!promoteTo(expr, elemType)) {
       err << "Element of type " << expr->type
           << " inside initializer for array of type " << elemType << expr->loc;
       return false;
@@ -193,9 +216,8 @@ void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
   }
 
   Type declType = decl.type->resolved;
-  Type exprType = decl.expr->type;
-  if (!exprType.isPromotableTo(declType)) {
-    err << "Trying to assign value of type " << exprType
+  if (!promoteTo(decl.expr, declType)) {
+    err << "Trying to assign value of type " << decl.expr->type
         << " to global of type " << declType << decl.expr->loc;
   }
 };
@@ -231,7 +253,7 @@ void AnalysisVisitor::leave(AST::VarDeclarationStatement &decl) {
     SKIP_INVALID(declType);
     SKIP_INVALID(initType);
 
-    if (!initType.isPromotableTo(declType)) {
+    if (!promoteTo(decl.initializer, declType)) {
       err << "Trying to assign value of type " << initType
           << " to variable of type " << declType << decl.initializer->loc;
     }
@@ -354,7 +376,7 @@ void AnalysisVisitor::leave(AST::SimulateStatement &stmt) {
     return;
   }
 
-  if (!stmt.timestepsExpr->type.isPromotableTo(Type::INT32)) {
+  if (!stmt.timestepsExpr->type.isInt()) {
     err << "Number of timesteps must be an integer, "
         << stmt.timestepsExpr->type << " given" << stmt.timestepsExpr->loc;
     return;
@@ -393,7 +415,7 @@ void AnalysisVisitor::leave(AST::ReturnStatement &stmt) {
       return;
     }
 
-    if (!stmt.expr->type.isPromotableTo(returnType)) {
+    if (!promoteTo(stmt.expr, returnType)) {
       err << "Trying to return " << stmt.expr->type
           << " from function with return type " << returnType << stmt.expr->loc;
       return;
@@ -607,8 +629,10 @@ void AnalysisVisitor::leave(AST::TernaryExpression &expr) {
   SKIP_INVALID(elseType);
 
   if (ifType.isPromotableTo(elseType)) {
+    promoteTo(expr.ifExpr, elseType);
     expr.type = elseType;
   } else if (elseType.isPromotableTo(ifType)) {
+    promoteTo(expr.elseExpr, ifType);
     expr.type = ifType;
   } else {
     err << "Branches of ternary operator have divergent types "
@@ -642,7 +666,7 @@ void AnalysisVisitor::leave(AST::AgentCreationExpression &expr) {
 
     Type memberType = member->type->resolved;
     Type exprType = entry->expr->type;
-    if (!exprType.isPromotableTo(memberType)) {
+    if (!promoteTo(entry->expr, memberType)) {
       err << "Trying to initialize member of type " << memberType
           << " from expression of type " << exprType << entry->expr->loc;
       return;
@@ -834,9 +858,9 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
 
   size_t num = expr.args->size();
   for (size_t i = 0; i < num; i++) {
-    const AST::Arg &arg = *(*expr.args)[i];
+    AST::Arg &arg = *(*expr.args)[i];
     const AST::Param &param = *(*decl->params)[i];
-    if (!arg.expr->type.isPromotableTo(param.type->resolved)) {
+    if (!promoteTo(arg.expr, param.type->resolved)) {
       err << "Argument " << i << " to function " << decl->name << " has type "
           << arg.expr->type << " but " << param.type->resolved << " expected" << arg.loc;
       return;

@@ -12,6 +12,7 @@ struct FlameGPUPrinter : public GenericPrinter {
   FlameGPUPrinter(AST::Script &script, const FlameModel &model)
     : GenericPrinter(script), script(script), model(model) {}
 
+  void print(const AST::Literal &);
   void print(const AST::CallExpression &);
   void print(const AST::MemberInitEntry &);
   void print(const AST::AgentCreationExpression &);

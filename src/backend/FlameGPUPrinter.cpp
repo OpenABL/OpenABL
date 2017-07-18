@@ -9,6 +9,14 @@ void FlameGPUPrinter::print(const AST::SimulateStatement &) {}
 void FlameGPUPrinter::print(const AST::AgentMember &) {}
 void FlameGPUPrinter::print(const AST::AgentDeclaration &) {}
 
+void FlameGPUPrinter::print(const AST::Literal &lit) {
+  GenericPrinter::print(lit);
+  if (dynamic_cast<const AST::FloatLiteral *>(&lit)) {
+    // We're using floats for FlameGPU
+    *this << "f";
+  }
+}
+
 void FlameGPUPrinter::print(const AST::SimpleType &type) {
   Type t = type.resolved;
   switch (t.getTypeId()) {
