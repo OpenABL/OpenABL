@@ -52,17 +52,26 @@ void FlameGPUPrinter::print(const AST::AssignStatement &stmt) {
         const std::string &name = memAcc->member;
         std::string inVar = currentInVar->name;
         if (memAcc->type.isVec()) {
+          std::string varName;
+          if (auto *var = dynamic_cast<AST::VarExpression *>(&*stmt.right)) {
+            varName = var->var->name;
+          } else {
+            varName = makeAnonLabel();
+            printType(*this, memAcc->type);
+            *this << " " << varName << " = " << *stmt.right << ";";
+          }
+
           const AST::AgentMember *posMember = currentAgent->getPositionMember();
           if (posMember && name == posMember->name) {
             // Special case position member, as FlameGPU requires specific names here...
             for (const std::string &member : memAcc->type.getVecMembers()) {
               *this << "in->" << member
-                    << " = " << *stmt.right << "." << member << ";" << nl;
+                    << " = " << varName << "." << member << ";" << nl;
             }
           } else {
             for (const std::string &member : memAcc->type.getVecMembers()) {
               *this << "in->" << name << "_" << member
-                    << " = " << *stmt.right << "." << member << ";" << nl;
+                    << " = " << varName << "." << member << ";" << nl;
             }
           }
         } else {
