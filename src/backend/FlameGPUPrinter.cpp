@@ -90,14 +90,15 @@ void FlameGPUPrinter::print(const AST::CallExpression &expr) {
     printTypeCtor(*this, expr);
   } else if (expr.isBuiltin()) {
     if (expr.name == "dist") {
-      *this << "glm::distance(";
-      printArgs(expr);
-      *this << ")";
+      *this << "glm::distance";
+    } else if (expr.name == "normalize") {
+      *this << "glm::normalize";
     } else {
-      *this << expr.name << "(";
-      printArgs(expr);
-      *this << ")";
+      *this << expr.name;
     }
+    *this << "(";
+    printArgs(expr);
+    *this << ")";
   } else {
     *this << expr.name << "(";
     printArgs(expr);

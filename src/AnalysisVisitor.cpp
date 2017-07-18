@@ -86,6 +86,8 @@ bool promoteTo(AST::ExpressionPtr &expr, Type type) {
       auto *args = new AST::ArgList;
       args->emplace_back(new AST::Arg(origExpr, nullptr, origExpr->loc));
       auto *cast = new AST::CallExpression("float", args, origExpr->loc);
+      cast->kind = AST::CallExpression::Kind::CTOR;
+      cast->type = Type::FLOAT32;
       expr.reset(cast);
     }
     return true;
@@ -494,11 +496,14 @@ void AnalysisVisitor::leave(AST::Literal &lit) {
   }
 };
 
-static bool promoteToFloat(Type l, Type r) {
-  return (l.isFloat() && r.isInt()) || (r.isFloat() && l.isInt());
+static bool promoteBinary(AST::ExpressionPtr &left, AST::ExpressionPtr &right) {
+  return promoteTo(left, right->type) || promoteTo(right, left->type);
 }
 
-static Type getBinaryOpType(AST::BinaryOp op, Type l, Type r) {
+static Type getBinaryOpType(
+    AST::BinaryOp op, AST::ExpressionPtr &left, AST::ExpressionPtr &right) {
+  Type l = left->type;
+  Type r = right->type;
   switch (op) {
     case AST::BinaryOp::ADD:
     case AST::BinaryOp::SUB:
@@ -506,7 +511,7 @@ static Type getBinaryOpType(AST::BinaryOp op, Type l, Type r) {
         return { Type::INVALID };
       }
       if (l != r) {
-        if (promoteToFloat(l, r)) {
+        if (promoteBinary(left, right)) {
           return { Type::FLOAT32 };
         } else {
           return { Type::INVALID };
@@ -522,16 +527,18 @@ static Type getBinaryOpType(AST::BinaryOp op, Type l, Type r) {
         return { Type::INVALID };
       }
       if (l.isVec()) {
+        promoteTo(right, Type::FLOAT32);
         return l;
       }
       if (r.isVec()) {
         if (op == AST::BinaryOp::DIV) {
           return { Type::INVALID };
         }
+        promoteTo(left, Type::FLOAT32);
         return r;
       }
       if (l != r) {
-        if (promoteToFloat(l, r)) {
+        if (promoteBinary(left, right)) {
           return { Type::FLOAT32 };
         } else {
           return { Type::INVALID };
@@ -599,7 +606,7 @@ void AnalysisVisitor::leave(AST::BinaryOpExpression &expr) {
   SKIP_INVALID(expr.left->type);
   SKIP_INVALID(expr.right->type);
 
-  expr.type = getBinaryOpType(expr.op, expr.left->type, expr.right->type);
+  expr.type = getBinaryOpType(expr.op, expr.left, expr.right);
   if (expr.type.isInvalid()) {
     err << "Type mismatch (" << expr.left->type << " "
         << getBinaryOpSigil(expr.op) << " " << expr.right->type << ")" << expr.loc;
@@ -628,11 +635,9 @@ void AnalysisVisitor::leave(AST::TernaryExpression &expr) {
   SKIP_INVALID(ifType);
   SKIP_INVALID(elseType);
 
-  if (ifType.isPromotableTo(elseType)) {
-    promoteTo(expr.ifExpr, elseType);
+  if (promoteTo(expr.ifExpr, elseType)) {
     expr.type = elseType;
-  } else if (elseType.isPromotableTo(ifType)) {
-    promoteTo(expr.elseExpr, ifType);
+  } else if (promoteTo(expr.elseExpr, ifType)) {
     expr.type = ifType;
   } else {
     err << "Branches of ternary operator have divergent types "
