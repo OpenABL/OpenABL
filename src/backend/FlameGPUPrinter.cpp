@@ -106,10 +106,12 @@ void FlameGPUPrinter::print(const AST::CallExpression &expr) {
 }
 
 void FlameGPUPrinter::print(const AST::MemberAccessExpression &expr) {
-  if (expr.type.isVec()) {
-    *this << *expr.expr << "_" << expr.member;
-  } else if (expr.type.isAgent()) {
-    *this << *expr.expr << "->" << expr.member;
+  if (expr.expr->type.isAgent()) {
+    if (expr.type.isVec()) {
+      *this << *expr.expr << "_" << expr.member;
+    } else {
+      *this << *expr.expr << "->" << expr.member;
+    }
   } else {
     GenericPrinter::print(expr);
   }
@@ -117,6 +119,7 @@ void FlameGPUPrinter::print(const AST::MemberAccessExpression &expr) {
 
 void FlameGPUPrinter::print(const AST::ConstDeclaration &stmt) {
   *this << "static const __device__ " << *stmt.type << " " << *stmt.var
+        << (stmt.isArray ? "[]" : "")
         << " = " << *stmt.expr << ";";
 }
 
@@ -210,11 +213,10 @@ void FlameGPUPrinter::print(const AST::Script &script) {
   }
 
   for (const FlameModel::Func &func : model.funcs) {
-    std::string msgName = !func.inMsgName.empty() ? func.inMsgName : func.outMsgName;
-    const FlameModel::Message *msg = model.getMessageByName(msgName);
-
     if (!func.func) {
       // This is an automatically generated "output" function
+      const std::string &msgName = func.outMsgName;
+      const FlameModel::Message *msg = model.getMessageByName(msgName);
       *this << "__FLAME_GPU_FUNC__ int " << func.name << "("
             << "xmachine_memory_" << func.agent->name << "* xmemory, "
             << "xmachine_message_" << msgName << "_list* "
@@ -227,22 +229,27 @@ void FlameGPUPrinter::print(const AST::Script &script) {
       }
       *this << ");" << nl << "return 0;" << outdent << nl << "}\n\n";
     } else {
-      // For now assuming there is a partition matrix
-      currentFunc = &func;
       const AST::Param &param = *(*func.func->params)[0];
       const std::string &paramName = param.var->name;
       *this << "__FLAME_GPU_FUNC__ int " << func.name << "("
-            << "xmachine_memory_" << func.agent->name << "* " << paramName
-            << ", xmachine_message_" << msgName << "_list* "
-            << msgName << "_messages, xmachine_message_" << msgName
-            << "_PBM* partition_matrix) {" << indent;
+            << "xmachine_memory_" << func.agent->name << "* " << paramName;
+      if (!func.inMsgName.empty()) {
+        // For now assuming there is a partition matrix
+        const std::string &msgName = func.inMsgName;
+        *this << ", xmachine_message_" << msgName << "_list* "
+              << msgName << "_messages, xmachine_message_" << msgName
+              << "_PBM* partition_matrix";
+      }
+      *this << ") {" << indent;
       extractAgentMembers(*this, *func.agent, paramName);
 
       // Remember the agent variables we're currently working on
+      currentFunc = &func;
       currentAgent = func.agent;
       currentInVar = &*param.var;
       currentOutVar = &*param.outVar;
       *this << *func.func->stmts;
+      currentFunc = nullptr;
       currentAgent = nullptr;
       currentInVar = nullptr;
       currentOutVar = nullptr;
