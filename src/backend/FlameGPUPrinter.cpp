@@ -37,6 +37,37 @@ void FlameGPUPrinter::print(const AST::SimpleType &type) {
   }
 }
 
+void FlameGPUPrinter::print(const AST::AssignStatement &stmt) {
+  if (auto *memAcc = dynamic_cast<AST::MemberAccessExpression *>(&*stmt.left)) {
+    if (auto *var = dynamic_cast<AST::VarExpression *>(&*memAcc->expr)) {
+      if (currentOutVar && var->var->id == currentOutVar->id) {
+        // Write to current agent variable. Rewrite it to the input variable instead
+        const std::string &name = memAcc->member;
+        std::string inVar = currentInVar->name;
+        if (memAcc->type.isVec()) {
+          const AST::AgentMember *posMember = currentAgent->getPositionMember();
+          if (posMember && name == posMember->name) {
+            // Special case position member, as FlameGPU requires specific names here...
+            for (const std::string &member : memAcc->type.getVecMembers()) {
+              *this << "in->" << member
+                    << " = " << *stmt.right << "." << member << ";" << nl;
+            }
+          } else {
+            for (const std::string &member : memAcc->type.getVecMembers()) {
+              *this << "in->" << name << "_" << member
+                    << " = " << *stmt.right << "." << member << ";" << nl;
+            }
+          }
+        } else {
+          *this << inVar << "->" << name << " = " << *stmt.right << ";";
+        }
+        return;
+      }
+    }
+  }
+  GenericPrinter::print(stmt);
+}
+
 static void printTypeCtor(FlameGPUPrinter &p, const AST::CallExpression &expr) {
   Type t = expr.type;
   if (t.isVec()) {
@@ -190,15 +221,25 @@ void FlameGPUPrinter::print(const AST::Script &script) {
     } else {
       // For now assuming there is a partition matrix
       currentFunc = &func;
-      const std::string &paramName = (*func.func->params)[0]->var->name;
+      const AST::Param &param = *(*func.func->params)[0];
+      const std::string &paramName = param.var->name;
       *this << "__FLAME_GPU_FUNC__ int " << func.name << "("
             << "xmachine_memory_" << func.agent->name << "* " << paramName
             << ", xmachine_message_" << msgName << "_list* "
             << msgName << "_messages, xmachine_message_" << msgName
             << "_PBM* partition_matrix) {" << indent;
       extractAgentMembers(*this, *func.agent, paramName);
-      *this << *func.func->stmts
-            << nl << "return 0;" << outdent << nl << "}\n\n";
+
+      // Remember the agent variables we're currently working on
+      currentAgent = func.agent;
+      currentInVar = &*param.var;
+      currentOutVar = &*param.outVar;
+      *this << *func.func->stmts;
+      currentAgent = nullptr;
+      currentInVar = nullptr;
+      currentOutVar = nullptr;
+
+      *this << nl << "return 0;" << outdent << nl << "}\n\n";
       currentFunc = nullptr;
     }
 

@@ -13,6 +13,7 @@ struct FlameGPUPrinter : public GenericPrinter {
     : GenericPrinter(script), script(script), model(model) {}
 
   void print(const AST::Literal &);
+  void print(const AST::AssignStatement &);
   void print(const AST::CallExpression &);
   void print(const AST::MemberInitEntry &);
   void print(const AST::AgentCreationExpression &);
@@ -30,6 +31,10 @@ private:
   AST::Script &script;
   const FlameModel &model;
   const FlameModel::Func *currentFunc = nullptr;
+  // Current agent, input and output variables inside a step function
+  const AST::AgentDeclaration *currentAgent = nullptr;
+  const AST::Var *currentInVar = nullptr;
+  const AST::Var *currentOutVar = nullptr;
 };
 
 }
