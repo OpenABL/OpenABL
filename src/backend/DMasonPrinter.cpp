@@ -298,17 +298,11 @@ void DMasonPrinter::print(const AST::Script &script) {
     *this << *decl << nl;
   }
 
-  // TODO Replace dummy granularity
-  if (script.envDecl && script.envDecl->sizeExpr) {
-    //const AST::CallExpression &expr =
-      //*dynamic_cast<const AST::CallExpression *>(&*script.envDecl->sizeExpr);
-    *this << "DContinuousGrid2D env;"  << nl
-    	  << "String topicPrefix;"  << nl
-     	  << "int MODE;"  << nl
-    	  << "public double gridWidth;" << nl
-    	  << "public double gridHeight;" << nl << nl;
-       //printVecCtorArgs(*this, expr);
-  }
+  *this << "DContinuousGrid2D env;"  << nl
+      << "String topicPrefix;"  << nl
+      << "int MODE;"  << nl
+      << "public double gridWidth;" << nl
+      << "public double gridHeight;" << nl << nl;
 
   *this << "public Sim(GeneralParam params,String prefix) {" << indent << nl
         << "super(params, new DistributedMultiSchedule<Double2D>(),prefix,params.getConnectionType());" << nl

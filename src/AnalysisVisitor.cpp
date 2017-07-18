@@ -231,17 +231,30 @@ void AnalysisVisitor::leave(AST::EnvironmentDeclaration &decl) {
   }
 
   for (const AST::MemberInitEntryPtr &member : *decl.members) {
-    if (member->name == "size") {
-      const AST::Expression &sizeExpr = *member->expr;
-      if (!sizeExpr.type.isVec()) {
-        err << "Environment size must be float2 or float3" << decl.loc;
+    if (member->name == "min" || member->name == "max") {
+      const AST::Expression &boundsExpr = *member->expr;
+      if (!boundsExpr.type.isVec()) {
+        err << "Environment bounds must be float2 or float3" << boundsExpr.loc;
         return;
       }
-      decl.sizeExpr = &sizeExpr;
+      if (member->name == "min") {
+        decl.minExpr = &boundsExpr;
+      } else {
+        decl.maxExpr = &boundsExpr;
+      }
     } else {
       err << "Unknown environment member \"" << member->name << "\"" << member->loc;
       return;
     }
+  }
+
+  if (decl.maxExpr) {
+    if (decl.minExpr && decl.maxExpr->type != decl.minExpr->type) {
+      err << "min and max environment bounds must have the same type" << decl.loc;
+      return;
+    }
+
+    decl.envDimension = decl.maxExpr->type.getVecLen();
   }
 
   script.envDecl = &decl;
@@ -891,12 +904,12 @@ void AnalysisVisitor::leave(AST::Script &script) {
   for (AST::AgentDeclaration *agent : script.agents) {
     AST::AgentMember *member = agent->getPositionMember();
     if (member) {
-      if (!script.envDecl || !script.envDecl->sizeExpr) {
-        err << "An environment { size } declaration is required to use position members"
+      if (!script.envDecl || !script.envDecl->hasEnvDimension()) {
+        err << "An environment { } declaration is required to use position members"
             << member->loc;
         return;
       }
-      if (member->type->resolved != script.envDecl->sizeExpr->type) {
+      if (member->type->resolved.getVecLen() != script.envDecl->getEnvDimension()) {
         err << "Dimensionality of position member does not match environment dimension"
             << member->loc;
         return;

@@ -14,7 +14,7 @@ float W = 500;
 float rho = 0.01;
 
 // Specify environment size
-environment { size: float2(W, W) }
+environment { max: float2(W) }
 
 // Step function
 // TODO Add keyword?

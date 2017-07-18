@@ -16,9 +16,10 @@ float steer_scale = 0.65;
 float collision_scale = 0.75;
 float match_scale = 1.25;
 
-// TODO The environment in this example goes from -0.5 to 0.5 rather than from 0.0 to 1.0
-// Might it be better to specify min/max instead of size?
-environment { size: float2(1.0, 1.0) }
+environment {
+  min: float2(-0.5),
+  max: float2(0.5)
+}
 
 // This function looks somewhat weird to me, but let's take it as-is
 float2 boundPosition(float2 pos) {

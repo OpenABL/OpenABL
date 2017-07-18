@@ -597,14 +597,18 @@ struct EnvironmentDeclaration : public Declaration {
   MemberInitListPtr members;
 
   // Populated during analysis
-  const Expression *sizeExpr = nullptr;
+  const Expression *minExpr = nullptr;
+  const Expression *maxExpr = nullptr;
+  int envDimension = -1;
 
   EnvironmentDeclaration(MemberInitList *members, Location loc)
     : Declaration{loc}, members{members} {}
 
-  int getEnvDimension() const {
-    assert(sizeExpr);
-    return sizeExpr->type.getVecLen();
+  bool hasEnvDimension() const {
+    return envDimension != -1;
+  }
+  unsigned getEnvDimension() const {
+    return envDimension;
   }
 
   void accept(Visitor &);

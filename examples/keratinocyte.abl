@@ -49,7 +49,7 @@ int K_TYPE_COMM  = 2;
 int K_TYPE_CORN  = 3;
 int K_TYPE_HACAT = 4;
 
-environment { size: float3(SURFACE_WIDTH) }
+environment { max: float3(SURFACE_WIDTH) }
 
 bool on_substrate_surface(float z) {
   return z < BASEMENT_MAX_Z;
