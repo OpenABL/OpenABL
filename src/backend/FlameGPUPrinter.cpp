@@ -109,7 +109,8 @@ void FlameGPUPrinter::print(const AST::MemberAccessExpression &expr) {
 }
 
 void FlameGPUPrinter::print(const AST::ConstDeclaration &stmt) {
-  *this << "#define " << *stmt.var << " " << *stmt.expr;
+  *this << "static const __device__ " << *stmt.type << " " << *stmt.var
+        << " = " << *stmt.expr << ";";
 }
 
 // Extract vecN members into separate glm::vecN variables

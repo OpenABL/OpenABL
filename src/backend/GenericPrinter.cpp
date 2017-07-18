@@ -21,7 +21,9 @@ void GenericPrinter::print(const AST::Literal &lit) {
   if (const AST::IntLiteral *ilit = dynamic_cast<const AST::IntLiteral *>(&lit)) {
     *this << ilit->value;
   } else if (const AST::FloatLiteral *flit = dynamic_cast<const AST::FloatLiteral *>(&lit)) {
-    std::string str = std::to_string(flit->value);
+    std::ostringstream s;
+    s << flit->value;
+    std::string str = s.str();
     if (str.find(".") == std::string::npos && std::isfinite(flit->value)) {
       // Make sure it looks like a floating point number...
       str += ".0";
