@@ -39,7 +39,7 @@ for file in $DIR/examples/*abl; do
     continue
   fi
 
-  for backend in c flame flamegpu mason; do
+  for backend in ${BACKENDS:-c flame flamegpu mason}; do
     echo "BACKEND $backend"
 
     BACKEND_DIR=$TARGET_DIR/$backend

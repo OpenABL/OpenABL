@@ -8,7 +8,6 @@ void FlameGPUPrinter::print(const AST::NewArrayExpression &) {}
 void FlameGPUPrinter::print(const AST::SimulateStatement &) {}
 void FlameGPUPrinter::print(const AST::AgentMember &) {}
 void FlameGPUPrinter::print(const AST::AgentDeclaration &) {}
-void FlameGPUPrinter::print(const AST::ConstDeclaration &) {}
 
 void FlameGPUPrinter::print(const AST::SimpleType &type) {
   Type t = type.resolved;
@@ -44,11 +43,18 @@ void FlameGPUPrinter::print(const AST::CallExpression &expr) {
   if (expr.isCtor()) {
     printTypeCtor(*this, expr);
   } else if (expr.isBuiltin()) {
-    // TODO
-    //printBuiltin(*this, expr);
+    if (expr.name == "dist") {
+      *this << "glm::distance(";
+      printArgs(expr);
+      *this << ")";
+    } else {
+      *this << expr.name << "(";
+      printArgs(expr);
+      *this << ")";
+    }
   } else {
     *this << expr.name << "(";
-    this->printArgs(expr);
+    printArgs(expr);
     *this << ")";
   }
 }
@@ -61,6 +67,10 @@ void FlameGPUPrinter::print(const AST::MemberAccessExpression &expr) {
   } else {
     GenericPrinter::print(expr);
   }
+}
+
+void FlameGPUPrinter::print(const AST::ConstDeclaration &stmt) {
+  *this << "#define " << *stmt.var << " " << *stmt.expr;
 }
 
 // Extract vecN members into separate glm::vecN variables
@@ -134,7 +144,11 @@ void FlameGPUPrinter::print(const AST::Script &script) {
            "#define _FUNCTIONS_H_\n\n"
            "#include \"header.h\"\n\n";
 
-  for (AST::FunctionDeclaration *func : script.funcs) {
+  for (const AST::ConstDeclaration *decl : script.consts) {
+    *this << *decl << nl;
+  }
+
+  for (const AST::FunctionDeclaration *func : script.funcs) {
     if (func->isStep) {
       // Step functions will be handled separately later
       continue;
