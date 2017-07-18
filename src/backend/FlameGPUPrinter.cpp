@@ -17,24 +17,31 @@ void FlameGPUPrinter::print(const AST::Literal &lit) {
   }
 }
 
-void FlameGPUPrinter::print(const AST::SimpleType &type) {
-  Type t = type.resolved;
+static void printType(Printer &p, Type t) {
   switch (t.getTypeId()) {
     case Type::VOID:
     case Type::BOOL:
     case Type::INT32:
     case Type::FLOAT32:
-      *this << t;
+      p << t;
       return;
     case Type::VEC2:
-      *this << "glm::vec2";
+      p << "glm::vec2";
       return;
     case Type::VEC3:
-      *this << "glm::vec3";
+      p << "glm::vec3";
+      return;
+    case Type::ARRAY:
+      // Print base type only
+      printType(p, t.getBaseType());
       return;
     default:
       assert(0);
   }
+}
+
+void FlameGPUPrinter::print(const AST::SimpleType &type) {
+  printType(*this, type.resolved);
 }
 
 void FlameGPUPrinter::print(const AST::AssignStatement &stmt) {

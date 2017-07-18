@@ -19,6 +19,9 @@ static XmlElems createXmlAgents(AST::Script &script, const FlameModel &model) {
       }});
     }
 
+    // FlameGPU requires state names to be unique *across* agents
+    std::string defaultState = decl->name + "_default";
+
     XmlElems functions;
     for (const FlameModel::Func &func : model.funcs) {
       if (func.agent != decl) {
@@ -42,8 +45,8 @@ static XmlElems createXmlAgents(AST::Script &script, const FlameModel &model) {
 
       std::vector<XmlElem> fnElems {
         { "name", {{ func.name }} },
-        { "currentState", {{ "default" }} },
-        { "nextState", {{ "default" }} },
+        { "currentState", {{ defaultState }} },
+        { "nextState", {{ defaultState }} },
       };
 
       // FlameGPU does not allow <inputs> and <outputs> to be empty
@@ -68,9 +71,9 @@ static XmlElems createXmlAgents(AST::Script &script, const FlameModel &model) {
       { "functions", functions },
       { "states", {
         { "gpu:state", {
-          { "name", {{ "default" }} },
+          { "name", {{ defaultState }} },
         }},
-        { "initialState", {{ "default" }} },
+        { "initialState", {{ defaultState }} },
       }},
       { "gpu:type", {{ "continuous" }} },
       { "gpu:bufferSize", {{ "1024" }} }, // TODO dummy
@@ -160,6 +163,8 @@ void FlameGPUBackend::generate(
   writeToFile(outputDir + "/model/XMLModelFile.xml", createXmlModel(script, model));
   writeToFile(outputDir + "/model/functions.c", createFunctionsFile(script, model));
   copyFile(assetDir + "/flamegpu/Makefile", outputDir + "/Makefile");
+  copyFile(assetDir + "/flamegpu/build.sh", outputDir + "/build.sh");
+  makeFileExecutable(outputDir + "/build.sh");
 }
 
 }
