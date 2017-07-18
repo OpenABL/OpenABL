@@ -44,41 +44,50 @@ void FlameGPUPrinter::print(const AST::SimpleType &type) {
   printType(*this, type.resolved);
 }
 
+static bool isSameVar(const AST::Expression &expr, const AST::Var *var) {
+  if (var == nullptr) {
+    return false;
+  }
+
+  if (const auto *varExpr = dynamic_cast<const AST::VarExpression *>(&expr)) {
+    return varExpr->var->id == var->id;
+  }
+  return false;
+}
+
 void FlameGPUPrinter::print(const AST::AssignStatement &stmt) {
   if (auto *memAcc = dynamic_cast<AST::MemberAccessExpression *>(&*stmt.left)) {
-    if (auto *var = dynamic_cast<AST::VarExpression *>(&*memAcc->expr)) {
-      if (currentOutVar && var->var->id == currentOutVar->id) {
-        // Write to current agent variable. Rewrite it to the input variable instead
-        const std::string &name = memAcc->member;
-        std::string inVar = currentInVar->name;
-        if (memAcc->type.isVec()) {
-          std::string varName;
-          if (auto *var = dynamic_cast<AST::VarExpression *>(&*stmt.right)) {
-            varName = var->var->name;
-          } else {
-            varName = makeAnonLabel();
-            printType(*this, memAcc->type);
-            *this << " " << varName << " = " << *stmt.right << ";";
-          }
+    if (isSameVar(*memAcc->expr, currentOutVar)) {
+      // Write to current agent variable. Rewrite it to the input variable instead
+      const std::string &name = memAcc->member;
+      std::string inVar = currentInVar->name;
+      if (memAcc->type.isVec()) {
+        std::string varName;
+        if (auto *var = dynamic_cast<AST::VarExpression *>(&*stmt.right)) {
+          varName = var->var->name;
+        } else {
+          varName = makeAnonLabel();
+          printType(*this, memAcc->type);
+          *this << " " << varName << " = " << *stmt.right << ";";
+        }
 
-          const AST::AgentMember *posMember = currentAgent->getPositionMember();
-          if (posMember && name == posMember->name) {
-            // Special case position member, as FlameGPU requires specific names here...
-            for (const std::string &member : memAcc->type.getVecMembers()) {
-              *this << "in->" << member
-                    << " = " << varName << "." << member << ";" << nl;
-            }
-          } else {
-            for (const std::string &member : memAcc->type.getVecMembers()) {
-              *this << "in->" << name << "_" << member
-                    << " = " << varName << "." << member << ";" << nl;
-            }
+        const AST::AgentMember *posMember = currentAgent->getPositionMember();
+        if (posMember && name == posMember->name) {
+          // Special case position member, as FlameGPU requires specific names here...
+          for (const std::string &member : memAcc->type.getVecMembers()) {
+            *this << "in->" << member
+                  << " = " << varName << "." << member << ";" << nl;
           }
         } else {
-          *this << inVar << "->" << name << " = " << *stmt.right << ";";
+          for (const std::string &member : memAcc->type.getVecMembers()) {
+            *this << "in->" << name << "_" << member
+                  << " = " << varName << "." << member << ";" << nl;
+          }
         }
-        return;
+      } else {
+        *this << inVar << "->" << name << " = " << *stmt.right << ";";
       }
+      return;
     }
   }
   GenericPrinter::print(stmt);
@@ -119,6 +128,9 @@ void FlameGPUPrinter::print(const AST::MemberAccessExpression &expr) {
   if (expr.expr->type.isAgent()) {
     if (expr.type.isVec()) {
       *this << *expr.expr << "_" << expr.member;
+    } else if (isSameVar(*expr.expr, currentNearVar)) {
+      // Access to a message variable in a for-near loop
+      *this << currentFunc->inMsgName << "_message->" << expr.member;
     } else {
       *this << *expr.expr << "->" << expr.member;
     }
@@ -186,8 +198,12 @@ void FlameGPUPrinter::print(const AST::ForStatement &stmt) {
           << "(float) " << agentVar << "->y, (float) " << agentVar << "->z"
           << ");" << nl << "while (" << msgVar << ") {" << indent;
     extractMsgMembers(*this, msg, stmt.var->name);
-    *this << nl << *stmt.stmt
-          << nl << msgVar << " = get_next_" << msgName << "_message(" << msgVar
+
+    currentNearVar = &*stmt.var;
+    *this << nl << *stmt.stmt;
+    currentNearVar = nullptr;
+
+    *this << nl << msgVar << " = get_next_" << msgName << "_message(" << msgVar
           << ", " << msgName << "_messages, partition_matrix);"
           << outdent << nl << "}";
 

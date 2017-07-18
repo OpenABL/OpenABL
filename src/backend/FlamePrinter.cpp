@@ -138,12 +138,28 @@ void FlamePrinter::print(const AST::CallExpression &expr) {
   }
 }
 
+static bool isSameVar(const AST::Expression &expr, const AST::Var *var) {
+  if (var == nullptr) {
+    return false;
+  }
+
+  if (const auto *varExpr = dynamic_cast<const AST::VarExpression *>(&expr)) {
+    return varExpr->var->id == var->id;
+  }
+  return false;
+}
+
 void FlamePrinter::print(const AST::MemberAccessExpression &expr) {
-  if (expr.type.isVec()) {
-    *this << *expr.expr << "_" << expr.member;
-  } else if (expr.expr->type.isAgent()) {
-    // TODO Assuming its the current agent for now, obviously wrong
-    *this << "get_" << expr.member << "()" ;
+  if (expr.expr->type.isAgent()) {
+    if (expr.type.isVec()) {
+      *this << *expr.expr << "_" << expr.member;
+    } else if (isSameVar(*expr.expr, currentNearVar)) {
+      // Access to a message variable in a for-near loop
+      *this << currentFunc->inMsgName << "_message->" << expr.member;
+    } else {
+      // TODO Assuming its the current agent for now, obviously wrong
+      *this << "get_" << expr.member << "()" ;
+    }
   } else {
     GenericPrinter::print(expr);
   }
@@ -208,8 +224,12 @@ void FlamePrinter::print(const AST::ForStatement &stmt) {
     std::string posMember = agent.getPositionMember()->name;
     *this << "START_" << upperMsgName << "_LOOP" << indent;
     extractMsgMembers(*this, msg, stmt.var->name);
-    *this << nl << *stmt.stmt
-          << outdent << nl << "FINISH_" << upperMsgName << "_LOOP";
+
+    currentNearVar = &*stmt.var;
+    *this << nl << *stmt.stmt;
+    currentNearVar = nullptr;
+
+    *this << outdent << nl << "FINISH_" << upperMsgName << "_LOOP";
 
     // TODO What are our semantics on agent self-interaction?
     return;

@@ -35,6 +35,7 @@ private:
   const AST::AgentDeclaration *currentAgent = nullptr;
   const AST::Var *currentInVar = nullptr;
   const AST::Var *currentOutVar = nullptr;
+  const AST::Var *currentNearVar = nullptr;
 };
 
 }

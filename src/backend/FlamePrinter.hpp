@@ -32,6 +32,7 @@ private:
   AST::Script &script;
   const FlameModel &model;
   const FlameModel::Func *currentFunc = nullptr;
+  const AST::Var *currentNearVar = nullptr;
 };
 
 }
