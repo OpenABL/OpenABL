@@ -11,6 +11,14 @@ namespace OpenABL {
 namespace AST {
   struct AgentDeclaration;
   struct Expression;
+
+  // TODO Move out of AST namespace
+  enum class UnaryOp {
+    MINUS,
+    PLUS,
+    LOGICAL_NOT,
+    BITWISE_NOT,
+  };
 }
 
 // Globally unique variable id, to distinguish
@@ -38,6 +46,16 @@ private:
 };
 
 struct Value {
+  struct Vec2 {
+    double x;
+    double y;
+  };
+  struct Vec3 {
+    double x;
+    double y;
+    double z;
+  };
+
   Value(const Value &other) {
     type = other.type;
     switch (type.getTypeId()) {
@@ -106,7 +124,7 @@ struct Value {
 
   Value(double v1, double v2, double v3) {
     type = Type::VEC3;
-    vec3 = std::make_tuple(v1, v2, v3);
+    vec3 = { v1, v2, v3 };
   }
 
   bool isInvalid() const { return type.isInvalid(); }
@@ -126,7 +144,7 @@ struct Value {
     assert(type.isBool());
     return bval;
   }
-  int getInt() const {
+  long getInt() const {
     assert(type.isInt());
     return ival;
   }
@@ -134,19 +152,19 @@ struct Value {
     assert(type.isFloat());
     return fval;
   }
-  std::pair<double, double> getVec2() const {
+  Vec2 getVec2() const {
     assert(type.isVec2());
     return vec2;
   }
-  std::tuple<double, double, double> getVec3() const {
+  Vec3 getVec3() const {
     assert(type.isVec3());
     return vec3;
   }
   std::vector<double> getVec() const {
     if (isVec2()) {
-      return { vec2.first, vec2.second };
+      return { vec2.x, vec2.y };
     } else if (isVec3()) {
-      return { std::get<0>(vec3), std::get<1>(vec3), std::get<2>(vec3) };
+      return { vec3.x, vec3.y, vec3.z };
     } else {
       assert(0);
     }
@@ -198,7 +216,7 @@ struct Value {
     if (isVec3()) {
       return *this;
     } else if (isVec2()) {
-      return { vec2.first, vec2.second, 0 };
+      return { vec2.x, vec2.y, 0 };
     } else {
       return {};
     }
@@ -212,6 +230,8 @@ struct Value {
 
   AST::Expression *toExpression() const;
 
+  static Value calcUnaryOp(AST::UnaryOp op, const Value &val);
+
 private:
   Type type;
   union {
@@ -219,8 +239,8 @@ private:
     long ival;
     double fval;
     std::string str;
-    std::pair<double, double> vec2;
-    std::tuple<double, double, double> vec3;
+    Vec2 vec2;
+    Vec3 vec3;
   };
 };
 

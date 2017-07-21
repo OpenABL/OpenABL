@@ -254,6 +254,14 @@ Value AnalysisVisitor::evalExpression(const AST::Expression &expr) {
         return {};
     }
   }
+
+  if (auto *unary = dynamic_cast<const AST::UnaryOpExpression *>(&expr)) {
+    Value v = evalExpression(*unary->expr);
+    if (v.isInvalid()) {
+      return {};
+    }
+    return Value::calcUnaryOp(unary->op, v);
+  }
   return {};
 }
 

@@ -100,20 +100,17 @@ static XmlElems createXmlMessages(const AST::Script &script, const FlameModel &m
     const AST::EnvironmentDeclaration *envDecl = script.envDecl;
     assert(envDecl);
 
-    const Value &min = envDecl->envMin.extendToVec3();
-    const Value &max = envDecl->envMax.extendToVec3();
-    assert(min.isVec3() && max.isVec3());
+    const Value::Vec3 &min = envDecl->envMin.extendToVec3().getVec3();
+    const Value::Vec3 &max = envDecl->envMax.extendToVec3().getVec3();
 
-    auto minCoords = min.getVec();
-    auto maxCoords = max.getVec();
     XmlElems partitioningInfo {
       { "gpu:radius", {{ "1.0" }} }, // TODO dummy
-      { "gpu:xmin", {{ std::to_string(minCoords[0]) }} },
-      { "gpu:xmax", {{ std::to_string(maxCoords[0]) }} },
-      { "gpu:ymin", {{ std::to_string(minCoords[1]) }} },
-      { "gpu:ymax", {{ std::to_string(maxCoords[1]) }} },
-      { "gpu:zmin", {{ std::to_string(minCoords[2]) }} },
-      { "gpu:zmax", {{ std::to_string(maxCoords[2]) }} },
+      { "gpu:xmin", {{ std::to_string(min.x) }} },
+      { "gpu:xmax", {{ std::to_string(max.x) }} },
+      { "gpu:ymin", {{ std::to_string(min.y) }} },
+      { "gpu:ymax", {{ std::to_string(max.y) }} },
+      { "gpu:zmin", {{ std::to_string(min.z) }} },
+      { "gpu:zmax", {{ std::to_string(max.z) }} },
     };
 
     messages.push_back({ "gpu:message", {

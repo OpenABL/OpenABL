@@ -99,13 +99,6 @@ struct VarExpression : public Expression {
   void print(Printer &) const;
 };
 
-enum class UnaryOp {
-  MINUS,
-  PLUS,
-  LOGICAL_NOT,
-  BITWISE_NOT,
-};
-
 static inline const char *getUnaryOpSigil(UnaryOp op) {
   switch (op) {
     case UnaryOp::MINUS:       return "-";

@@ -5,6 +5,38 @@ namespace OpenABL {
 
 uint32_t VarId::max_id;
 
+Value Value::calcUnaryOp(AST::UnaryOp op, const Value &val) {
+  switch (op) {
+    case AST::UnaryOp::PLUS:
+      if (val.isInt() || val.isFloat() || val.isVec()) {
+        return val;
+      }
+      return {};
+    case AST::UnaryOp::MINUS:
+      if (val.isInt()) {
+        return -val.getInt();
+      } else if (val.isFloat()) {
+        return -val.getFloat();
+      } else if (val.isVec2()) {
+        return { -val.vec2.x, -val.vec2.y };
+      } else if (val.isVec3()) {
+        return { -val.vec3.x, -val.vec3.y, -val.vec3.z };
+      }
+      return {};
+    case AST::UnaryOp::LOGICAL_NOT:
+      if (val.isBool()) {
+        return !val.getBool();
+      }
+      return {};
+    case AST::UnaryOp::BITWISE_NOT:
+      if (val.isInt()) {
+        return ~val.getInt();
+      }
+      return {};
+  }
+  assert(0);
+}
+
 static inline AST::Expression *withType(AST::Expression *expr, Type t) {
   expr->type = t;
   return expr;
@@ -29,8 +61,8 @@ AST::Expression *Value::toExpression() const {
     case Type::VEC2:
     {
       auto *args = new AST::ExpressionList();
-      args->emplace_back(makeFloatLiteral(vec2.first));
-      args->emplace_back(makeFloatLiteral(vec2.second));
+      args->emplace_back(makeFloatLiteral(vec2.x));
+      args->emplace_back(makeFloatLiteral(vec2.y));
       auto *call = new AST::CallExpression("float2", args, location{});
       call->kind = AST::CallExpression::Kind::CTOR;
       call->type = type;
@@ -39,9 +71,9 @@ AST::Expression *Value::toExpression() const {
     case Type::VEC3:
     {
       auto *args = new AST::ExpressionList();
-      args->emplace_back(makeFloatLiteral(std::get<0>(vec3)));
-      args->emplace_back(makeFloatLiteral(std::get<1>(vec3)));
-      args->emplace_back(makeFloatLiteral(std::get<2>(vec3)));
+      args->emplace_back(makeFloatLiteral(vec3.x));
+      args->emplace_back(makeFloatLiteral(vec3.y));
+      args->emplace_back(makeFloatLiteral(vec3.z));
       auto *call = new AST::CallExpression("float2", args, location{});
       call->kind = AST::CallExpression::Kind::CTOR;
       call->type = type;
