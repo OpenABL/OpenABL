@@ -1,0 +1,6 @@
+environment {
+  min: float2(0, 1),
+  max: float2(1, 0)
+}
+
+int main() {}

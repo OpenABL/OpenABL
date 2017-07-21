@@ -338,12 +338,30 @@ void AnalysisVisitor::leave(AST::EnvironmentDeclaration &decl) {
   }
 
   if (decl.envMax.isValid()) {
-    if (decl.envMin.isValid() && decl.envMax.getType() != decl.envMin.getType()) {
-      err << "min and max environment bounds must have the same type" << decl.loc;
-      return;
+    decl.envDimension = decl.envMax.getType().getVecLen();
+    if (decl.envMin.isValid()) {
+      if (decl.envMax.getType() != decl.envMin.getType()) {
+        err << "min and max environment bounds must have the same type" << decl.loc;
+        return;
+      }
+    } else {
+      // Default environment minimum
+      if (decl.envDimension == 2) {
+        decl.envMin = { 0, 0 };
+      } else {
+        decl.envMin = { 0, 0, 0 };
+      }
     }
 
-    decl.envDimension = decl.envMax.getType().getVecLen();
+    auto minCoords = decl.envMin.getVec();
+    auto maxCoords = decl.envMax.getVec();
+    for (int i = 0; i < decl.envDimension; i++) {
+      if (minCoords[i] > maxCoords[i]) {
+        err << "Environment minimum should be compentwise smaller or equal than the maximum"
+            << decl.loc;
+        return;
+      }
+    }
   }
 
   script.envDecl = &decl;

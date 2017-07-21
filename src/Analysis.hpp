@@ -323,6 +323,16 @@ struct Value {
     return {};
   }
 
+  Value extendToVec3() const {
+    if (isVec3()) {
+      return *this;
+    } else if (isVec2()) {
+      return { vec2.first, vec2.second, 0 };
+    } else {
+      return {};
+    }
+  }
+
   ~Value() {
     if (type.isString()) {
       str.~basic_string();

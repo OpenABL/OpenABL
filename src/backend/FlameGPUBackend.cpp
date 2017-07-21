@@ -7,7 +7,7 @@
 
 namespace OpenABL {
 
-static XmlElems createXmlAgents(AST::Script &script, const FlameModel &model) {
+static XmlElems createXmlAgents(const AST::Script &script, const FlameModel &model) {
   XmlElems xagents;
   for (const AST::AgentDeclaration *decl : script.agents) {
     XmlElems members;
@@ -85,7 +85,7 @@ static XmlElems createXmlAgents(AST::Script &script, const FlameModel &model) {
   return xagents;
 }
 
-static XmlElems createXmlMessages(const FlameModel &model) {
+static XmlElems createXmlMessages(const AST::Script &script, const FlameModel &model) {
   XmlElems messages;
   for (const FlameModel::Message &msg : model.messages) {
     XmlElems variables;
@@ -97,14 +97,23 @@ static XmlElems createXmlMessages(const FlameModel &model) {
       }});
     }
 
+    const AST::EnvironmentDeclaration *envDecl = script.envDecl;
+    assert(envDecl);
+
+    const Value &min = envDecl->envMin.extendToVec3();
+    const Value &max = envDecl->envMax.extendToVec3();
+    assert(min.isVec3() && max.isVec3());
+
+    auto minCoords = min.getVec();
+    auto maxCoords = max.getVec();
     XmlElems partitioningInfo {
       { "gpu:radius", {{ "1.0" }} }, // TODO dummy
-      { "gpu:xmin", {{ "0.0" }} }, // TODO dummy
-      { "gpu:xmax", {{ "0.0" }} }, // TODO dummy
-      { "gpu:ymin", {{ "0.0" }} }, // TODO dummy
-      { "gpu:ymax", {{ "0.0" }} }, // TODO dummy
-      { "gpu:zmin", {{ "0.0" }} }, // TODO dummy
-      { "gpu:zmax", {{ "0.0" }} }, // TODO dummy
+      { "gpu:xmin", {{ std::to_string(minCoords[0]) }} },
+      { "gpu:xmax", {{ std::to_string(maxCoords[0]) }} },
+      { "gpu:ymin", {{ std::to_string(minCoords[1]) }} },
+      { "gpu:ymax", {{ std::to_string(maxCoords[1]) }} },
+      { "gpu:zmin", {{ std::to_string(minCoords[2]) }} },
+      { "gpu:zmax", {{ std::to_string(maxCoords[2]) }} },
     };
 
     messages.push_back({ "gpu:message", {
@@ -131,7 +140,7 @@ static XmlElems createXmlLayers(const FlameModel &model) {
 
 static std::string createXmlModel(AST::Script &script, const FlameModel &model) {
   XmlElems xagents = createXmlAgents(script, model);
-  XmlElems messages = createXmlMessages(model);
+  XmlElems messages = createXmlMessages(script, model);
   XmlElems layers = createXmlLayers(model);
   XmlElem root("gpu:xmodel", {
     { "name", {{ "TODO" }} },
