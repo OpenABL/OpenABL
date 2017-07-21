@@ -46,7 +46,8 @@ Type AnalysisVisitor::resolveAstType(AST::Type &type) {
   }
 }
 
-void AnalysisVisitor::declareVar(AST::Var &var, Type type, bool isConst, bool isGlobal) {
+void AnalysisVisitor::declareVar(
+    AST::Var &var, Type type, bool isConst, bool isGlobal, Value val) {
   auto it = varMap.find(var.name);
   if (it != varMap.end()) {
     const ScopeEntry &entry = scope.get(it->second);
@@ -59,7 +60,7 @@ void AnalysisVisitor::declareVar(AST::Var &var, Type type, bool isConst, bool is
 
   var.id = VarId::make();
   varMap.insert({ var.name, var.id });
-  scope.add(var.id, type, isConst, isGlobal);
+  scope.add(var.id, type, isConst, isGlobal, val);
 }
 
 void AnalysisVisitor::pushVarScope() {
@@ -179,6 +180,83 @@ static bool isConstantExpression(const AST::Expression &expr) {
   return false;
 }
 
+Value AnalysisVisitor::evalExpression(const AST::Expression &expr) {
+  // Literals
+  if (auto *blit = dynamic_cast<const AST::BoolLiteral *>(&expr)) {
+    return { blit->value };
+  }
+  if (auto *ilit = dynamic_cast<const AST::IntLiteral *>(&expr)) {
+    return { ilit->value };
+  }
+  if (auto *flit = dynamic_cast<const AST::FloatLiteral *>(&expr)) {
+    return { flit->value };
+  }
+  if (auto *slit = dynamic_cast<const AST::StringLiteral *>(&expr)) {
+    return { slit->value };
+  }
+
+  // Access to named constants
+  if (auto *var = dynamic_cast<const AST::VarExpression *>(&expr)) {
+    VarId id = var->var->id;
+    if (!scope.has(id)) {
+      return {};
+    }
+
+    ScopeEntry entry = scope.get(id);
+    return entry.val;
+  }
+
+  // Casts and type constructors
+  if (auto *call = dynamic_cast<const AST::CallExpression *>(&expr)) {
+    if (!call->isCtor()) {
+      return {};
+    }
+
+    switch (call->type.getTypeId()) {
+      case Type::BOOL:
+        return evalExpression(call->getArg(0)).toBoolExplicit();
+      case Type::INT32:
+        return evalExpression(call->getArg(0)).toIntExplicit();
+      case Type::FLOAT32:
+        return evalExpression(call->getArg(0)).toFloatExplicit();
+      case Type::VEC2:
+        if (call->getNumArgs() == 1) {
+          Value v = evalExpression(call->getArg(0)).toFloatImplicit();
+          if (v.isInvalid()) {
+            return {};
+          }
+          return { v.getFloat(), v.getFloat() };
+        } else {
+          Value v1 = evalExpression(call->getArg(0)).toFloatImplicit();
+          Value v2 = evalExpression(call->getArg(1)).toFloatImplicit();
+          if (v1.isInvalid() || v2.isInvalid()) {
+            return {};
+          }
+          return { v1.getFloat(), v2.getFloat() };
+        }
+      case Type::VEC3:
+        if (call->getNumArgs() == 1) {
+          Value v = evalExpression(call->getArg(0)).toFloatImplicit();
+          if (v.isInvalid()) {
+            return {};
+          }
+          return { v.getFloat(), v.getFloat(), v.getFloat() };
+        } else {
+          Value v1 = evalExpression(call->getArg(0)).toFloatImplicit();
+          Value v2 = evalExpression(call->getArg(1)).toFloatImplicit();
+          Value v3 = evalExpression(call->getArg(1)).toFloatImplicit();
+          if (v1.isInvalid() || v2.isInvalid() || v3.isInvalid()) {
+            return {};
+          }
+          return { v1.getFloat(), v2.getFloat(), v3.getFloat() };
+        }
+      default:
+        return {};
+    }
+  }
+  return {};
+}
+
 static bool handleArrayInitializer(ErrorStream &err, AST::Expression &expr, Type elemType) {
   const auto *init = dynamic_cast<const AST::ArrayInitExpression *>(&expr);
   if (!init) {
@@ -206,13 +284,21 @@ void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
     if (!handleArrayInitializer(err, *decl.expr, elemType)) {
       return;
     }
-  }
 
-  declareVar(*decl.var, decl.type->resolved, true, true);
+    if (!isConstantExpression(*decl.expr)) {
+      err << "Initializer of global constant must be a constant expression" << decl.expr->loc;
+      return;
+    }
 
-  if (!isConstantExpression(*decl.expr)) {
-    err << "Initializer of global constant must be a constant expression" << decl.expr->loc;
-    return;
+    declareVar(*decl.var, decl.type->resolved, true, true, {});
+  } else {
+    Value val = evalExpression(*decl.expr);
+    if (val.isInvalid()) {
+      err << "Initializer of global constant must be a constant expression" << decl.expr->loc;
+      return;
+    }
+
+    declareVar(*decl.var, decl.type->resolved, true, true, val);
   }
 
   Type declType = decl.type->resolved;
@@ -231,14 +317,19 @@ void AnalysisVisitor::leave(AST::EnvironmentDeclaration &decl) {
   for (const AST::MemberInitEntryPtr &member : *decl.members) {
     if (member->name == "min" || member->name == "max") {
       const AST::Expression &boundsExpr = *member->expr;
+      Value v = evalExpression(boundsExpr);
+      if (v.isInvalid()) {
+        err << "Environment bounds must be a constant expression" << boundsExpr.loc;
+        return;
+      }
       if (!boundsExpr.type.isVec()) {
         err << "Environment bounds must be float2 or float3" << boundsExpr.loc;
         return;
       }
       if (member->name == "min") {
-        decl.minExpr = &boundsExpr;
+        decl.envMin = v;
       } else {
-        decl.maxExpr = &boundsExpr;
+        decl.envMax = v;
       }
     } else {
       err << "Unknown environment member \"" << member->name << "\"" << member->loc;
@@ -246,20 +337,20 @@ void AnalysisVisitor::leave(AST::EnvironmentDeclaration &decl) {
     }
   }
 
-  if (decl.maxExpr) {
-    if (decl.minExpr && decl.maxExpr->type != decl.minExpr->type) {
+  if (decl.envMax.isValid()) {
+    if (decl.envMin.isValid() && decl.envMax.getType() != decl.envMin.getType()) {
       err << "min and max environment bounds must have the same type" << decl.loc;
       return;
     }
 
-    decl.envDimension = decl.maxExpr->type.getVecLen();
+    decl.envDimension = decl.envMax.getType().getVecLen();
   }
 
   script.envDecl = &decl;
 };
 
 void AnalysisVisitor::leave(AST::VarDeclarationStatement &decl) {
-  declareVar(*decl.var, decl.type->resolved, false, false);
+  declareVar(*decl.var, decl.type->resolved, false, false, {});
   if (decl.initializer) {
     Type declType = decl.type->resolved;
     Type initType = decl.initializer->type;
@@ -276,9 +367,9 @@ void AnalysisVisitor::leave(AST::VarDeclarationStatement &decl) {
 void AnalysisVisitor::leave(AST::Param &param) {
   // If an in -> out structgure is used, "in" is immutable
   bool isImmutable = param.outVar != nullptr;
-  declareVar(*param.var, param.type->resolved, isImmutable, false);
+  declareVar(*param.var, param.type->resolved, isImmutable, false, {});
   if (param.outVar) {
-    declareVar(*param.outVar, param.type->resolved, false, false);
+    declareVar(*param.outVar, param.type->resolved, false, false, {});
   }
 }
 
@@ -286,7 +377,7 @@ void AnalysisVisitor::enter(AST::ForStatement &stmt) {
   pushVarScope();
 
   Type declType = resolveAstType(*stmt.type); // Not resolved yet
-  declareVar(*stmt.var, declType, true, false);
+  declareVar(*stmt.var, declType, true, false, {});
 
   // Handle for-near loops early, as we want to collect member accesses
   if (AST::CallExpression *call = dynamic_cast<AST::CallExpression *>(&*stmt.expr)) {
@@ -797,9 +888,17 @@ static bool isTypeCtorValid(Type t, const std::vector<Type> &argTypes) {
     case Type::BOOL:
     case Type::INT32:
     case Type::FLOAT32:
-      return numArgs == 1; // TODO
+    {
+      if (numArgs != 1) {
+        return false;
+      }
+
+      Type argType = argTypes[0];
+      return argType.isBool() || argType.isNum();
+    }
     case Type::STRING:
-      return numArgs == 1 && argTypes[0] == Type::STRING;
+      // Don't allow explicitly string casts
+      return false;
     case Type::VEC2:
       if (numArgs != 1 && numArgs != 2) {
         return false;

@@ -213,6 +213,10 @@ struct CallExpression : public Expression {
   bool isBuiltin() const { return kind == Kind::BUILTIN; }
   bool isCtor() const { return kind == Kind::CTOR; }
 
+  size_t getNumArgs() const {
+    return (*args).size();
+  }
+
   const AST::Expression &getArg(size_t n) const {
     return *(*args)[n];
   }
@@ -582,8 +586,8 @@ struct EnvironmentDeclaration : public Declaration {
   MemberInitListPtr members;
 
   // Populated during analysis
-  const Expression *minExpr = nullptr;
-  const Expression *maxExpr = nullptr;
+  Value envMin;
+  Value envMax;
   int envDimension = -1;
 
   EnvironmentDeclaration(MemberInitList *members, Location loc)

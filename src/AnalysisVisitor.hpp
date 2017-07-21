@@ -76,10 +76,11 @@ struct AnalysisVisitor : public AST::Visitor {
   void leave(AST::Script &);
 
 private:
-  void declareVar(AST::Var &, Type, bool isConst, bool isGlobal);
+  void declareVar(AST::Var &, Type, bool isConst, bool isGlobal, Value val);
   void pushVarScope();
   void popVarScope();
   Type resolveAstType(AST::Type &);
+  Value evalExpression(const AST::Expression &expr);
 
   using VarMap = std::map<std::string, VarId>;
 
