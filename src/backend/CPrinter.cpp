@@ -184,8 +184,8 @@ void CPrinter::print(const AST::ForStatement &stmt) {
     printRangeFor(*this, stmt);
     return;
   } else if (stmt.isNear()) {
-    AST::Expression &agentExpr = stmt.getNearAgent();
-    AST::Expression &radiusExpr = stmt.getNearRadius();
+    const AST::Expression &agentExpr = stmt.getNearAgent();
+    const AST::Expression &radiusExpr = stmt.getNearRadius();
 
     AST::AgentDeclaration *agentDecl = stmt.type->resolved.getAgentDecl();
     AST::AgentMember *posMember = agentDecl->getPositionMember();

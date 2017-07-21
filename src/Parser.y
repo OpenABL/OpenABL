@@ -127,8 +127,6 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 %type <OpenABL::AST::AgentMemberList *> agent_member_list;
 %type <OpenABL::AST::Param *> param;
 %type <OpenABL::AST::ParamList *> param_list non_empty_param_list;
-%type <OpenABL::AST::Arg *> arg;
-%type <OpenABL::AST::ArgList *> arg_list non_empty_arg_list;
 %type <OpenABL::AST::StatementList *> statement_list;
 %type <OpenABL::AST::MemberInitEntry *> member_init_entry;
 %type <OpenABL::AST::MemberInitList *> member_init_list non_empty_member_init_list;
@@ -136,7 +134,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
 %type <OpenABL::AST::DeclarationList *> declaration_list;
 %type <OpenABL::AST::IdentList *> ident_list;
 %type <OpenABL::AST::Expression *> expression array_initializer initializer;
-%type <OpenABL::AST::ExpressionList *> expression_list;
+%type <OpenABL::AST::ExpressionList *> expression_list arg_list;
 %type <OpenABL::AST::Statement *> statement;
 
 %%
@@ -256,13 +254,8 @@ statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
              { $$ = new AssignOpStatement(BinaryOp::SHIFT_RIGHT, $1, $3, @$); }
          ;
 
-arg: expression { $$ = new Arg($1, @$); };
-
-arg_list: %empty { $$ = new ArgList(); }
-        | non_empty_arg_list { $$ = $1; };
-
-non_empty_arg_list: arg { $$ = new ArgList(); $$->emplace_back($1); }
-                  | non_empty_arg_list COMMA arg { $1->emplace_back($3); $$ = $1; };
+arg_list: %empty { $$ = new ExpressionList(); }
+        | expression_list { $$ = $1; };
 
 optional_comma: %empty
               | COMMA;

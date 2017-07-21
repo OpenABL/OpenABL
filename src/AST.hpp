@@ -186,20 +186,6 @@ struct BinaryOpExpression : public Expression {
   void print(Printer &) const;
 };
 
-struct Arg : public Node {
-  ExpressionPtr expr;
-
-  Arg(Expression *expr, Location loc)
-    : Node{loc}, expr{expr} {}
-
-  void accept(Visitor &);
-  void print(Printer &) const;
-};
-
-using ArgPtr = std::unique_ptr<Arg>;
-using ArgList = std::vector<ArgPtr>;
-using ArgListPtr = std::unique_ptr<ArgList>;
-
 struct FunctionDeclaration;
 
 struct CallExpression : public Expression {
@@ -210,7 +196,7 @@ struct CallExpression : public Expression {
   };
 
   std::string name;
-  ArgListPtr args;
+  ExpressionListPtr args;
 
   // Populated during analysis
   Kind kind;
@@ -218,7 +204,7 @@ struct CallExpression : public Expression {
   // Only if user function is called
   const FunctionDeclaration *calledFunc = nullptr;
 
-  CallExpression(std::string name, ArgList *args, Location loc)
+  CallExpression(std::string name, ExpressionList *args, Location loc)
     : Expression{loc}, name{name}, args{args}, kind{Kind::USER} {}
 
   void accept(Visitor &);
@@ -227,7 +213,7 @@ struct CallExpression : public Expression {
   bool isBuiltin() const { return kind == Kind::BUILTIN; }
   bool isCtor() const { return kind == Kind::CTOR; }
 
-  const AST::Arg &getArg(size_t n) const {
+  const AST::Expression &getArg(size_t n) const {
     return *(*args)[n];
   }
 };
@@ -435,8 +421,8 @@ struct ForStatement : public Statement {
     assert(isNear());
     return *dynamic_cast<CallExpression *>(&*expr);
   }
-  Expression &getNearAgent() const { return *(*getNearCall().args)[0]->expr; }
-  Expression &getNearRadius() const { return *(*getNearCall().args)[1]->expr; }
+  const Expression &getNearAgent() const { return getNearCall().getArg(0); }
+  const Expression &getNearRadius() const { return getNearCall().getArg(1); }
 };
 
 using IdentList = std::vector<std::string>;

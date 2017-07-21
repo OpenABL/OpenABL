@@ -11,7 +11,6 @@ struct Visitor {
   virtual void enter(VarExpression &) {};
   virtual void enter(UnaryOpExpression &) {};
   virtual void enter(BinaryOpExpression &) {};
-  virtual void enter(Arg &) {};
   virtual void enter(CallExpression &) {};
   virtual void enter(MemberAccessExpression &) {};
   virtual void enter(ArrayAccessExpression &) {};
@@ -44,7 +43,6 @@ struct Visitor {
   virtual void leave(VarExpression &) {};
   virtual void leave(UnaryOpExpression &) {};
   virtual void leave(BinaryOpExpression &) {};
-  virtual void leave(Arg &) {};
   virtual void leave(CallExpression &) {};
   virtual void leave(MemberAccessExpression &) {};
   virtual void leave(ArrayAccessExpression &) {};

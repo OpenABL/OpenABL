@@ -19,7 +19,6 @@ struct Printer {
   virtual void print(const AST::VarExpression &) = 0;
   virtual void print(const AST::UnaryOpExpression &) = 0;
   virtual void print(const AST::BinaryOpExpression &) = 0;
-  virtual void print(const AST::Arg &) = 0;
   virtual void print(const AST::CallExpression &) = 0;
   virtual void print(const AST::MemberAccessExpression &) = 0;
   virtual void print(const AST::ArrayAccessExpression &) = 0;

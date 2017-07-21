@@ -90,7 +90,7 @@ static void printVecCtorArgs(MasonPrinter &p, const AST::CallExpression &expr) {
   size_t numArgs = expr.args->size();
   if (numArgs == 1) {
     // TODO Multiple evaluation
-    const AST::Expression &arg = *expr.getArg(0).expr;
+    const AST::Expression &arg = expr.getArg(0);
     p << arg << ", " << arg;
     if (vecLen == 3) {
       p << ", " << arg;
@@ -108,7 +108,7 @@ static void printTypeCtor(MasonPrinter &p, const AST::CallExpression &expr) {
     printVecCtorArgs(p, expr);
     p << ")";
   } else {
-    p << "(" << t << ") " << *expr.getArg(0).expr;
+    p << "(" << t << ") " << expr.getArg(0);
   }
 }
 
@@ -139,8 +139,8 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
       *this << ")";
     } else if (name == "add") {
       std::string aLabel = makeAnonLabel();
-      const AST::Arg &arg = expr.getArg(0);
-      Type type = arg.expr->type;
+      const AST::Expression &arg = expr.getArg(0);
+      Type type = arg.type;
       AST::AgentDeclaration *agent = type.getAgentDecl();
       AST::AgentMember *posMember = agent->getPositionMember();
 
@@ -259,9 +259,9 @@ void MasonPrinter::print(const AST::ForStatement &stmt) {
   if (stmt.isNear()) {
     AST::AgentDeclaration *agentDecl = stmt.type->resolved.getAgentDecl();
     std::string iLabel = makeAnonLabel();
-    AST::Expression &nearAgent = stmt.getNearAgent();
+    const AST::Expression &nearAgent = stmt.getNearAgent();
     AST::AgentDeclaration *nearAgentDecl = nearAgent.type.getAgentDecl();
-    AST::Expression &nearRadius = stmt.getNearRadius();
+    const AST::Expression &nearRadius = stmt.getNearRadius();
 
     *this << "Bag _bag = _sim.env.getNeighborsWithinDistance("
           << nearAgent << "." << nearAgentDecl->getPositionMember()->name

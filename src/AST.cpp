@@ -34,15 +34,9 @@ void BinaryOpExpression::accept(Visitor &visitor) {
   visitor.leave(*this);
 }
 
-void Arg::accept(Visitor &visitor) {
-  visitor.enter(*this);
-  expr->accept(visitor);
-  visitor.leave(*this);
-}
-
 void CallExpression::accept(Visitor &visitor) {
   visitor.enter(*this);
-  for (ArgPtr &arg : *args) {
+  for (ExpressionPtr &arg : *args) {
     arg->accept(visitor);
   }
   visitor.leave(*this);
@@ -244,7 +238,6 @@ void Literal::print(Printer &printer) const { printer.print(*this); }
 void VarExpression::print(Printer &printer) const { printer.print(*this); }
 void UnaryOpExpression::print(Printer &printer) const { printer.print(*this); }
 void BinaryOpExpression::print(Printer &printer) const { printer.print(*this); }
-void Arg::print(Printer &printer) const { printer.print(*this); }
 void CallExpression::print(Printer &printer) const { printer.print(*this); }
 void MemberAccessExpression::print(Printer &printer) const { printer.print(*this); }
 void ArrayAccessExpression::print(Printer &printer) const { printer.print(*this); }

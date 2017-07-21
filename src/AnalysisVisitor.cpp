@@ -83,8 +83,8 @@ bool promoteTo(AST::ExpressionPtr &expr, Type type) {
     } else {
       // Insert cast expression
       auto *origExpr = expr.release();
-      auto *args = new AST::ArgList;
-      args->emplace_back(new AST::Arg(origExpr, origExpr->loc));
+      auto *args = new AST::ExpressionList();
+      args->emplace_back(origExpr);
       auto *cast = new AST::CallExpression("float", args, origExpr->loc);
       cast->kind = AST::CallExpression::Kind::CTOR;
       cast->type = Type::FLOAT32;
@@ -100,7 +100,6 @@ void AnalysisVisitor::enter(AST::Var &) {}
 void AnalysisVisitor::enter(AST::Literal &) {}
 void AnalysisVisitor::enter(AST::UnaryOpExpression &) {}
 void AnalysisVisitor::enter(AST::BinaryOpExpression &) {}
-void AnalysisVisitor::enter(AST::Arg &) {}
 void AnalysisVisitor::enter(AST::CallExpression &) {}
 void AnalysisVisitor::enter(AST::MemberAccessExpression &) {}
 void AnalysisVisitor::enter(AST::ArrayAccessExpression &) {}
@@ -123,7 +122,6 @@ void AnalysisVisitor::enter(AST::VarDeclarationStatement &) {}
 void AnalysisVisitor::enter(AST::Param &) {}
 void AnalysisVisitor::enter(AST::EnvironmentDeclaration &) {}
 void AnalysisVisitor::leave(AST::Var &) {}
-void AnalysisVisitor::leave(AST::Arg &) {}
 void AnalysisVisitor::leave(AST::MemberInitEntry &) {}
 void AnalysisVisitor::leave(AST::ArrayInitExpression &) {}
 void AnalysisVisitor::leave(AST::ExpressionStatement &) {}
@@ -775,8 +773,8 @@ void AnalysisVisitor::leave(AST::ArrayAccessExpression &expr) {
 
 static std::vector<Type> getArgTypes(const AST::CallExpression &expr) {
   std::vector<Type> types;
-  for (AST::ArgPtr &arg : *expr.args) {
-    types.push_back(arg->expr->type);
+  for (AST::ExpressionPtr &arg : *expr.args) {
+    types.push_back(arg->type);
     // TODO out types?
   }
   return types;
@@ -881,11 +879,11 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
 
   size_t num = expr.args->size();
   for (size_t i = 0; i < num; i++) {
-    AST::Arg &arg = *(*expr.args)[i];
+    AST::ExpressionPtr &arg = (*expr.args)[i];
     const AST::Param &param = *(*decl->params)[i];
-    if (!promoteTo(arg.expr, param.type->resolved)) {
+    if (!promoteTo(arg, param.type->resolved)) {
       err << "Argument " << i << " to function " << decl->name << " has type "
-          << arg.expr->type << " but " << param.type->resolved << " expected" << arg.loc;
+          << arg->type << " but " << param.type->resolved << " expected" << arg->loc;
       return;
     }
   }

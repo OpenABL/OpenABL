@@ -66,12 +66,8 @@ void GenericPrinter::print(const AST::ArrayInitExpression &expr) {
   *this << " }";
 }
 
-void GenericPrinter::print(const AST::Arg &arg) {
-  *this << *arg.expr;
-}
-
 void GenericPrinter::printArgs(const AST::CallExpression &expr) {
-  printCommaSeparated(*expr.args, [&](const AST::ArgPtr &arg) {
+  printCommaSeparated(*expr.args, [&](const AST::ExpressionPtr &arg) {
     *this << *arg;
   });
 }
