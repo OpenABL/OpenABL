@@ -120,28 +120,6 @@ struct UnaryOpExpression : public Expression {
   void print(Printer &) const;
 };
 
-enum class BinaryOp {
-  ADD,
-  SUB,
-  MUL,
-  DIV,
-  MOD,
-  BITWISE_AND,
-  BITWISE_XOR,
-  BITWISE_OR,
-  SHIFT_LEFT,
-  SHIFT_RIGHT,
-  EQUALS,
-  NOT_EQUALS,
-  SMALLER,
-  SMALLER_EQUALS,
-  GREATER,
-  GREATER_EQUALS,
-  LOGICAL_AND,
-  LOGICAL_OR,
-  RANGE,
-};
-
 static inline const char *getBinaryOpSigil(BinaryOp op) {
   switch (op) {
     case BinaryOp::ADD:            return "+";

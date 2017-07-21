@@ -19,6 +19,29 @@ namespace AST {
     LOGICAL_NOT,
     BITWISE_NOT,
   };
+
+  // TODO Move out of AST namespace
+  enum class BinaryOp {
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    MOD,
+    BITWISE_AND,
+    BITWISE_XOR,
+    BITWISE_OR,
+    SHIFT_LEFT,
+    SHIFT_RIGHT,
+    EQUALS,
+    NOT_EQUALS,
+    SMALLER,
+    SMALLER_EQUALS,
+    GREATER,
+    GREATER_EQUALS,
+    LOGICAL_AND,
+    LOGICAL_OR,
+    RANGE,
+  };
 }
 
 // Globally unique variable id, to distinguish
@@ -132,6 +155,7 @@ struct Value {
   bool isBool() const { return type.isBool(); }
   bool isInt() const { return type.isInt(); }
   bool isFloat() const { return type.isFloat(); }
+  bool isNum() const { return type.isNum(); }
   bool isVec() const { return type.isVec(); }
   bool isVec2() const { return type.isVec2(); }
   bool isVec3() const { return type.isVec3(); }
@@ -165,6 +189,16 @@ struct Value {
       return { vec2.x, vec2.y };
     } else if (isVec3()) {
       return { vec3.x, vec3.y, vec3.z };
+    } else {
+      assert(0);
+    }
+  }
+
+  double asFloat() const {
+    if (isFloat()) {
+      return fval;
+    } else if (isInt()) {
+      return (double) ival;
     } else {
       assert(0);
     }
@@ -231,6 +265,7 @@ struct Value {
   AST::Expression *toExpression() const;
 
   static Value calcUnaryOp(AST::UnaryOp op, const Value &val);
+  static Value calcBinaryOp(AST::BinaryOp op, const Value &left, const Value &right);
 
 private:
   Type type;

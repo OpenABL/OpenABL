@@ -255,12 +255,23 @@ Value AnalysisVisitor::evalExpression(const AST::Expression &expr) {
     }
   }
 
+  // Unary expression
   if (auto *unary = dynamic_cast<const AST::UnaryOpExpression *>(&expr)) {
     Value v = evalExpression(*unary->expr);
     if (v.isInvalid()) {
       return {};
     }
     return Value::calcUnaryOp(unary->op, v);
+  }
+
+  // Binary expression
+  if (auto *binary = dynamic_cast<const AST::BinaryOpExpression *>(&expr)) {
+    Value l = evalExpression(*binary->left);
+    Value r = evalExpression(*binary->right);
+    if (l.isInvalid() || r.isInvalid()) {
+      return {};
+    }
+    return Value::calcBinaryOp(binary->op, l, r);
   }
   return {};
 }

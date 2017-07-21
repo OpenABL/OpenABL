@@ -37,6 +37,154 @@ Value Value::calcUnaryOp(AST::UnaryOp op, const Value &val) {
   assert(0);
 }
 
+static int compareNums(const Value &l, const Value &r) {
+  if (l.isInt() && r.isInt()) {
+    long lv = l.getInt(), rv = r.getInt();
+    return lv > rv ? 1 : lv < rv ? -1 : 0;
+  } else {
+    double lv = l.asFloat(), rv = r.asFloat();
+    return lv > rv ? 1 : lv < rv ? -1 : 0;
+  }
+}
+
+Value Value::calcBinaryOp(AST::BinaryOp op, const Value &l, const Value &r) {
+  switch (op) {
+    case AST::BinaryOp::ADD:
+      if (l.isInt() && r.isInt()) {
+        return l.getInt() + r.getInt();
+      }
+      if (l.isNum() && r.isNum()) {
+        return l.asFloat() + r.asFloat();
+      }
+      if (l.isVec2() && r.isVec2()) {
+        return { l.vec2.x + r.vec2.x, l.vec2.y + r.vec2.y };
+      }
+      if (l.isVec3() && r.isVec3()) {
+        return { l.vec3.x + r.vec3.x, l.vec3.y + r.vec3.y, l.vec3.z + r.vec3.z };
+      }
+      return {};
+    case AST::BinaryOp::SUB:
+      if (l.isInt() && r.isInt()) {
+        return l.getInt() - r.getInt();
+      }
+      if (l.isNum() && r.isNum()) {
+        return l.asFloat() - r.asFloat();
+      }
+      if (l.isVec2() && r.isVec2()) {
+        return { l.vec2.x - r.vec2.x, l.vec2.y - r.vec2.y };
+      }
+      if (l.isVec3() && r.isVec3()) {
+        return { l.vec3.x - r.vec3.x, l.vec3.y - r.vec3.y, l.vec3.z - r.vec3.z };
+      }
+      return {};
+    case AST::BinaryOp::MUL:
+      if (l.isInt() && r.isInt()) {
+        return l.getInt() * r.getInt();
+      }
+      if (l.isNum() && r.isNum()) {
+        return l.asFloat() * r.asFloat();
+      }
+      if (l.isVec2() && r.isNum()) {
+        double f = r.asFloat();
+        return { l.vec2.x * f, l.vec2.y * f };
+      }
+      if (l.isVec3() && r.isNum()) {
+        double f = r.asFloat();
+        return { l.vec3.x * f, l.vec3.y * f, l.vec3.z * f };
+      }
+      if (l.isNum() && r.isVec2()) {
+        double f = l.asFloat();
+        return { r.vec2.x * f, r.vec2.y * f };
+      }
+      if (l.isNum() && r.isVec3()) {
+        double f = l.asFloat();
+        return { r.vec3.x * f, r.vec3.y * f, r.vec3.z * f };
+      }
+      return {};
+    case AST::BinaryOp::DIV:
+      if (l.isInt() && r.isInt()) {
+        return l.getInt() / r.getInt();
+      }
+      if (l.isNum() && r.isNum()) {
+        return l.asFloat() / r.asFloat();
+      }
+      if (l.isVec2() && r.isNum()) {
+        double f = r.asFloat();
+        return { l.vec2.x / f, l.vec2.y / f };
+      }
+      if (l.isVec3() && r.isNum()) {
+        double f = r.asFloat();
+        return { l.vec3.x / f, l.vec3.y / f, l.vec3.z / f };
+      }
+      return {};
+    case AST::BinaryOp::MOD:
+      if (l.isInt() && r.isInt()) {
+        return l.getInt() % r.getInt();
+      }
+      return {};
+    case AST::BinaryOp::BITWISE_OR:
+      if (l.isInt() && r.isInt()) {
+        return l.getInt() | r.getInt();
+      }
+      return {};
+    case AST::BinaryOp::BITWISE_AND:
+      if (l.isInt() && r.isInt()) {
+        return l.getInt() & r.getInt();
+      }
+      return {};
+    case AST::BinaryOp::BITWISE_XOR:
+      if (l.isInt() && r.isInt()) {
+        return l.getInt() ^ r.getInt();
+      }
+      return {};
+    case AST::BinaryOp::SHIFT_LEFT:
+      if (l.isInt() && r.isInt()) {
+        return l.getInt() << r.getInt();
+      }
+      return {};
+    case AST::BinaryOp::SHIFT_RIGHT:
+      if (l.isInt() && r.isInt()) {
+        return l.getInt() >> r.getInt();
+      }
+      return {};
+    case AST::BinaryOp::EQUALS:
+    case AST::BinaryOp::NOT_EQUALS:
+    case AST::BinaryOp::SMALLER:
+    case AST::BinaryOp::SMALLER_EQUALS:
+    case AST::BinaryOp::GREATER:
+    case AST::BinaryOp::GREATER_EQUALS:
+    {
+      if (!l.isNum() || !r.isNum()) {
+        return {};
+      }
+
+      int cmp = compareNums(l, r);
+      switch (op) {
+        case AST::BinaryOp::EQUALS: return cmp == 0;
+        case AST::BinaryOp::NOT_EQUALS: return cmp != 0;
+        case AST::BinaryOp::SMALLER: return cmp < 0;
+        case AST::BinaryOp::SMALLER_EQUALS: return cmp <= 0;
+        case AST::BinaryOp::GREATER: return cmp > 0;
+        case AST::BinaryOp::GREATER_EQUALS: return cmp >= 0;
+        default: assert(0); return {};
+      }
+    }
+    case AST::BinaryOp::LOGICAL_OR:
+    case AST::BinaryOp::LOGICAL_AND:
+      if (!l.isBool() || !r.isBool()) {
+        return {};
+      }
+      if (op == AST::BinaryOp::LOGICAL_OR) {
+        return l.getBool() || r.getBool();
+      } else {
+        return l.getBool() && r.getBool();
+      }
+    case AST::BinaryOp::RANGE:
+      return {};
+  }
+  assert(0);
+}
+
 static inline AST::Expression *withType(AST::Expression *expr, Type t) {
   expr->type = t;
   return expr;
