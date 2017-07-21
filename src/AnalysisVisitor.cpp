@@ -84,7 +84,7 @@ bool promoteTo(AST::ExpressionPtr &expr, Type type) {
       // Insert cast expression
       auto *origExpr = expr.release();
       auto *args = new AST::ArgList;
-      args->emplace_back(new AST::Arg(origExpr, nullptr, origExpr->loc));
+      args->emplace_back(new AST::Arg(origExpr, origExpr->loc));
       auto *cast = new AST::CallExpression("float", args, origExpr->loc);
       cast->kind = AST::CallExpression::Kind::CTOR;
       cast->type = Type::FLOAT32;

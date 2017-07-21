@@ -68,9 +68,6 @@ void GenericPrinter::print(const AST::ArrayInitExpression &expr) {
 
 void GenericPrinter::print(const AST::Arg &arg) {
   *this << *arg.expr;
-  if (arg.outExpr) {
-    *this << ", " << *arg.outExpr;
-  }
 }
 
 void GenericPrinter::printArgs(const AST::CallExpression &expr) {

@@ -256,8 +256,7 @@ statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
              { $$ = new AssignOpStatement(BinaryOp::SHIFT_RIGHT, $1, $3, @$); }
          ;
 
-arg: expression { $$ = new Arg($1, nullptr, @$); }
-   | expression ARROW expression { $$ = new Arg($1, $3, @$); };
+arg: expression { $$ = new Arg($1, @$); };
 
 arg_list: %empty { $$ = new ArgList(); }
         | non_empty_arg_list { $$ = $1; };

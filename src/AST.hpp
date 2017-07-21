@@ -188,10 +188,9 @@ struct BinaryOpExpression : public Expression {
 
 struct Arg : public Node {
   ExpressionPtr expr;
-  ExpressionPtr outExpr;
 
-  Arg(Expression *expr, Expression *outExpr, Location loc)
-    : Node{loc}, expr{expr}, outExpr{outExpr} {}
+  Arg(Expression *expr, Location loc)
+    : Node{loc}, expr{expr} {}
 
   void accept(Visitor &);
   void print(Printer &) const;

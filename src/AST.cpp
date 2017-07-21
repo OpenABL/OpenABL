@@ -37,9 +37,6 @@ void BinaryOpExpression::accept(Visitor &visitor) {
 void Arg::accept(Visitor &visitor) {
   visitor.enter(*this);
   expr->accept(visitor);
-  if (outExpr) {
-    outExpr->accept(visitor);
-  }
   visitor.leave(*this);
 }
 
