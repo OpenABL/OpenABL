@@ -7,6 +7,7 @@ set(OpenABL_SOURCES
     src/Analysis.cpp
     src/AnalysisVisitor.cpp
     src/FileUtil.cpp
+	src/Type.cpp
     src/main.cpp
     src/backend/GenericPrinter.cpp
     src/backend/CBackend.cpp
