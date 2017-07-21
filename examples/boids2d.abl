@@ -3,8 +3,8 @@ agent Boid {
   float2 velocity;
 }
 
-float min_pos = -0.5;
-float max_pos = +0.5;
+float min_pos = 0;
+float max_pos = 1;
 
 float interaction_radius = 0.1;
 float separation_radius = 0.005;
@@ -17,8 +17,8 @@ float collision_scale = 0.75;
 float match_scale = 1.25;
 
 environment {
-  min: float2(-0.5),
-  max: float2(0.5)
+  min: float2(min_pos),
+  max: float2(max_pos)
 }
 
 // This function looks somewhat weird to me, but let's take it as-is
