@@ -374,11 +374,11 @@ void MasonPrinter::print(const AST::Script &script) {
   }
 
   // TODO Replace dummy granularity
-  if (script.envDecl && script.envDecl->envMax.isValid()) {
-    const Value &max = script.envDecl->envMax;
-    int vecLen = max.getType().getVecLen();
+  if (script.envDecl && script.envDecl->envSize.isValid()) {
+    const Value &size = script.envDecl->envSize;
+    int vecLen = size.getType().getVecLen();
     *this << "public Continuous" << vecLen << "D env = new Continuous" << vecLen << "D(1.0, ";
-    printCommaSeparated(max.getVec(), [&](double d) {
+    printCommaSeparated(size.getVec(), [&](double d) {
         *this << d;
     });
     *this << ");" << nl << nl;

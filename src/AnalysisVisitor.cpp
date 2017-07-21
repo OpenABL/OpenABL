@@ -372,11 +372,11 @@ void AnalysisVisitor::leave(AST::EnvironmentDeclaration &decl) {
       }
     }
 
-    auto minCoords = decl.envMin.getVec();
-    auto maxCoords = decl.envMax.getVec();
-    for (int i = 0; i < decl.envDimension; i++) {
-      if (minCoords[i] > maxCoords[i]) {
-        err << "Environment minimum should be compentwise smaller or equal than the maximum"
+    decl.envSize = Value::calcBinaryOp(AST::BinaryOp::SUB, decl.envMax, decl.envMin);
+
+    for (double coord : decl.envSize.getVec()) {
+      if (coord < 0) {
+        err << "Environment minimum should be smaller or equal than the maximum"
             << decl.loc;
         return;
       }

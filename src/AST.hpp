@@ -559,6 +559,7 @@ struct EnvironmentDeclaration : public Declaration {
   // Populated during analysis
   Value envMin;
   Value envMax;
+  Value envSize;
   int envDimension = -1;
 
   EnvironmentDeclaration(MemberInitList *members, Location loc)
