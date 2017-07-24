@@ -545,9 +545,10 @@ struct ConstDeclaration : public Declaration {
   VarPtr var;
   ExpressionPtr expr;
   bool isArray;
+  bool isParam; // Can be specified on CLI
 
-  ConstDeclaration(Type *type, Var *var, Expression *expr, bool isArray, Location loc)
-    : Declaration{loc}, type{type}, var{var}, expr{expr}, isArray{isArray} {}
+  ConstDeclaration(Type *type, Var *var, Expression *expr, bool isArray, bool isParam, Location loc)
+    : Declaration{loc}, type{type}, var{var}, expr{expr}, isArray{isArray}, isParam{isParam} {}
 
   void accept(Visitor &);
   void print(Printer &) const;

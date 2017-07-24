@@ -51,6 +51,7 @@ loc.step();
 "if"       { return Parser::make_IF(loc); }
 "for"      { return Parser::make_FOR(loc); }
 "new"      { return Parser::make_NEW(loc); }
+"param"    { return Parser::make_PARAM(loc); }
 "position" { return Parser::make_POSITION(loc); }
 "return"   { return Parser::make_RETURN(loc); }
 "simulate" { return Parser::make_SIMULATE(loc); }

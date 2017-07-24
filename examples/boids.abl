@@ -16,6 +16,8 @@ float steer_scale = 0.65;
 float collision_scale = 0.75;
 float match_scale = 1.25;
 
+param int num_agents = 5000;
+
 environment {
   min: float3(min_pos),
   max: float3(max_pos)
@@ -94,8 +96,7 @@ void update_boid(Boid in->out) {
 void main() {
   //load("boids.in");
 
-  int num_boids = 5000;
-  for (int i : 0 .. num_boids) {
+  for (int i : 0 .. num_agents) {
     add(Boid {
       pos: random(float3(min_pos), float3(max_pos)),
       velocity: random(float3(0), float3(1)),

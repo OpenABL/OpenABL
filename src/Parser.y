@@ -37,6 +37,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   IF
   FOR
   NEW
+  PARAM
   POSITION
   RETURN
   SIMULATE
@@ -190,7 +191,10 @@ initializer: expression { $$ = $1; }
 		   | array_initializer { $$ = $1; };
 
 const_decl: type var is_array ASSIGN initializer SEMI
-              { $$ = new ConstDeclaration($1, $2, $5, $3, @$); };
+              { $$ = new ConstDeclaration($1, $2, $5, $3, false, @$); }
+          | PARAM type var is_array ASSIGN initializer SEMI
+              { $$ = new ConstDeclaration($2, $3, $6, $4, true, @$); }
+		  ;
 
 env_decl: ENVIRONMENT LBRACE member_init_list RBRACE
 		    { $$ = new EnvironmentDeclaration($3, @$); };

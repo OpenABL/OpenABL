@@ -264,6 +264,7 @@ struct Value {
 
   AST::Expression *toExpression() const;
 
+  static Value fromString(const std::string &str);
   static Value calcUnaryOp(AST::UnaryOp op, const Value &val);
   static Value calcBinaryOp(AST::BinaryOp op, const Value &left, const Value &right);
 

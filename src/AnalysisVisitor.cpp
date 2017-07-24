@@ -296,6 +296,7 @@ static bool handleArrayInitializer(ErrorStream &err, AST::Expression &expr, Type
 }
 
 void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
+  Value val;
   if (decl.isArray) {
     Type elemType = decl.type->resolved;
     decl.type->resolved = { Type::ARRAY, elemType };
@@ -309,22 +310,49 @@ void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
       return;
     }
 
-    declareVar(*decl.var, decl.type->resolved, true, true, {});
+    val = {};
   } else {
-    Value val = evalExpression(*decl.expr);
+    val = evalExpression(*decl.expr);
     if (val.isInvalid()) {
       err << "Initializer of global constant must be a constant expression" << decl.expr->loc;
       return;
     }
-
-    declareVar(*decl.var, decl.type->resolved, true, true, val);
   }
 
   Type declType = decl.type->resolved;
   if (!promoteTo(decl.expr, declType)) {
     err << "Trying to assign value of type " << decl.expr->type
         << " to global of type " << declType << decl.expr->loc;
+    return;
   }
+
+  auto it = params.find(decl.var->name);
+  if (it != params.end()) {
+    // Parameter was overwritten on the CLI
+    if (!decl.isParam) {
+      err << "Only constants marked with \"param\" can be specified as parameters"
+          << decl.var->loc;
+      return;
+    }
+
+    val = Value::fromString(it->second);
+    if (val.isInvalid()) {
+      err << "Value \"" << it->second << "\" provided for parameter \"" << decl.var->name
+          << "\" could not parsed" << decl.var->loc;
+      return;
+    }
+
+    if (!val.getType().isPromotableTo(declType)) {
+      err << "Provided parameter \"" << decl.var->name << "\" is of type " << val.getType()
+          << ", but " << declType << " expected" << decl.var->loc;
+      return;
+    }
+
+    // Update initializer expression, as that's what the pretty printers are using right now
+    decl.expr.reset(val.toExpression());
+  }
+
+  declareVar(*decl.var, decl.type->resolved, true, true, val);
 };
 
 void AnalysisVisitor::leave(AST::EnvironmentDeclaration &decl) {

@@ -59,6 +59,7 @@ struct Options {
   std::string backend;
   std::string outputDir;
   std::string assetDir;
+  std::map<std::string, std::string> params;
 };
 
 static Options parseCliOptions(int argc, char **argv) {
@@ -87,6 +88,17 @@ static Options parseCliOptions(int argc, char **argv) {
       options.outputDir = argv[++i];
     } else if (arg == "-A" || arg == "--asset-dir") {
       options.assetDir = argv[++i];
+    } else if (arg == "-P" || arg == "--param") {
+      const std::string &val = argv[++i];
+      size_t pos = val.find('=');
+      if (pos == std::string::npos) {
+        std::cerr << "Malformed parameter: Missing \"=\"" << std::endl;
+        return {};
+      }
+
+      std::string name = std::string(val, 0, pos);
+      std::string value = std::string(val, pos + 1);
+      options.params.insert({ name, value });
     } else {
       std::cerr << "Unknown option \"" << arg << "\"" << std::endl;
       return {};
@@ -168,7 +180,7 @@ int main(int argc, char **argv) {
   OpenABL::BuiltinFunctions funcs;
   registerBuiltinFunctions(funcs);
 
-  OpenABL::AnalysisVisitor visitor(script, err, funcs);
+  OpenABL::AnalysisVisitor visitor(script, options.params, err, funcs);
   script.accept(visitor);
 
   if (numErrors > 0) {

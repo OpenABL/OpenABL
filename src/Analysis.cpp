@@ -5,6 +5,40 @@ namespace OpenABL {
 
 uint32_t VarId::max_id;
 
+Value Value::fromString(const std::string &str) {
+  // Boolean
+  if (str == "true") {
+    return true;
+  }
+
+  if (str == "false") {
+    return false;
+  }
+
+  // Integer
+  try {
+    size_t pos;
+    long lval = std::stoi(str, &pos);
+    if (pos == str.length()) {
+      return lval;
+    }
+  } catch (const std::logic_error &e) {
+  }
+  
+  // Double
+  try {
+    size_t pos;
+    double dval = std::stod(str, &pos);
+    if (pos == str.length()) {
+      return dval;
+    }
+  } catch (const std::logic_error &e) {
+  }
+
+  // Invalid
+  return {};
+}
+
 Value Value::calcUnaryOp(AST::UnaryOp op, const Value &val) {
   switch (op) {
     case AST::UnaryOp::PLUS:

@@ -9,8 +9,10 @@
 namespace OpenABL {
 
 struct AnalysisVisitor : public AST::Visitor {
-  AnalysisVisitor(AST::Script &script, ErrorStream &err, BuiltinFunctions &builtins)
-    : script(script), builtins(builtins), err(err), scope(script.scope) {}
+  AnalysisVisitor(
+      AST::Script &script, const std::map<std::string, std::string> &params,
+      ErrorStream &err, BuiltinFunctions &builtins
+  ) : script(script), params(params), builtins(builtins), err(err), scope(script.scope) {}
 
   void enter(AST::Var &);
   void enter(AST::Literal &);
@@ -86,6 +88,8 @@ private:
 
   // Analyzed script
   AST::Script &script;
+  // Simulation parameters
+  const std::map<std::string, std::string> &params;
   // Builtin functions
   BuiltinFunctions &builtins;
   // Stream for error reporting
