@@ -26,7 +26,9 @@ void MasonBackend::generate(
 
   copyFile(assetDir + "/mason/Util.java", outputDir + "/Util.java");
   copyFile(assetDir + "/mason/build.sh", outputDir + "/build.sh");
+  copyFile(assetDir + "/mason/run.sh", outputDir + "/run.sh");
   makeFileExecutable(outputDir + "/build.sh");
+  makeFileExecutable(outputDir + "/run.sh");
 }
 
 }

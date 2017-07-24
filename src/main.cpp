@@ -56,6 +56,7 @@ struct Options {
   bool help;
   bool lintOnly;
   bool build;
+  bool run;
   std::string fileName;
   std::string backend;
   std::string outputDir;
@@ -77,6 +78,9 @@ static Options parseCliOptions(int argc, char **argv) {
       continue;
     } else if (arg == "--build" || arg == "-B") {
       options.build = true;
+      continue;
+    } else if (arg == "--run" || arg == "-R") {
+      options.run = true;
       continue;
     }
 
@@ -135,19 +139,22 @@ static Options parseCliOptions(int argc, char **argv) {
 }
 
 void printHelp() {
-  std::cout << "Usage: ./OpenABL -i input.abl -o ./output-dir\n\n"
+  std::cout << "Usage: ./OpenABL -i input.abl -o ./output-dir -b backend\n\n"
                "Options:\n"
                "  -A, --asset-dir    Asset directory (default: ./asset)\n"
                "  -b, --backend      Backend (default: c)\n"
+               "  -B, --build        Build the generated code\n"
                "  -h, --help         Display this help\n"
                "  -i, --input        Input file\n"
-               "  -o, --output-dir   Output directory\n\n"
+               "  -o, --output-dir   Output directory\n"
+               "  -R, --run          Build and run the generated code\n"
+               "\n"
                "Available backends:\n"
                " * c        (working)\n"
                " * flame    (mostly working)\n"
-               " * flamegpu (not working)\n"
+               " * flamegpu (mostly working)\n"
                " * mason    (mostly working)\n"
-               " * dmason   (not working)"
+               " * dmason   (mostly working)"
             << std::endl;
 }
 
@@ -218,16 +225,28 @@ int main(int argc, char **argv) {
   OpenABL::Backend &backend = *it->second;
   backend.generate(script, options.outputDir, options.assetDir);
 
-  if (options.build) {
-    if (!OpenABL::fileExists(options.outputDir + "/build.sh")) {
+  if (options.build || options.run) {
+    OpenABL::changeWorkingDirectory(options.outputDir);
+    if (!OpenABL::fileExists("./build.sh")) {
       std::cerr << "Build file for this backend not found" << std::endl;
       return 1;
     }
 
-    OpenABL::changeWorkingDirectory(options.outputDir);
     if (!OpenABL::executeCommand("./build.sh")) {
       std::cerr << "Build failed" << std::endl;
       return 1;
+    }
+
+    if (options.run) {
+      if (!OpenABL::fileExists("./run.sh")) {
+        std::cerr << "Run file for this backend not found" << std::endl;
+        return 1;
+      }
+
+      if (!OpenABL::executeCommand("./run.sh")) {
+        std::cerr << "Run failed" << std::endl;
+        return 1;
+      }
     }
   }
 

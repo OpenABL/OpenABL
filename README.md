@@ -45,12 +45,16 @@ Usage: ./OpenABL -i input.abl -o ./output-dir
 Options:
   -A, --asset-dir    Asset directory (default: ./asset)
   -b, --backend      Backend (default: c)
+  -B, --build        Build the generated code
   -h, --help         Display this help
   -i, --input        Input file
   -o, --output-dir   Output directory
+  -R, --run          Build and run the generated code
 
 Available backends:
  * c        (working)
- * flame    (partially working)
- * flamegpu (not working)
+ * flame    (mostly working)
+ * flamegpu (mostly working)
+ * mason    (mostly working)
+ * dmason   (mostly working)
 ```
