@@ -55,6 +55,7 @@ std::map<std::string, std::unique_ptr<Backend>> getBackends() {
 struct Options {
   bool help;
   bool lintOnly;
+  bool build;
   std::string fileName;
   std::string backend;
   std::string outputDir;
@@ -73,6 +74,9 @@ static Options parseCliOptions(int argc, char **argv) {
 
     if (arg == "--lint-only") {
       options.lintOnly = true;
+      continue;
+    } else if (arg == "--build" || arg == "-B") {
+      options.build = true;
       continue;
     }
 
@@ -213,6 +217,19 @@ int main(int argc, char **argv) {
 
   OpenABL::Backend &backend = *it->second;
   backend.generate(script, options.outputDir, options.assetDir);
+
+  if (options.build) {
+    if (!OpenABL::fileExists(options.outputDir + "/build.sh")) {
+      std::cerr << "Build file for this backend not found" << std::endl;
+      return 1;
+    }
+
+    OpenABL::changeWorkingDirectory(options.outputDir);
+    if (!OpenABL::executeCommand("./build.sh")) {
+      std::cerr << "Build failed" << std::endl;
+      return 1;
+    }
+  }
 
   fclose(file);
   return 0;

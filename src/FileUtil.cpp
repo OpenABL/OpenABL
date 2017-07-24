@@ -1,5 +1,6 @@
 #include "FileUtil.hpp"
 #include <fstream>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #ifdef _WIN32
@@ -7,6 +8,11 @@
 #endif
 
 namespace OpenABL {
+
+bool fileExists(const std::string &name) {
+  struct stat info;
+  return stat(name.c_str(), &info) == 0 && (info.st_mode & S_IFREG);
+}
 
 bool directoryExists(const std::string &name) {
   struct stat info;
@@ -40,6 +46,14 @@ void makeFileExecutable(const std::string &name) {
 #ifndef _WIN32
   chmod(name.c_str(), 0755);
 #endif
+}
+
+void changeWorkingDirectory(const std::string &name) {
+  chdir(name.c_str());
+}
+
+bool executeCommand(const std::string &cmd) {
+  return system(cmd.c_str()) == 0;
 }
 
 }
