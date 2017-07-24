@@ -223,7 +223,12 @@ int main(int argc, char **argv) {
   }
 
   OpenABL::Backend &backend = *it->second;
-  backend.generate(script, options.outputDir, options.assetDir);
+  try {
+    backend.generate(script, options.outputDir, options.assetDir);
+  } catch (const OpenABL::NotSupportedError &e) {
+    std::cerr << e.what() << std::endl;
+    return 1;
+  }
 
   if (options.build || options.run) {
     OpenABL::changeWorkingDirectory(options.outputDir);

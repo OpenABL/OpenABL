@@ -4,6 +4,10 @@
 
 namespace OpenABL {
 
+struct NotSupportedError : public std::logic_error {
+  NotSupportedError(const std::string &msg) : std::logic_error(msg) {}
+};
+
 struct Backend {
   virtual void generate(AST::Script &script, const std::string &targetDir,
                         const std::string &assetDir) = 0;

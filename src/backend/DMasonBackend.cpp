@@ -28,8 +28,18 @@ static std::string generateLocalTestCode(AST::Script &script) {
 
 void DMasonBackend::generate(
     AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
-  writeToFile(outputDir + "/Sim.java", generateMainCode(script));
+  if (script.envDecl) {
+    if (script.envDecl->envDimension == 3) {
+      throw NotSupportedError("3D environments are not supported by DMason");
+    }
+    for (double d : script.envDecl->envMin.getVec()) {
+      if (d < 0) {
+        throw NotSupportedError("Negative environment bounds are not supported by DMason");
+      }
+    }
+  }
 
+  writeToFile(outputDir + "/Sim.java", generateMainCode(script));
   writeToFile(outputDir + "/LocalTestSim.java", generateLocalTestCode(script));
   
   for (AST::AgentDeclaration *agent : script.agents) {
