@@ -373,11 +373,12 @@ void MasonPrinter::print(const AST::Script &script) {
     *this << *decl << nl;
   }
 
-  // TODO Replace dummy granularity
-  if (script.envDecl && script.envDecl->envSize.isValid()) {
-    const Value &size = script.envDecl->envSize;
+  const auto *envDecl = script.envDecl;
+  if (envDecl && envDecl->envSize.isValid()) {
+    const Value &size = envDecl->envSize;
     int vecLen = size.getType().getVecLen();
-    *this << "public Continuous" << vecLen << "D env = new Continuous" << vecLen << "D(1.0, ";
+    *this << "public Continuous" << vecLen << "D env = new Continuous" << vecLen << "D("
+          << envDecl->envGranularity << ", ";
     printCommaSeparated(size.getVec(), [&](double d) {
         *this << d;
     });

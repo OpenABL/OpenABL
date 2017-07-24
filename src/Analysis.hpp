@@ -176,6 +176,10 @@ struct Value {
     assert(type.isFloat());
     return fval;
   }
+  const std::string &getString() const {
+    assert(type.isString());
+    return str;
+  }
   Vec2 getVec2() const {
     assert(type.isVec2());
     return vec2;
@@ -279,6 +283,8 @@ private:
     Vec3 vec3;
   };
 };
+
+std::ostream &operator<<(std::ostream &s, const Value &value);
 
 struct ScopeEntry {
   Type type;

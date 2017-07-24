@@ -1,0 +1,15 @@
+agent Agent {
+  position float3 pos;
+}
+
+environment { max: float3(1.0) }
+
+void step(Agent in -> out) {
+  int dynamic_radius = 5;
+  for (Agent nx : near(in, dynamic_radius)) {
+  }
+}
+
+void main() {
+  simulate(100) { step }
+}

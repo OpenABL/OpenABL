@@ -102,9 +102,10 @@ static XmlElems createXmlMessages(const AST::Script &script, const FlameModel &m
 
     const Value::Vec3 &min = envDecl->envMin.extendToVec3().getVec3();
     const Value::Vec3 &max = envDecl->envMax.extendToVec3().getVec3();
+    double radius = envDecl->envGranularity.asFloat();
 
     XmlElems partitioningInfo {
-      { "gpu:radius", {{ "1.0" }} }, // TODO dummy
+      { "gpu:radius", {{ std::to_string(radius) }} },
       { "gpu:xmin", {{ std::to_string(min.x) }} },
       { "gpu:xmax", {{ std::to_string(max.x) }} },
       { "gpu:ymin", {{ std::to_string(min.y) }} },

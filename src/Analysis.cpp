@@ -5,6 +5,42 @@ namespace OpenABL {
 
 uint32_t VarId::max_id;
 
+std::ostream &operator<<(std::ostream &s, const Value &value) {
+  switch (value.getType().getTypeId()) {
+    case Type::INVALID:
+      s << "INVALID";
+      break;
+    case Type::BOOL:
+      s << (value.getBool() ? "true" : "false");
+      break;
+    case Type::INT32:
+      s << value.getInt();
+      break;
+    case Type::FLOAT32:
+      s << value.getFloat();
+      break;
+    case Type::VEC2:
+    {
+      auto v = value.getVec2();
+      s << "(" << v.x << ", " << v.y << ")";
+      break;
+    }
+    case Type::VEC3:
+    {
+      auto v = value.getVec3();
+      s << "(" << v.x << ", " << v.y << ", " << v.z << ")";
+      break;
+    }
+    case Type::STRING:
+      s << "\"" << value.getString() << "\"";
+      break;
+    default:
+      s << "UNKNOWN";
+      break;
+  }
+  return s;
+}
+
 Value Value::fromString(const std::string &str) {
   // Boolean
   if (str == "true") {

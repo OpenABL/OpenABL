@@ -561,6 +561,7 @@ struct EnvironmentDeclaration : public Declaration {
   Value envMin;
   Value envMax;
   Value envSize;
+  Value envGranularity;
   int envDimension = -1;
 
   EnvironmentDeclaration(MemberInitList *members, Location loc)
@@ -588,8 +589,7 @@ struct Script : public Node {
   std::vector<FunctionDeclaration *> funcs;
   SimulateStatement *simStmt = nullptr;
   FunctionDeclaration *mainFunc = nullptr;
-
-  const EnvironmentDeclaration *envDecl = nullptr;
+  EnvironmentDeclaration *envDecl = nullptr;
 
   Script(DeclarationList *decls, Location loc)
     : Node{loc}, decls{decls} {}

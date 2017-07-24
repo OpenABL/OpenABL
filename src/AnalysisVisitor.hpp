@@ -111,6 +111,8 @@ private:
   // Variable on which member accesses should be collected
   // (for FunctionDeclaration::accessedMembers)
   VarId collectAccessVar;
+  // Radiuses used in near() loops
+  std::vector<Value> radiuses;
 };
 
 }

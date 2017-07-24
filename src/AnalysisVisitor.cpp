@@ -362,22 +362,32 @@ void AnalysisVisitor::leave(AST::EnvironmentDeclaration &decl) {
   }
 
   for (const AST::MemberInitEntryPtr &member : *decl.members) {
-    if (member->name == "min" || member->name == "max") {
-      const AST::Expression &boundsExpr = *member->expr;
-      Value v = evalExpression(boundsExpr);
-      if (v.isInvalid()) {
-        err << "Environment bounds must be a constant expression" << boundsExpr.loc;
+    const AST::Expression &expr = *member->expr;
+    Value v = evalExpression(expr);
+    if (v.isInvalid()) {
+      err << "Environment member \"" << member->name << "\" must be a constant expression"
+          << expr.loc;
+      return;
+    }
+
+    if (member->name == "min") {
+      if (!expr.type.isVec()) {
+        err << "Environment min bound must be float2 or float3" << expr.loc;
         return;
       }
-      if (!boundsExpr.type.isVec()) {
-        err << "Environment bounds must be float2 or float3" << boundsExpr.loc;
+      decl.envMin = v;
+    } else if (member->name == "max") {
+      if (!expr.type.isVec()) {
+        err << "Environment max bound must be float2 or float3" << expr.loc;
         return;
       }
-      if (member->name == "min") {
-        decl.envMin = v;
-      } else {
-        decl.envMax = v;
+      decl.envMax = v;
+    } else if (member->name == "granularity") {
+      if (!expr.type.isNum()) {
+        err << "Environment granularity must be a number" << expr.loc;
+        return;
       }
+      decl.envGranularity = v;
     } else {
       err << "Unknown environment member \"" << member->name << "\"" << member->loc;
       return;
@@ -477,8 +487,13 @@ void AnalysisVisitor::leave(AST::ForStatement &stmt) {
   popVarScope();
 
   if (stmt.isNear()) {
-    // Already handled, only disable member collection
+    // Disable member collection
     collectAccessVar.reset();
+
+    // Collect radius
+    AST::CallExpression *call = dynamic_cast<AST::CallExpression *>(&*stmt.expr);
+    assert(call);
+    radiuses.push_back(evalExpression(call->getArg(1)));
     return;
   }
 
@@ -1063,20 +1078,45 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
 };
 
 void AnalysisVisitor::leave(AST::Script &script) {
+  AST::EnvironmentDeclaration *envDecl = script.envDecl;
+
   for (AST::AgentDeclaration *agent : script.agents) {
     AST::AgentMember *member = agent->getPositionMember();
     if (member) {
-      if (!script.envDecl || !script.envDecl->hasEnvDimension()) {
+      if (!envDecl || !envDecl->hasEnvDimension()) {
         err << "An environment { } declaration is required to use position members"
             << member->loc;
         return;
       }
-      if (member->type->resolved.getVecLen() != script.envDecl->getEnvDimension()) {
+      if (member->type->resolved.getVecLen() != envDecl->getEnvDimension()) {
         err << "Dimensionality of position member does not match environment dimension"
             << member->loc;
         return;
       }
     }
+  }
+
+  if (envDecl && envDecl->envGranularity.isInvalid()) {
+    // TODO: What is the proper way to automatically determine the radius?
+    // Lets use the maximum known radius for now
+    Value autoRadius;
+    for (const Value &radius : radiuses) {
+      if (radius.isInvalid()) {
+        continue;
+      }
+
+      if (autoRadius.isInvalid() || radius.asFloat() > autoRadius.asFloat()) {
+        autoRadius = radius;
+      }
+    }
+
+    if (autoRadius.isInvalid()) {
+      err << "Could not automatically determine partitioning granularity. "
+          << "Please explicitly specify it in the environment { } declaration" << envDecl->loc;
+      return;
+    }
+
+    envDecl->envGranularity = autoRadius;
   }
 
   if (!script.mainFunc) {
