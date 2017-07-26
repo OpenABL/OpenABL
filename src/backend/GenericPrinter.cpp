@@ -45,6 +45,11 @@ void GenericPrinter::print(const AST::UnaryOpExpression &expr) {
   *this << "(" << AST::getUnaryOpSigil(expr.op) << *expr.expr << ")";
 }
 void GenericPrinter::print(const AST::BinaryOpExpression &expr) {
+  if (isSpecialBinaryOp(expr.op, *expr.left, *expr.right)) {
+    printSpecialBinaryOp(expr.op, *expr.left, *expr.right);
+    return;
+  }
+
   *this << "(" << *expr.left << " "
         << AST::getBinaryOpSigil(expr.op) << " " << *expr.right << ")";
 }
@@ -78,7 +83,15 @@ void GenericPrinter::print(const AST::ExpressionStatement &stmt) {
 void GenericPrinter::print(const AST::AssignStatement &expr) {
   *this << *expr.left << " = " << *expr.right << ";";
 }
+
 void GenericPrinter::print(const AST::AssignOpStatement &stmt) {
+  if (isSpecialBinaryOp(stmt.op, *stmt.left, *stmt.right)) {
+    *this << *stmt.left << " = ";
+    printSpecialBinaryOp(stmt.op, *stmt.left, *stmt.right);
+    *this << ";";
+    return;
+  }
+
   *this << *stmt.left << " " << AST::getBinaryOpSigil(stmt.op)
         << "= " << *stmt.right << ";";
 }

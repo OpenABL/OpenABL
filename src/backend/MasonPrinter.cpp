@@ -56,32 +56,25 @@ void MasonPrinter::print(const AST::VarExpression &expr) {
   }
 }
 
-static void printBinaryOp(MasonPrinter &p, AST::BinaryOp op,
-                          const AST::Expression &left, const AST::Expression &right) {
-  Type l = left.type;
-  Type r = right.type;
-  if (l.isVec() || r.isVec()) {
-    p << left << ".";
-    switch (op) {
-      case AST::BinaryOp::ADD: p << "add"; break;
-      case AST::BinaryOp::SUB: p << "subtract"; break;
-      case AST::BinaryOp::MUL: p << "multiply"; break;
-      case AST::BinaryOp::DIV:
-        // Emulate divide via multiply by reciprocal
-        p << "multiply(1. / " << right << ")";
-        return;
-      default:
-        assert(0);
-    }
-    p << "(" << right << ")";
-    return;
-  }
-
-  p << "(" << left << " " << AST::getBinaryOpSigil(op) << " " << right << ")";
+bool MasonPrinter::isSpecialBinaryOp(
+    AST::BinaryOp, const AST::Expression &left, const AST::Expression &right) {
+  return left.type.isVec() || right.type.isVec();
 }
-
-void MasonPrinter::print(const AST::BinaryOpExpression &expr) {
-  printBinaryOp(*this, expr.op, *expr.left, * expr.right);
+void MasonPrinter::printSpecialBinaryOp(
+    AST::BinaryOp op, const AST::Expression &left, const AST::Expression &right) {
+  *this << left << ".";
+  switch (op) {
+    case AST::BinaryOp::ADD: *this << "add"; break;
+    case AST::BinaryOp::SUB: *this << "subtract"; break;
+    case AST::BinaryOp::MUL: *this << "multiply"; break;
+    case AST::BinaryOp::DIV:
+      // Emulate divide via multiply by reciprocal
+      *this << "multiply(1. / " << right << ")";
+      return;
+    default:
+      assert(0);
+  }
+  *this << "(" << right << ")";
 }
 
 static void printVecCtorArgs(MasonPrinter &p, const AST::CallExpression &expr) {
@@ -213,9 +206,7 @@ void MasonPrinter::print(const AST::AssignOpStatement &stmt) {
     }
   }
 
-  *this << *stmt.left << " = ";
-  printBinaryOp(*this, stmt.op, *stmt.left, *stmt.right);
-  *this << ";";
+  GenericPrinter::print(stmt);
 }
 
 void MasonPrinter::print(const AST::UnaryOpExpression &expr) {

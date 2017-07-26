@@ -33,6 +33,15 @@ struct GenericPrinter : public Printer {
   virtual void print(const AST::Param &);
   virtual void print(const AST::FunctionDeclaration &);
 
+  virtual void printSpecialBinaryOp(
+      const AST::BinaryOp, const AST::Expression &, const AST::Expression &) {
+    assert(0);
+  }
+  virtual bool isSpecialBinaryOp(
+      const AST::BinaryOp, const AST::Expression &, const AST::Expression &) {
+    return false;
+  }
+
   void printArgs(const AST::CallExpression &);
   void printParams(const AST::FunctionDeclaration &);
 

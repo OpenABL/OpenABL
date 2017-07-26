@@ -11,7 +11,6 @@ struct MasonPrinter : public GenericPrinter {
 
   void print(const AST::VarExpression &);
   void print(const AST::UnaryOpExpression &);
-  void print(const AST::BinaryOpExpression &);
   void print(const AST::CallExpression &);
   void print(const AST::MemberInitEntry &);
   void print(const AST::AgentCreationExpression &);
@@ -27,6 +26,11 @@ struct MasonPrinter : public GenericPrinter {
   void print(const AST::AgentDeclaration &);
   void print(const AST::ConstDeclaration &);
   void print(const AST::Script &);
+
+  virtual void printSpecialBinaryOp(
+      const AST::BinaryOp, const AST::Expression &, const AST::Expression &);
+  virtual bool isSpecialBinaryOp(
+      const AST::BinaryOp, const AST::Expression &, const AST::Expression &);
 
 protected:
   const char *getSimVarName() const {

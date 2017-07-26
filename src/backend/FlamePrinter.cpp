@@ -22,31 +22,40 @@ void FlamePrinter::print(const AST::SimpleType &type) {
   }
 }
 
-static void printBinaryOp(FlamePrinter &p, AST::BinaryOp op,
-                          AST::Expression &left, AST::Expression &right) {
+bool FlamePrinter::isSpecialBinaryOp(
+    AST::BinaryOp op, const AST::Expression &left, const AST::Expression &right) {
+  Type l = left.type, r = right.type;
+  if (op == AST::BinaryOp::MOD && !(l.isInt() && r.isInt())) {
+    return true;
+  }
+  return l.isVec() || r.isVec();
+}
+
+void FlamePrinter::printSpecialBinaryOp(
+    AST::BinaryOp op, const AST::Expression &left, const AST::Expression &right) {
   Type l = left.type;
   Type r = right.type;
   if (l.isVec() || r.isVec()) {
     Type v = l.isVec() ? l : r;
-    p << (v.getTypeId() == Type::VEC2 ? "float2_" : "float3_");
+    *this << (v.getTypeId() == Type::VEC2 ? "float2_" : "float3_");
     switch (op) {
-      case AST::BinaryOp::ADD: p << "add"; break;
-      case AST::BinaryOp::SUB: p << "sub"; break;
-      case AST::BinaryOp::DIV: p << "div_scalar"; break;
-      case AST::BinaryOp::MUL: p << "mul_scalar"; break;
+      case AST::BinaryOp::ADD: *this << "add"; break;
+      case AST::BinaryOp::SUB: *this << "sub"; break;
+      case AST::BinaryOp::DIV: *this << "div_scalar"; break;
+      case AST::BinaryOp::MUL: *this << "mul_scalar"; break;
       default:
         assert(0);
     }
-    p << "(" << left << ", " << right << ")";
+    *this << "(" << left << ", " << right << ")";
     return;
   }
 
   if (op == AST::BinaryOp::MOD && !(l.isInt() && r.isInt())) {
-    p << "fmod(" << left << ", " << right << ")";
+    *this << "fmod(" << left << ", " << right << ")";
     return;
   }
 
-  p << "(" << left << " " << AST::getBinaryOpSigil(op) << " " << right << ")";
+  assert(0);
 }
 void FlamePrinter::print(const AST::UnaryOpExpression &expr) {
   Type t = expr.expr->type;
@@ -57,7 +66,7 @@ void FlamePrinter::print(const AST::UnaryOpExpression &expr) {
     } else if (expr.op == AST::UnaryOp::MINUS) {
       // Compile to multiplication by -1.0
       AST::FloatLiteral negOne(-1.0, AST::Location());
-      printBinaryOp(*this, AST::BinaryOp::MUL, *expr.expr, negOne);
+      printSpecialBinaryOp(AST::BinaryOp::MUL, *expr.expr, negOne);
     } else {
       assert(0);
     }
@@ -65,9 +74,6 @@ void FlamePrinter::print(const AST::UnaryOpExpression &expr) {
   }
 
   GenericPrinter::print(expr);
-}
-void FlamePrinter::print(const AST::BinaryOpExpression &expr) {
-  printBinaryOp(*this, expr.op, *expr.left, *expr.right);
 }
 
 void FlamePrinter::print(const AST::AssignStatement &stmt) {
@@ -89,12 +95,6 @@ void FlamePrinter::print(const AST::AssignStatement &stmt) {
     }
   }
   GenericPrinter::print(stmt);
-}
-
-void FlamePrinter::print(const AST::AssignOpStatement &stmt) {
-  *this << *stmt.left << " = ";
-  printBinaryOp(*this, stmt.op, *stmt.left, *stmt.right);
-  *this << ";";
 }
 
 static void printTypeCtor(FlamePrinter &p, const AST::CallExpression &expr) {

@@ -44,6 +44,16 @@ void FlameGPUPrinter::print(const AST::SimpleType &type) {
   printType(*this, type.resolved);
 }
 
+bool FlameGPUPrinter::isSpecialBinaryOp(
+    AST::BinaryOp op, const AST::Expression &left, const AST::Expression &right) {
+  Type l = left.type, r = right.type;
+  return op == AST::BinaryOp::MOD && !(l.isInt() && r.isInt());
+}
+void FlameGPUPrinter::printSpecialBinaryOp(
+    AST::BinaryOp, const AST::Expression &left, const AST::Expression &right) {
+  *this << "fmod(" << left << ", " << right << ")";
+}
+
 static bool isSameVar(const AST::Expression &expr, const AST::Var *var) {
   if (var == nullptr) {
     return false;

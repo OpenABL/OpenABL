@@ -28,6 +28,11 @@ struct FlameGPUPrinter : public GenericPrinter {
   void print(const AST::FunctionDeclaration &);
   void print(const AST::Script &);
 
+  virtual void printSpecialBinaryOp(
+      const AST::BinaryOp, const AST::Expression &, const AST::Expression &);
+  virtual bool isSpecialBinaryOp(
+      const AST::BinaryOp, const AST::Expression &, const AST::Expression &);
+
 private:
   AST::Script &script;
   const FlameModel &model;

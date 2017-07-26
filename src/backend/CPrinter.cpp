@@ -31,32 +31,42 @@ static void printStorageType(Printer &s, Type type) {
 static bool typeRequiresStorage(Type type) {
   return type.isArray() || type.isAgent();
 }
-static void printBinaryOp(CPrinter &p, AST::BinaryOp op,
-                          AST::Expression &left, AST::Expression &right) {
+
+bool CPrinter::isSpecialBinaryOp(
+    AST::BinaryOp op, const AST::Expression &left, const AST::Expression &right) {
+  Type l = left.type, r = right.type;
+  if (op == AST::BinaryOp::MOD && !(l.isInt() && r.isInt())) {
+    return true;
+  }
+  return l.isVec() || r.isVec();
+}
+void CPrinter::printSpecialBinaryOp(
+    AST::BinaryOp op, const AST::Expression &left, const AST::Expression &right) {
   Type l = left.type;
   Type r = right.type;
   if (l.isVec() || r.isVec()) {
     Type v = l.isVec() ? l : r;
-    p << "float" << v.getVecLen() << "_";
+    *this << "float" << v.getVecLen() << "_";
     switch (op) {
-      case AST::BinaryOp::ADD: p << "add"; break;
-      case AST::BinaryOp::SUB: p << "sub"; break;
-      case AST::BinaryOp::DIV: p << "div_scalar"; break;
-      case AST::BinaryOp::MUL: p << "mul_scalar"; break;
+      case AST::BinaryOp::ADD: *this << "add"; break;
+      case AST::BinaryOp::SUB: *this << "sub"; break;
+      case AST::BinaryOp::DIV: *this << "div_scalar"; break;
+      case AST::BinaryOp::MUL: *this << "mul_scalar"; break;
       default:
         assert(0);
     }
-    p << "(" << left << ", " << right << ")";
+    *this << "(" << left << ", " << right << ")";
     return;
   }
 
   if (op == AST::BinaryOp::MOD && !(l.isInt() && r.isInt())) {
-    p << "fmod(" << left << ", " << right << ")";
+    *this << "fmod(" << left << ", " << right << ")";
     return;
   }
-
-  p << "(" << left << " " << AST::getBinaryOpSigil(op) << " " << right << ")";
+  
+  assert(0);
 }
+
 void CPrinter::print(const AST::UnaryOpExpression &expr) {
   Type t = expr.expr->type;
   if (t.isVec()) {
@@ -66,7 +76,7 @@ void CPrinter::print(const AST::UnaryOpExpression &expr) {
     } else if (expr.op == AST::UnaryOp::MINUS) {
       // Compile to multiplication by -1.0
       AST::FloatLiteral negOne(-1.0, AST::Location());
-      printBinaryOp(*this, AST::BinaryOp::MUL, *expr.expr, negOne);
+      printSpecialBinaryOp(AST::BinaryOp::MUL, *expr.expr, negOne);
     } else {
       assert(0);
     }
@@ -74,9 +84,6 @@ void CPrinter::print(const AST::UnaryOpExpression &expr) {
   }
 
   GenericPrinter::print(expr);
-}
-void CPrinter::print(const AST::BinaryOpExpression &expr) {
-  printBinaryOp(*this, expr.op, *expr.left, *expr.right);
 }
 static void printTypeCtor(CPrinter &p, const AST::CallExpression &expr) {
   Type t = expr.type;
@@ -147,11 +154,6 @@ void CPrinter::print(const AST::AssignStatement &expr) {
   } else {
     GenericPrinter::print(expr);
   }
-}
-void CPrinter::print(const AST::AssignOpStatement &stmt) {
-  *this << *stmt.left << " = ";
-  printBinaryOp(*this, stmt.op, *stmt.left, *stmt.right);
-  *this << ";";
 }
 void CPrinter::print(const AST::VarDeclarationStatement &stmt) {
   Type type = stmt.type->resolved;
