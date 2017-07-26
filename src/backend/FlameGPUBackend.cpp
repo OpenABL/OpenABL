@@ -1,4 +1,5 @@
 #include <sstream>
+#include <iomanip>
 #include "Backend.hpp"
 #include "FileUtil.hpp"
 #include "XmlUtil.hpp"
@@ -6,6 +7,21 @@
 #include "FlameGPUPrinter.hpp"
 
 namespace OpenABL {
+
+static std::string doubleToString(double d) {
+  // Find a reasonable but accurate representation for the double
+  // Seriously, C++? Seriously?
+  for (int precision = 6; precision <= 17; precision++) {
+    std::stringstream s;
+    s << std::setprecision(precision) << d;
+    std::string str = s.str();
+    double d2 = std::stod(str);
+    if (d == d2) {
+      return str;
+    }
+  }
+  assert(0);
+}
 
 static XmlElems createXmlAgents(const AST::Script &script, const FlameModel &model) {
   XmlElems xagents;
@@ -102,16 +118,25 @@ static XmlElems createXmlMessages(const AST::Script &script, const FlameModel &m
 
     const Value::Vec3 &min = envDecl->envMin.extendToVec3().getVec3();
     const Value::Vec3 &max = envDecl->envMax.extendToVec3().getVec3();
+    const Value::Vec3 &size = envDecl->envSize.extendToVec3().getVec3();
     double radius = envDecl->envGranularity.asFloat();
 
+    double minSize = std::min({
+      size.x, size.y,
+      size.z != 0 ? size.z : std::numeric_limits<double>::infinity()
+    });
+
+    // Size is required to be a multiple of the radius, so adjust radius accordingly
+    radius = minSize / round(minSize / radius);
+
     XmlElems partitioningInfo {
-      { "gpu:radius", {{ std::to_string(radius) }} },
-      { "gpu:xmin", {{ std::to_string(min.x) }} },
-      { "gpu:xmax", {{ std::to_string(max.x) }} },
-      { "gpu:ymin", {{ std::to_string(min.y) }} },
-      { "gpu:ymax", {{ std::to_string(max.y) }} },
-      { "gpu:zmin", {{ std::to_string(min.z) }} },
-      { "gpu:zmax", {{ std::to_string(max.z) }} },
+      { "gpu:radius", {{ doubleToString(radius) }} },
+      { "gpu:xmin", {{ doubleToString(min.x) }} },
+      { "gpu:xmax", {{ doubleToString(max.x) }} },
+      { "gpu:ymin", {{ doubleToString(min.y) }} },
+      { "gpu:ymax", {{ doubleToString(max.y) }} },
+      { "gpu:zmin", {{ doubleToString(min.z) }} },
+      { "gpu:zmax", {{ doubleToString(max.z) }} },
     };
 
     messages.push_back({ "gpu:message", {
