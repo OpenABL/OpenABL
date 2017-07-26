@@ -1,3 +1,4 @@
+#include <chrono>
 #include <iostream>
 #include "ParserContext.hpp"
 #include "Analysis.hpp"
@@ -248,10 +249,16 @@ int main(int argc, char **argv) {
         return 1;
       }
 
+      auto start = std::chrono::high_resolution_clock::now();
       if (!OpenABL::executeCommand("./run.sh")) {
         std::cerr << "Run failed" << std::endl;
         return 1;
       }
+      auto end = std::chrono::high_resolution_clock::now();
+
+      auto msecs = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+      auto secs = msecs/1000.0;
+      std::cout << "Execution time: " << secs << "s" << std::endl;
     }
   }
 
