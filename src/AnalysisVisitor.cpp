@@ -728,6 +728,13 @@ static Type getBinaryOpType(
       }
       return l;
     case AST::BinaryOp::MOD:
+      if (l.isInt() && r.isInt()) {
+        return { Type::INT32 };
+      }
+      if (promoteBinary(left, right)) {
+        return { Type::FLOAT32 };
+      }
+      return { Type::INVALID };
     case AST::BinaryOp::BITWISE_OR:
     case AST::BinaryOp::BITWISE_AND:
     case AST::BinaryOp::BITWISE_XOR:

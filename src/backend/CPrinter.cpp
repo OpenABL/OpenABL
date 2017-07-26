@@ -50,6 +50,11 @@ static void printBinaryOp(CPrinter &p, AST::BinaryOp op,
     return;
   }
 
+  if (op == AST::BinaryOp::MOD && !(l.isInt() && r.isInt())) {
+    p << "fmod(" << left << ", " << right << ")";
+    return;
+  }
+
   p << "(" << left << " " << AST::getBinaryOpSigil(op) << " " << right << ")";
 }
 void CPrinter::print(const AST::UnaryOpExpression &expr) {

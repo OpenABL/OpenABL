@@ -41,6 +41,11 @@ static void printBinaryOp(FlamePrinter &p, AST::BinaryOp op,
     return;
   }
 
+  if (op == AST::BinaryOp::MOD && !(l.isInt() && r.isInt())) {
+    p << "fmod(" << left << ", " << right << ")";
+    return;
+  }
+
   p << "(" << left << " " << AST::getBinaryOpSigil(op) << " " << right << ")";
 }
 void FlamePrinter::print(const AST::UnaryOpExpression &expr) {

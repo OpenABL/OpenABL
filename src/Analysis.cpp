@@ -191,6 +191,9 @@ Value Value::calcBinaryOp(AST::BinaryOp op, const Value &l, const Value &r) {
       if (l.isInt() && r.isInt()) {
         return l.getInt() % r.getInt();
       }
+      if (l.isNum() && r.isNum()) {
+        return fmod(l.asFloat(), r.asFloat());
+      }
       return {};
     case AST::BinaryOp::BITWISE_OR:
       if (l.isInt() && r.isInt()) {
