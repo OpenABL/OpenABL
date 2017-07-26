@@ -146,13 +146,13 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
 
       *this << type << " " << aLabel << " = " << arg << ";" << nl;
       if (posMember) {
-        *this << "env.setObjectLocation(" << aLabel << ", "
+        *this << "_sim.env.setObjectLocation(" << aLabel << ", "
               << aLabel << "." << posMember->name << ");" << nl;
       }
 
       // TODO There are some ordering issues here, which we ignore for now
       // This does not fully respect the order between different agent types
-      *this << "schedule.scheduleRepeating(" << aLabel << ")";
+      *this << "_sim.schedule.scheduleRepeating(" << aLabel << ")";
     } else if (name == "save") {
       // TODO Handle save
       *this << "//save()";
@@ -357,8 +357,11 @@ void MasonPrinter::print(const AST::AgentDeclaration &decl) {
   *this << outdent << nl << "}";
 }
 
-void MasonPrinter::print(const AST::SimulateStatement &) {
-  // TODO
+void MasonPrinter::print(const AST::SimulateStatement &stmt) {
+  *this << "do {" << indent << nl
+        << "if (!_sim.schedule.step(_sim)) break;" << outdent << nl
+        << "} while (_sim.schedule.getSteps() < "
+        << *stmt.timestepsExpr << ");";
 }
 
 void MasonPrinter::print(const AST::Script &script) {
@@ -387,21 +390,18 @@ void MasonPrinter::print(const AST::Script &script) {
 
   *this << "public Sim(long seed) {" << indent << nl
         << "super(seed);"
-        << outdent << nl << "}" << nl << nl
-        << "public void start() {" << indent << nl
-        << "super.start();";
+        << outdent << nl << "}" << nl;
 
-  // TODO This needs to be split in start + end
   AST::FunctionDeclaration *mainFunc = script.mainFunc;
-  if (mainFunc) {
-    *this << *mainFunc->stmts;
-  }
-
-  *this << outdent << nl << "}" << nl
-        << "public static void main(String[] args) {" << indent
-        << nl << "doLoop(Sim.class, args);"
+  inMain = true;
+  *this << "public static void main(String[] args) {" << indent
+        << nl << "Sim _sim = new Sim(System.currentTimeMillis());"
+        << nl << "_sim.start();"
+        << *mainFunc->stmts
+        << nl << "_sim.finish();"
         << nl << "System.exit(0);"
         << outdent << nl << "}";
+  inMain = false;
 
   // Print non-step, non-main functions
   for (const AST::FunctionDeclaration *decl : script.funcs) {

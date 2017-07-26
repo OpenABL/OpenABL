@@ -30,14 +30,16 @@ struct MasonPrinter : public GenericPrinter {
 
 protected:
   const char *getSimVarName() const {
-    return inAgent ? "_sim" : "this";
+    return inAgent || inMain ? "_sim" : "this";
   }
 
   // Current input and output variables inside a step function
   VarId currentInVar;
   VarId currentOutVar;
-  // Whether we're in agent code or in main simulation code
+  // Whether we're in agent code
   bool inAgent;
+  // Whether we're in the main function
+  bool inMain;
 };
 
 }
