@@ -182,4 +182,9 @@ typedef struct {
 	const char *name;
 } agent_info;
 
-void save(void *agents, const agent_info *info, const char *path);
+typedef enum {
+	SAVE_JSON,
+	SAVE_FLAME_XML,
+} save_type;
+
+void save(void *agents, const agent_info *info, const char *path, save_type type);

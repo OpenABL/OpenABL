@@ -3,6 +3,7 @@
 #include "FileUtil.hpp"
 #include "FlameModel.hpp"
 #include "FlamePrinter.hpp"
+#include "FlameMainPrinter.hpp"
 
 namespace OpenABL {
 
@@ -105,17 +106,26 @@ static std::string createFunctionsFile(AST::Script &script, const FlameModel &mo
   return printer.extractStr();
 }
 
+static std::string createMainFile(AST::Script &script) {
+  FlameMainPrinter printer(script);
+  printer.print(script);
+  return printer.extractStr();
+}
+
 void FlameBackend::generate(
     AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
   FlameModel model = FlameModel::generateFromScript(script);
 
   writeToFile(outputDir + "/XMLModelFile.xml", createXmlModel(script, model));
   writeToFile(outputDir + "/functions.c", createFunctionsFile(script, model));
+  writeToFile(outputDir + "/runner.c", createMainFile(script));
 
   copyFile(assetDir + "/c/libabl.h", outputDir + "/libabl.h");
   copyFile(assetDir + "/c/libabl.c", outputDir + "/libabl.c");
   copyFile(assetDir + "/flame/build.sh", outputDir + "/build.sh");
   makeFileExecutable(outputDir + "/build.sh");
+
+  createDirectory(outputDir + "/iterations");
 }
 
 }

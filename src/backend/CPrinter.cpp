@@ -106,7 +106,7 @@ static void printBuiltin(CPrinter &p, const AST::CallExpression &expr) {
       << ", " << agent->name << ") = " << *(*expr.args)[0];
     return;
   } else if (sig.name == "save") {
-    p << "save(&agents, agents_info, " << *(*expr.args)[0] << ")";
+    p << "save(&agents, agents_info, " << *(*expr.args)[0] << ", SAVE_JSON)";
     return;
   }
 

@@ -27,7 +27,7 @@ static size_t type_info_get_size(const type_info *info) {
 	return info->offset;
 }
 
-static void save_agent(FILE *file, char *agent, const type_info *info) {
+static void save_json_agent(FILE *file, const char *agent, const type_info *info) {
 	bool first = true;
 	fputs("{", file);
 	while (info->type != TYPE_END) {
@@ -77,7 +77,7 @@ static void save_agent(FILE *file, char *agent, const type_info *info) {
 	fputs("}", file);
 }
 
-static void save_agents(FILE *file, dyn_array *arr, const type_info *info) {
+static void save_json_agents(FILE *file, dyn_array *arr, const type_info *info) {
 	size_t elem_size = type_info_get_size(info);
 	bool first = true;
 
@@ -87,18 +87,12 @@ static void save_agents(FILE *file, dyn_array *arr, const type_info *info) {
 		first = false;
 
 		char *agent = ((char *) arr->values) + elem_size * i;
-		save_agent(file, agent, info);
+		save_json_agent(file, agent, info);
 	}
 	fputs("]", file);
 }
 
-void save(void *agents, const agent_info *info, const char *path) {
-	FILE *file = fopen(path, "w");
-	if (!file) {
-		fprintf(stderr, "save(): Count not open \"%s\" for writing\n", path);
-		return;
-	}
-
+void save_json(void *agents, const agent_info *info, FILE *file) {
 	bool first = true;
 	fputs("{", file);
 	while (info->name) {
@@ -107,10 +101,94 @@ void save(void *agents, const agent_info *info, const char *path) {
 
 		dyn_array *arr = (dyn_array *) ((char *) agents + info->offset);
 		fprintf(file, "\"%s\":", info->name);
-		save_agents(file, arr, info->info);
+		save_json_agents(file, arr, info->info);
 		info++;
 	}
 	fputs("}", file);
+}
+
+static void save_flame_xml_member(FILE *file, const char *agent, const type_info *info) {
+	const char *name = info->name;
+	switch (info->type) {
+		case TYPE_INT:
+		{
+			int i = *(int *) (agent + info->offset);
+			fprintf(file, "<%s>%d</%s>\n", name, i, name);
+			break;
+		}
+		case TYPE_FLOAT:
+		{
+			float f = *(float *) (agent + info->offset);
+			fprintf(file, "<%s>%f</%s>\n", name, f, name);
+			break;
+		}
+		case TYPE_FLOAT2:
+		{
+			float2 *f = (float2 *) (agent + info->offset);
+			fprintf(file, "<%s_x>%f</%s_x>\n<%s_y>%f</%s_y>\n",
+				name, f->x, name, name, f->y, name);
+			break;
+		}
+		case TYPE_FLOAT3:
+		{
+			float3 *f = (float3 *) (agent + info->offset);
+			fprintf(file, "<%s_x>%f</%s_x>\n<%s_y>%f</%s_y>\n<%s_z>%f</%s_z>",
+				name, f->x, name, name, f->y, name, name, f->z, name);
+			break;
+		}
+		case TYPE_BOOL:
+		default:
+			assert(0);
+			break;
+	}
+}
+
+static void save_flame_xml_agents(
+		FILE *file, dyn_array *arr, const char *name, const type_info *info_start) {
+	size_t elem_size = type_info_get_size(info_start);
+	for (size_t i = 0; i < arr->len; i++) {
+		char *agent = ((char *) arr->values) + elem_size * i;
+		fputs("<xagent>\n", file);
+		fprintf(file, "<name>%s</name>\n", name);
+
+		for (const type_info *info = info_start; info->type != TYPE_END; info++) {
+			save_flame_xml_member(file, agent, info);
+		}
+
+		fputs("</xagent>\n", file);
+	}
+}
+
+void save_flame_xml(void *agents, const agent_info *info, FILE *file) {
+	fputs("<states>\n", file);
+	fputs("<itno>0</itno>\n", file);
+	// TODO: Necessary?
+	/*fputs("<environment>\n", file);
+	fputs("</environment>\n", file);*/
+
+	while (info->name) {
+		dyn_array *arr = (dyn_array *) ((char *) agents + info->offset);
+		save_flame_xml_agents(file, arr, info->name, info->info);
+		info++;
+	}
+
+	fputs("</states>\n", file);
+}
+
+void save(void *agents, const agent_info *info, const char *path, save_type type) {
+	(void) type; // Ignored for now
+
+	FILE *file = fopen(path, "w");
+	if (!file) {
+		fprintf(stderr, "save(): Count not open \"%s\" for writing\n", path);
+		return;
+	}
+
+	if (type == SAVE_JSON) {
+		save_json(agents, info, file);
+	} else if (type == SAVE_FLAME_XML) {
+		save_flame_xml(agents, info, file);
+	}
 
 	fclose(file);
 }
