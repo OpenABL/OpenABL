@@ -279,6 +279,7 @@ void CPrinter::print(const AST::SimulateStatement &stmt) {
 void CPrinter::print(const AST::SimpleType &type) {
   *this << type.resolved;
 }
+
 void CPrinter::print(const AST::AgentMember &member) {
   *this << *member.type << " " << member.name << ";";
 }
@@ -309,6 +310,18 @@ void CPrinter::print(const AST::AgentDeclaration &decl) {
   }
   *this << "{ TYPE_END, sizeof(" << decl.name << "), NULL }" << outdent << nl << "};" << nl;
 }
+
+void CPrinter::print(const AST::FunctionDeclaration &decl) {
+  if (decl.isMain()) {
+    // Return result code from main()
+    *this << "int main() {" << indent << *decl.stmts << nl
+          << "return 0;" << outdent << nl << "}";
+    return;
+  }
+
+  GenericPrinter::print(decl);
+}
+
 void CPrinter::print(const AST::Script &script) {
   *this << "#include \"libabl.h\"" << nl << nl;
 

@@ -16,6 +16,7 @@ struct FlameMainPrinter : public CPrinter {
 
   void print(const AST::SimulateStatement &);
   void print(const AST::FunctionDeclaration &);
+  void print(const AST::Script &);
 };
 
 }

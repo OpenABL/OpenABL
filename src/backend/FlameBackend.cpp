@@ -123,7 +123,9 @@ void FlameBackend::generate(
   copyFile(assetDir + "/c/libabl.h", outputDir + "/libabl.h");
   copyFile(assetDir + "/c/libabl.c", outputDir + "/libabl.c");
   copyFile(assetDir + "/flame/build.sh", outputDir + "/build.sh");
+  copyFile(assetDir + "/flame/run.sh", outputDir + "/run.sh");
   makeFileExecutable(outputDir + "/build.sh");
+  makeFileExecutable(outputDir + "/run.sh");
 
   createDirectory(outputDir + "/iterations");
 }
