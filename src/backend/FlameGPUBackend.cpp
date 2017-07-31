@@ -5,6 +5,7 @@
 #include "XmlUtil.hpp"
 #include "FlameModel.hpp"
 #include "FlameGPUPrinter.hpp"
+#include "FlameMainPrinter.hpp"
 
 namespace OpenABL {
 
@@ -188,6 +189,12 @@ static std::string createFunctionsFile(AST::Script &script, const FlameModel &mo
   return printer.extractStr();
 }
 
+static std::string createMainFile(AST::Script &script) {
+  FlameMainPrinter printer(script, true);
+  printer.print(script);
+  return printer.extractStr();
+}
+
 void FlameGPUBackend::generate(
     AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
   FlameModel model = FlameModel::generateFromScript(script);
@@ -197,9 +204,16 @@ void FlameGPUBackend::generate(
 
   writeToFile(outputDir + "/model/XMLModelFile.xml", createXmlModel(script, model));
   writeToFile(outputDir + "/model/functions.c", createFunctionsFile(script, model));
+  writeToFile(outputDir + "/runner.c", createMainFile(script));
+
   copyFile(assetDir + "/flamegpu/libabl_flamegpu.h", outputDir + "/model/libabl_flamegpu.h");
   copyFile(assetDir + "/flamegpu/Makefile", outputDir + "/Makefile");
   copyFile(assetDir + "/flamegpu/build.sh", outputDir + "/build.sh");
+
+  // These are required for runner.c
+  copyFile(assetDir + "/c/libabl.h", outputDir + "/libabl.h");
+  copyFile(assetDir + "/c/libabl.c", outputDir + "/libabl.c");
+
   makeFileExecutable(outputDir + "/build.sh");
 }
 

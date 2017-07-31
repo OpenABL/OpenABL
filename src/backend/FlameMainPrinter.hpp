@@ -11,12 +11,15 @@ namespace OpenABL {
 struct FlameMainPrinter : public CPrinter {
   using CPrinter::print;
 
-  FlameMainPrinter(AST::Script &script)
-    : CPrinter(script) {}
+  FlameMainPrinter(AST::Script &script, bool forGPU)
+    : CPrinter(script), forGPU(forGPU) {}
 
   void print(const AST::SimulateStatement &);
   void print(const AST::FunctionDeclaration &);
   void print(const AST::Script &);
+
+private:
+  bool forGPU;
 };
 
 }

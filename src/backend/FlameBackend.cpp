@@ -107,7 +107,7 @@ static std::string createFunctionsFile(AST::Script &script, const FlameModel &mo
 }
 
 static std::string createMainFile(AST::Script &script) {
-  FlameMainPrinter printer(script);
+  FlameMainPrinter printer(script, false);
   printer.print(script);
   return printer.extractStr();
 }
