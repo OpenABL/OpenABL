@@ -25,12 +25,6 @@ float2 clamp(float2 pos) {
   );
 }
 
-float2 wrap(float2 pos) {
-  float x = pos.x % W;
-  float y = pos.y % W;
-  return float2(x >= 0 ? x : x + W, y >= 0 ? y : y + W);
-}
-
 // Step function
 // TODO Add keyword?
 void move_point(Point in -> out) {
@@ -46,9 +40,7 @@ void move_point(Point in -> out) {
     }
     new_pos += force;
   }
-  //out.pos = clamp(new_pos);
-  //out.pos = wrap(new_pos);
-  out.pos = new_pos;
+  out.pos = clamp(new_pos);
 }
 
 void main() {
