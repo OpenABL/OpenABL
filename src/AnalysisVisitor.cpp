@@ -27,8 +27,8 @@ static Type tryResolveNameToSimpleType(const std::string &name) {
     }
 }
 
-Type AnalysisVisitor::resolveAstType(AST::Type &type) {
-  if (AST::SimpleType *t = dynamic_cast<AST::SimpleType *>(&type)) {
+Type AnalysisVisitor::resolveAstType(const AST::Type &type) {
+  if (const AST::SimpleType *t = dynamic_cast<const AST::SimpleType *>(&type)) {
     Type st = tryResolveNameToSimpleType(t->name);
     if (!st.isInvalid()) {
       return st;
@@ -133,13 +133,25 @@ void AnalysisVisitor::leave(AST::AgentDeclaration &) {}
 void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
   pushVarScope();
 
-  auto it = funcs.find(decl.name);
-  if (it != funcs.end()) {
+  // TODO Allow overloading
+  Function *fn = funcs.getByName(decl.name);
+  if (fn) {
     err << "Redeclaration of function named \"" << decl.name << "\"" << decl.loc;
     return;
   }
 
-  funcs.insert({ decl.name, &decl });
+  Type returnType = resolveAstType(*decl.returnType);
+  SKIP_INVALID(returnType);
+
+  std::vector<Type> paramTypes;
+  for (const AST::ParamPtr &param : *decl.params) {
+    Type paramType = resolveAstType(*param->type);;
+    SKIP_INVALID(paramType);
+    paramTypes.push_back(paramType);
+  }
+
+  funcs.add(decl.name, paramTypes, returnType);
+  funcDecls.insert({ decl.name, &decl });
   currentFunc = &decl;
 
   script.funcs.push_back(&decl);
@@ -567,8 +579,8 @@ void AnalysisVisitor::leave(AST::SimulateStatement &stmt) {
   }
 
   for (const std::string &name : *stmt.stepFuncs) {
-    auto it = funcs.find(name);
-    if (it == funcs.end()) {
+    auto it = funcDecls.find(name);
+    if (it == funcDecls.end()) {
       err << "Unknown step function \"" << name << "\"" << stmt.loc;
       return;
     }
@@ -1029,62 +1041,57 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
     return;
   }
 
-  BuiltinFunction *f = builtins.getByName(expr.name);
-  if (f) {
-    const FunctionSignature *sig = f->getCompatibleSignature(argTypes);
-    if (!sig) {
-      err << "Builtin function called with invalid arguments: " << expr.name;
-      printArgs(err, argTypes);
-      err << expr.loc;
-      return;
-    }
-
-    expr.kind = AST::CallExpression::Kind::BUILTIN;
-    expr.calledSig = sig->getConcreteSignature(argTypes);
-    expr.type = expr.calledSig.returnType;
-
-    // FlameGPU needs to know
-    if (expr.name == "random") {
-      currentFunc->usesRng = true;
-    }
-    return;
-  }
-
-  auto it = funcs.find(expr.name);
-  if (it == funcs.end()) {
+  Function *f = funcs.getByName(expr.name);
+  if (!f) {
     err << "Call to unknown function \"" << expr.name << "\"" << expr.loc;
     return;
   }
 
-  const AST::FunctionDeclaration *decl = it->second;
-  if (expr.args->size() != decl->params->size()) {
-    err << "Function " << decl->name << " expects " << decl->params->size()
-        << " parameters, but " << expr.args->size() << " were given" << expr.loc;
+  const FunctionSignature *sig = f->getCompatibleSignature(argTypes);
+  if (!sig) {
+    err << "Function called with invalid arguments: " << expr.name;
+    printArgs(err, argTypes);
+    err << ", expected ";
+
+    bool first = true;
+    for (const FunctionSignature &sig : f->signatures) {
+      if (!first) {
+        err << " or ";
+      }
+      first = false;
+
+      err << expr.name;
+      printArgs(err, sig.paramTypes);
+    }
+
+    err << expr.loc;
     return;
   }
 
-  size_t num = expr.args->size();
-  for (size_t i = 0; i < num; i++) {
-    AST::ExpressionPtr &arg = (*expr.args)[i];
-    const AST::Param &param = *(*decl->params)[i];
-    if (!promoteTo(arg, param.type->resolved)) {
-      err << "Argument " << i << " to function " << decl->name << " has type "
-          << arg->type << " but " << param.type->resolved << " expected" << arg->loc;
-      return;
-    }
+  expr.kind = sig->decl
+    ? AST::CallExpression::Kind::USER
+    : AST::CallExpression::Kind::BUILTIN;
+  expr.calledSig = sig->getConcreteSignature(argTypes);
+  expr.type = expr.calledSig.returnType;
+  expr.calledFunc = sig->decl;
+
+  // FlameGPU needs to know
+  if (expr.name == "random") {
+    currentFunc->usesRng = true;
   }
 
-  expr.kind = AST::CallExpression::Kind::USER;
-  expr.type = decl->returnType->resolved;
-  expr.calledFunc = decl;
-
   // We might be using an RNG indirectly
-  if (decl->usesRng) {
+  if (sig->decl && sig->decl->usesRng) {
     currentFunc->usesRng = true;
   }
 };
 
 void AnalysisVisitor::leave(AST::Script &script) {
+  if (isLib) {
+    // There checks only apply to the main script
+    return;
+  }
+
   AST::EnvironmentDeclaration *envDecl = script.envDecl;
 
   for (AST::AgentDeclaration *agent : script.agents) {

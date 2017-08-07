@@ -11,8 +11,8 @@ namespace OpenABL {
 struct AnalysisVisitor : public AST::Visitor {
   AnalysisVisitor(
       AST::Script &script, const std::map<std::string, std::string> &params,
-      ErrorStream &err, BuiltinFunctions &builtins
-  ) : script(script), params(params), builtins(builtins), err(err), scope(script.scope) {}
+      ErrorStream &err, FunctionList &builtins
+  ) : script(script), params(params), funcs(builtins), err(err), scope(script.scope) {}
 
   void enter(AST::Var &);
   void enter(AST::Literal &);
@@ -77,11 +77,21 @@ struct AnalysisVisitor : public AST::Visitor {
   void leave(AST::EnvironmentDeclaration &);
   void leave(AST::Script &);
 
+  void handleLibScript(AST::Script &script) {
+    isLib = true;
+    script.accept(*this);
+  }
+
+  void handleMainScript(AST::Script &script) {
+    isLib = false;
+    script.accept(*this);
+  }
+
 private:
   void declareVar(AST::Var &, Type, bool isConst, bool isGlobal, Value val);
   void pushVarScope();
   void popVarScope();
-  Type resolveAstType(AST::Type &);
+  Type resolveAstType(const AST::Type &);
   Value evalExpression(const AST::Expression &expr);
 
   using VarMap = std::map<std::string, VarId>;
@@ -90,11 +100,13 @@ private:
   AST::Script &script;
   // Simulation parameters
   const std::map<std::string, std::string> &params;
-  // Builtin functions
-  BuiltinFunctions &builtins;
+  // Functions
+  FunctionList &funcs;
   // Stream for error reporting
   ErrorStream &err;
 
+  // Whether the current script is a library or main script
+  bool isLib;
   // Currently *visible* variables
   VarMap varMap;
   // Stack of previous visible variable scopes
@@ -107,7 +119,7 @@ private:
   // Declared agents by name
   std::map<std::string, AST::AgentDeclaration *> agents;
   // Declared functions by name
-  std::map<std::string, AST::FunctionDeclaration *> funcs;
+  std::map<std::string, AST::FunctionDeclaration *> funcDecls;
   // Variable on which member accesses should be collected
   // (for FunctionDeclaration::accessedMembers)
   VarId collectAccessVar;

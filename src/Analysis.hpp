@@ -10,6 +10,7 @@ namespace OpenABL {
 
 namespace AST {
   struct AgentDeclaration;
+  struct FunctionDeclaration;
   struct Expression;
 
   // TODO Move out of AST namespace
@@ -311,9 +312,12 @@ private:
 
 struct FunctionSignature {
   FunctionSignature()
-    : name(""), paramTypes(), returnType() {}
-  FunctionSignature(const std::string &name, const std::vector<Type> &paramTypes, Type returnType)
-    : name(name), paramTypes(paramTypes), returnType(returnType) {}
+    : origName(""), name(""), paramTypes(), returnType(), decl(nullptr) {}
+  FunctionSignature(const std::string &origName, const std::string &name,
+                    const std::vector<Type> &paramTypes, Type returnType,
+                    const AST::FunctionDeclaration *decl)
+    : origName(origName), name(name),
+      paramTypes(paramTypes), returnType(returnType), decl(decl) {}
 
   bool isCompatibleWith(const std::vector<Type> &argTypes) const {
     if (argTypes.size() != paramTypes.size()) {
@@ -355,15 +359,17 @@ struct FunctionSignature {
       newReturnType = returnType;
     }
 
-    return { name, newParamTypes, newReturnType };
+    return { origName, name, newParamTypes, newReturnType, decl };
   }
 
+  std::string origName;
   std::string name;
   std::vector<Type> paramTypes;
   Type returnType;
+  const AST::FunctionDeclaration *decl;
 };
 
-struct BuiltinFunction {
+struct Function {
   const FunctionSignature *getCompatibleSignature(const std::vector<Type> &argTypes) const {
     for (const FunctionSignature &sig : signatures) {
       if (sig.isCompatibleWith(argTypes)) {
@@ -378,18 +384,20 @@ struct BuiltinFunction {
   std::vector<FunctionSignature> signatures;
 };
 
-struct BuiltinFunctions {
-  std::map<std::string, BuiltinFunction> funcs;
+struct FunctionList {
+  std::map<std::string, Function> funcs;
 
   void add(const std::string &name, const std::string &sigName,
-           std::vector<Type> argTypes, Type returnType) {
-    funcs[name].signatures.push_back({ sigName, argTypes, returnType });
+           std::vector<Type> argTypes, Type returnType,
+           const AST::FunctionDeclaration *decl = nullptr) {
+    funcs[name].signatures.push_back({ name, sigName, argTypes, returnType, decl });
   }
-  void add(const std::string &name, std::vector<Type> argTypes, Type returnType) {
-    add(name, name, argTypes, returnType);
+  void add(const std::string &name, std::vector<Type> argTypes, Type returnType,
+           const AST::FunctionDeclaration *decl = nullptr) {
+    add(name, name, argTypes, returnType, decl);
   }
 
-  BuiltinFunction *getByName(const std::string &name) {
+  Function *getByName(const std::string &name) {
     auto it = funcs.find(name);
     if (it == funcs.end()) {
       return nullptr;

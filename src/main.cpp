@@ -8,7 +8,7 @@
 
 namespace OpenABL {
 
-void registerBuiltinFunctions(BuiltinFunctions &funcs) {
+void registerBuiltinFunctions(FunctionList &funcs) {
   funcs.add("dot", "dot_float2", { Type::VEC2, Type::VEC2 }, Type::FLOAT32);
   funcs.add("dot", "dot_float3", { Type::VEC3, Type::VEC3 }, Type::FLOAT32);
   funcs.add("length", "length_float2", { Type::VEC2 }, Type::FLOAT32);
@@ -119,6 +119,10 @@ static Options parseCliOptions(int argc, char **argv) {
     return {};
   }
 
+  if (options.assetDir.empty()) {
+    options.assetDir = "./asset";
+  }
+
   if (options.lintOnly) {
     return options;
   }
@@ -130,10 +134,6 @@ static Options parseCliOptions(int argc, char **argv) {
 
   if (options.backend.empty()) {
     options.backend = "c";
-  }
-
-  if (options.assetDir.empty()) {
-    options.assetDir = "./asset";
   }
 
   return options;
@@ -170,18 +170,33 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  FILE *file = fopen(options.fileName.c_str(), "r");
-  if (!file) {
+  FILE *mainFile = fopen(options.fileName.c_str(), "r");
+  if (!mainFile) {
     std::cerr << "File \"" << options.fileName << "\" could not be opened." << std::endl;
     return 1;
   }
 
-  OpenABL::ParserContext ctx(file);
-  if (!ctx.parse()) {
+  if (!OpenABL::directoryExists(options.assetDir)) {
+    std::cerr << "Asset directory \"" << options.assetDir << "\" does not exist "
+              << "(override with -A or --asset-dir)" << std::endl;
     return 1;
   }
 
-  OpenABL::AST::Script &script = *ctx.script;
+  std::string libFileName = options.assetDir + "/lib.abl";
+  FILE *libFile = fopen(libFileName.c_str(), "r");
+  if (!libFile) {
+    std::cerr << "Library file \"" << libFileName << "\" could not be opened." << std::endl;
+    return 1;
+  }
+
+  OpenABL::ParserContext mainCtx(mainFile);
+  OpenABL::ParserContext libCtx(libFile);
+  if (!mainCtx.parse() || !libCtx.parse()) {
+    return 1;
+  }
+
+  OpenABL::AST::Script &mainScript = *mainCtx.script;
+  OpenABL::AST::Script &libScript = *libCtx.script;
 
   int numErrors = 0;
   OpenABL::ErrorStream err([&numErrors](const OpenABL::Error &err) {
@@ -189,11 +204,12 @@ int main(int argc, char **argv) {
     numErrors++;
   });
 
-  OpenABL::BuiltinFunctions funcs;
+  OpenABL::FunctionList funcs;
   registerBuiltinFunctions(funcs);
 
-  OpenABL::AnalysisVisitor visitor(script, options.params, err, funcs);
-  script.accept(visitor);
+  OpenABL::AnalysisVisitor visitor(mainScript, options.params, err, funcs);
+  visitor.handleLibScript(libScript);
+  visitor.handleMainScript(mainScript);
 
   if (numErrors > 0) {
     // There were errors, abort
@@ -217,15 +233,9 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  if (!OpenABL::directoryExists(options.assetDir)) {
-    std::cerr << "Asset directory \"" << options.assetDir << "\" does not exist "
-              << "(override with -A or --asset-dir)" << std::endl;
-    return 1;
-  }
-
   OpenABL::Backend &backend = *it->second;
   try {
-    backend.generate(script, options.outputDir, options.assetDir);
+    backend.generate(mainScript, options.outputDir, options.assetDir);
   } catch (const OpenABL::NotSupportedError &e) {
     std::cerr << e.what() << std::endl;
     return 1;
@@ -262,6 +272,6 @@ int main(int argc, char **argv) {
     }
   }
 
-  fclose(file);
+  fclose(mainFile);
   return 0;
 }

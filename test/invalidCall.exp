@@ -1,2 +1,2 @@
-Function foo expects 1 parameters, but 0 were given on line 6
-Argument 0 to function foo has type float3 but int expected on line 7
+Function called with invalid arguments: foo(), expected foo(int) on line 6
+Function called with invalid arguments: foo(float3), expected foo(int) on line 7
