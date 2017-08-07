@@ -151,8 +151,7 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
       *this << "//save()";
     } else {
       // TODO Handle other builtins
-      const FunctionSignature &sig = expr.calledSig;
-      *this << sig.name << "(";
+      *this << name << "(";
       printArgs(expr);
       *this << ")";
     }

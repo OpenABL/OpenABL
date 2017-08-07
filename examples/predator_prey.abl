@@ -43,14 +43,14 @@ void main() {
 
   for (int i : 0..num_prey) {
     add(Prey {
-      pos: random(float3(0), float3(env_size)),
+      pos: random(float3(env_size)),
       dir: float3(0),
     });
   }
 
   for (int i : 0..num_predators) {
     add(Predator {
-      pos: random(float3(0), float3(env_size)),
+      pos: random(float3(env_size)),
       dir: float3(0),
     });
   }

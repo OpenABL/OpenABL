@@ -18,8 +18,6 @@ void registerBuiltinFunctions(FunctionList &funcs) {
   funcs.add("normalize", "normalize_float2", { Type::VEC2 }, Type::VEC2);
   funcs.add("normalize", "normalize_float3", { Type::VEC3 }, Type::VEC3);
   funcs.add("random", "random_float", { Type::FLOAT32, Type::FLOAT32 }, Type::FLOAT32);
-  funcs.add("random", "random_float2", { Type::VEC2, Type::VEC2 }, Type::VEC2);
-  funcs.add("random", "random_float3", { Type::VEC3, Type::VEC3 }, Type::VEC3);
 
   funcs.add("sin", { Type::FLOAT32 }, Type::FLOAT32);
   funcs.add("cos", { Type::FLOAT32 }, Type::FLOAT32);

@@ -9,7 +9,7 @@ struct CPrinter : public GenericPrinter {
   using GenericPrinter::print;
 
   CPrinter(AST::Script &script)
-    : GenericPrinter(script), script(script) {}
+    : GenericPrinter(script, false), script(script) {}
 
   void print(const AST::UnaryOpExpression &);
   void print(const AST::CallExpression &);

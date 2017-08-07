@@ -333,6 +333,30 @@ struct FunctionSignature {
     return true;
   }
 
+  bool isConflictingWith(const std::vector<Type> &newParamTypes) const {
+    if (newParamTypes.size() != paramTypes.size()) {
+      // Always allow arity overloading
+      return false;
+    }
+
+    // For now we are very conservative and only allow overloads between float, float2 and float3.
+    // This may be extended as necessary in the future.
+    bool haveAllowedDiff = false, haveOtherDiff = false;
+    for (size_t i = 0; i < newParamTypes.size(); i++) {
+      Type newParamType = newParamTypes[i], paramType = paramTypes[i];
+      if (newParamType != paramType) {
+        if ((paramType.isVec() || paramType.isFloat())
+            && (newParamType.isVec() || newParamType.isFloat())) {
+          haveAllowedDiff = true;
+        } else {
+          haveOtherDiff = true;
+        }
+      }
+    }
+
+    return haveOtherDiff || !haveAllowedDiff;
+  }
+
   // Concrete signature with any generic agent types replaced
   FunctionSignature getConcreteSignature(const std::vector<Type> &argTypes) const {
     std::vector<Type> newParamTypes;
@@ -380,6 +404,16 @@ struct Function {
     return nullptr;
   }
 
+  // Get signature that conflicts for the purpose of overloading
+  const FunctionSignature *getConflictingSignature(const std::vector<Type> &paramTypes) const {
+    for (const FunctionSignature &sig : signatures) {
+      if (sig.isConflictingWith(paramTypes)) {
+        return &sig;
+      }
+    }
+    return nullptr;
+  }
+
   std::string name;
   std::vector<FunctionSignature> signatures;
 };
@@ -387,10 +421,13 @@ struct Function {
 struct FunctionList {
   std::map<std::string, Function> funcs;
 
+  void add(FunctionSignature sig) {
+    funcs[sig.origName].signatures.push_back(sig);
+  }
   void add(const std::string &name, const std::string &sigName,
            std::vector<Type> argTypes, Type returnType,
            const AST::FunctionDeclaration *decl = nullptr) {
-    funcs[name].signatures.push_back({ name, sigName, argTypes, returnType, decl });
+    add({ name, sigName, argTypes, returnType, decl });
   }
   void add(const std::string &name, std::vector<Type> argTypes, Type returnType,
            const AST::FunctionDeclaration *decl = nullptr) {

@@ -10,7 +10,7 @@ struct FlamePrinter : public GenericPrinter {
   using GenericPrinter::print;
 
   FlamePrinter(AST::Script &script, const FlameModel &model)
-    : GenericPrinter(script), script(script), model(model) {}
+    : GenericPrinter(script, false), script(script), model(model) {}
 
   void print(const AST::UnaryOpExpression &);
   void print(const AST::AssignStatement &);

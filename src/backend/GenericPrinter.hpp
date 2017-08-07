@@ -10,7 +10,8 @@ namespace OpenABL {
  * it is possible to overwrite the default implementations with
  * more specific ones. */
 struct GenericPrinter : public Printer {
-  GenericPrinter(AST::Script &script) : script(script) {}
+  GenericPrinter(AST::Script &script, bool supportsOverloads)
+    : script(script), supportsOverloads(supportsOverloads) {}
 
   virtual void print(const AST::Var &);
   virtual void print(const AST::Literal &);
@@ -52,6 +53,7 @@ struct GenericPrinter : public Printer {
 
 protected:
   AST::Script &script;
+  bool supportsOverloads;
 };
 
 }

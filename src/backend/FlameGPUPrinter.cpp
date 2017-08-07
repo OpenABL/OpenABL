@@ -116,9 +116,10 @@ static void printTypeCtor(FlameGPUPrinter &p, const AST::CallExpression &expr) {
 void FlameGPUPrinter::print(const AST::CallExpression &expr) {
   if (expr.isCtor()) {
     printTypeCtor(*this, expr);
-  } else if (expr.isBuiltin()) {
-    if (expr.name == "random") {
-      *this << expr.calledSig.name << "(rand48, ";
+  } else {
+    const FunctionSignature &sig = expr.calledSig;
+    if (!sig.decl && expr.name == "random") {
+      *this << expr.name << "(rand48, ";
       printArgs(expr);
       *this << ")";
       return;
@@ -126,17 +127,15 @@ void FlameGPUPrinter::print(const AST::CallExpression &expr) {
 
     if (expr.name == "dist") {
       *this << "glm::distance";
+    } else if (expr.name == "length") {
+      *this << "glm::length";
     } else if (expr.name == "normalize") {
       *this << "glm::normalize";
     } else {
       *this << expr.name;
     }
     *this << "(";
-    printArgs(expr);
-    *this << ")";
-  } else {
-    *this << expr.name << "(";
-    if (expr.calledFunc->usesRng) {
+    if (expr.calledFunc && expr.calledFunc->usesRng) {
       *this << "rand48, ";
     }
     printArgs(expr);

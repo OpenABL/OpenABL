@@ -473,6 +473,7 @@ struct FunctionDeclaration : public Declaration {
   ParamListPtr params;
   StatementListPtr stmts;
 
+  FunctionSignature sig;
   // The following members are for step functions only
   bool isStep = false;
   // The type of the agent that is interacted with (type of agent

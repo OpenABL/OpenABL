@@ -144,7 +144,8 @@ void GenericPrinter::printParams(const AST::FunctionDeclaration &decl) {
 }
 
 void GenericPrinter::print(const AST::FunctionDeclaration &decl) {
-  *this << *decl.returnType << " " << decl.name << "(";
+  const std::string &name = supportsOverloads ? decl.name : decl.sig.name;
+  *this << *decl.returnType << " " << name << "(";
   printParams(decl);
   *this << ") {" << indent << *decl.stmts << outdent << nl << "}";
 }

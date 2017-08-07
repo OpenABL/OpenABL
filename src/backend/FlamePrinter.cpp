@@ -113,32 +113,25 @@ static void printTypeCtor(FlamePrinter &p, const AST::CallExpression &expr) {
     p << "(" << t << ") " << *(*expr.args)[0];
   }
 }
-static void printBuiltin(FlamePrinter &p, const AST::CallExpression &expr) {
-  const FunctionSignature &sig = expr.calledSig;
-  // TODO
-  /*if (sig.name == "add") {
-    AST::AgentDeclaration *agent = sig.paramTypes[0].getAgentDecl();
-    p << "*DYN_ARRAY_PLACE(&agents.agents_" << agent->name
-      << ", " << agent->name << ") = " << *(*expr.args)[0];
-    return;
-  } else if (sig.name == "save") {
-    p << "save(&agents, agents_info, " << *(*expr.args)[0] << ")";
-    return;
-  }*/
-
-  p << sig.name;
-  p << "(";
-  p.printArgs(expr);
-  p << ")";
-}
 void FlamePrinter::print(const AST::CallExpression &expr) {
   if (expr.isCtor()) {
     printTypeCtor(*this, expr);
-  } else if (expr.isBuiltin()) {
-    printBuiltin(*this, expr);
   } else {
-    *this << expr.name << "(";
-    this->printArgs(expr);
+    const FunctionSignature &sig = expr.calledSig;
+
+    // TODO
+    /*if (sig.name == "add") {
+      AST::AgentDeclaration *agent = sig.paramTypes[0].getAgentDecl();
+      p << "*DYN_ARRAY_PLACE(&agents.agents_" << agent->name
+        << ", " << agent->name << ") = " << *(*expr.args)[0];
+      return;
+    } else if (sig.name == "save") {
+      p << "save(&agents, agents_info, " << *(*expr.args)[0] << ")";
+      return;
+    }*/
+
+    *this << sig.name << "(";
+    printArgs(expr);
     *this << ")";
   }
 }

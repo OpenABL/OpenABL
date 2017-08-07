@@ -17,9 +17,8 @@ void FlameMainPrinter::print(const AST::SimulateStatement &stmt) {
 }
 
 void FlameMainPrinter::print(const AST::FunctionDeclaration &decl) {
-  if (!decl.isMain()) {
-    // Only print the main() function
-    // TODO Do we also need to print helper functions?
+  if (decl.isStep) {
+    // Don't print step functions, those are in the simulation code
     return;
   }
 

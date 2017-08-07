@@ -130,15 +130,20 @@ void AnalysisVisitor::leave(AST::SimpleType &) {}
 void AnalysisVisitor::leave(AST::AgentMember &) {}
 void AnalysisVisitor::leave(AST::AgentDeclaration &) {}
 
+static void printArgs(ErrorStream &err, const std::vector<Type> &argTypes) {
+  bool first = true;
+  err << "(";
+  for (const Type &argType : argTypes) {
+    if (!first) err << ", ";
+    err << argType;
+    first = false;
+  }
+  err << ")";
+}
+
+
 void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
   pushVarScope();
-
-  // TODO Allow overloading
-  Function *fn = funcs.getByName(decl.name);
-  if (fn) {
-    err << "Redeclaration of function named \"" << decl.name << "\"" << decl.loc;
-    return;
-  }
 
   Type returnType = resolveAstType(*decl.returnType);
   SKIP_INVALID(returnType);
@@ -150,7 +155,29 @@ void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
     paramTypes.push_back(paramType);
   }
 
-  funcs.add(decl.name, paramTypes, returnType);
+  const Function *fn = funcs.getByName(decl.name);
+  if (fn) {
+    const FunctionSignature *conflict = fn->getConflictingSignature(paramTypes);
+    if (conflict) {
+      err << "Declaration " << decl.name;
+      printArgs(err, paramTypes);
+      err << " conflicts with previous declaration " << decl.name;
+      printArgs(err, conflict->paramTypes);
+      err << decl.loc;
+      return;
+    }
+  }
+
+  // TODO Better overload naming scheme
+  std::string sigName = decl.name;
+  if (fn) {
+    sigName += "_" + std::to_string(fn->signatures.size());
+  }
+
+  decl.sig = FunctionSignature { decl.name, sigName, paramTypes, returnType, &decl };
+  funcs.add(decl.sig);
+
+  // TODO get rid of funcDecls (used for step functions only now)
   funcDecls.insert({ decl.name, &decl });
   currentFunc = &decl;
 
@@ -1011,17 +1038,6 @@ static bool isTypeCtorValid(Type t, const std::vector<Type> &argTypes) {
     default:
       assert(0);
   }
-}
-
-static void printArgs(ErrorStream &err, const std::vector<Type> &argTypes) {
-  bool first = true;
-  err << "(";
-  for (const Type &argType : argTypes) {
-    if (!first) err << ", ";
-    err << argType;
-    first = false;
-  }
-  err << ")";
 }
 
 void AnalysisVisitor::leave(AST::CallExpression &expr) {

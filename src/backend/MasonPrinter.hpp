@@ -7,7 +7,7 @@ struct MasonPrinter : public GenericPrinter {
   using GenericPrinter::print;
 
   MasonPrinter(AST::Script &script)
-    : GenericPrinter(script) {}
+    : GenericPrinter(script, true) {}
 
   void print(const AST::VarExpression &);
   void print(const AST::UnaryOpExpression &);

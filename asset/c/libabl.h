@@ -142,20 +142,6 @@ static inline float3 normalize_float3(float3 v) {
 
 float random_float(float min, float max);
 
-static inline float2 random_float2(float2 min, float2 max) {
-	return (float2) {
-		random_float(min.x, max.x),
-		random_float(min.y, max.y)
-	};
-}
-static inline float3 random_float3(float3 min, float3 max) {
-	return (float3) {
-		random_float(min.x, max.x),
-		random_float(min.y, max.y),
-		random_float(min.z, max.z)
-	};
-}
-
 /*
  * Runtime type information
  */
