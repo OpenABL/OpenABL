@@ -18,13 +18,6 @@ param int num_timesteps = 100;
 // Specify environment size
 environment { max: float2(W) }
 
-float2 clamp(float2 pos) {
-  return float2(
-    pos.x < 0 ? 0 : pos.x > W ? W : pos.x,
-    pos.y < 0 ? 0 : pos.y > W ? W : pos.y
-  );
-}
-
 // Step function
 // TODO Add keyword?
 void move_point(Point in -> out) {
@@ -40,7 +33,7 @@ void move_point(Point in -> out) {
     }
     new_pos += force;
   }
-  out.pos = clamp(new_pos);
+  out.pos = clamp(new_pos, float2(W));
 }
 
 void main() {
