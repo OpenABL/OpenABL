@@ -259,8 +259,14 @@ void MasonPrinter::print(const AST::ForStatement &stmt) {
           << ", " << nearRadius << ");" << nl
           << "for (int " << iLabel << " = 0; " << iLabel << " < _bag.size(); "
           << iLabel << "++) {" << indent << nl
-          << agentDecl->name << " " << *stmt.var << " = "
-          << "(" << agentDecl->name << ") _bag.get(" << iLabel << ");" << nl
+          << "Object _agent = _bag.get(" << iLabel << ");" << nl;
+    if (script.agents.size() > 1) {
+      // If there is more than one agent type, we have to check that we only the agents that
+      // were asked for
+      *this << "if (!(_agent instanceof " << agentDecl->name << ")) continue;" << nl;
+    }
+    *this << agentDecl->name << " " << *stmt.var << " = "
+          << "(" << agentDecl->name << ") _agent;" << nl
           << *stmt.stmt
           << outdent << nl << "}";
   } else if (stmt.isRange()) {
