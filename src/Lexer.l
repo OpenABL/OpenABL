@@ -72,6 +72,12 @@ false { return Parser::make_BOOL(false, loc); }
   return Parser::make_FLOAT(std::stod(yytext, nullptr), loc);
 }
 
+{DNUM}".." {
+  // Make sure something like 0..n is lexed as 0 .. n and not 0. . n
+  yyless(yyleng - 2);
+  return Parser::make_INT(std::stol(yytext, nullptr, 10), loc);
+}
+
 \"(([^"]|\\.)*)\" {
   return Parser::make_STRING(parseString(yytext, yyleng), loc);
 }

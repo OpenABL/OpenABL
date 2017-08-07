@@ -41,14 +41,14 @@ void main() {
   int num_prey = int(prey_fraction * num_agents);
   int num_predators = num_agents - num_prey;
 
-  for (int i : 0 .. num_prey) {
+  for (int i : 0..num_prey) {
     add(Prey {
       pos: random(float3(0), float3(env_size)),
       dir: float3(0),
     });
   }
 
-  for (int i : 0 .. num_predators) {
+  for (int i : 0..num_predators) {
     add(Predator {
       pos: random(float3(0), float3(env_size)),
       dir: float3(0),

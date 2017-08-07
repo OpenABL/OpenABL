@@ -96,7 +96,7 @@ void update_boid(Boid in->out) {
 void main() {
   //load("boids.in");
 
-  for (int i : 0 .. num_agents) {
+  for (int i : 0..num_agents) {
     add(Boid {
       pos: random(float3(min_pos), float3(max_pos)),
       velocity: random(float3(0), float3(1)),
