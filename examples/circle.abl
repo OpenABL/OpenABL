@@ -50,5 +50,5 @@ void main() {
   // simulation (parallel)
   simulate(num_timesteps) { move_point }
 
-  save("points.out");
+  save("points.json");
 }

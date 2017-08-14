@@ -12,7 +12,9 @@ void CBackend::generate(
   copyFile(assetDir + "/c/libabl.h", outputDir + "/libabl.h");
   copyFile(assetDir + "/c/libabl.c", outputDir + "/libabl.c");
   copyFile(assetDir + "/c/build.sh", outputDir + "/build.sh");
+  copyFile(assetDir + "/c/run.sh", outputDir + "/run.sh");
   makeFileExecutable(outputDir + "/build.sh");
+  makeFileExecutable(outputDir + "/run.sh");
 }
 
 }

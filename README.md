@@ -22,7 +22,7 @@ Examples are located in the `examples` directory.
 To compile the `examples/circle.abl` example using the C backend:
 
 ```sh
-./OpenABL -i ../examples/circle.abl -o ./output --backend c
+./OpenABL -i ../examples/circle.abl -o ./output -b c
 ```
 
 The result will be written into the `./output` directory. To run the generated code:
@@ -30,17 +30,26 @@ The result will be written into the `./output` directory. To run the generated c
 ```sh
 cd ./output
 ./build.sh
-./a.out
+./run.sh
 ```
 
-For the `circle.abl` example, this will create a `points.out` file (JSON).
+For the `circle.abl` example, this will create a `points.json` file.
+
+You can also automatically build and run the generated code (if this is supported by the backend):
+
+```sh
+# Generate + Build
+./OpenABL -i ../examples/circle.abl -o ./output -b c -B
+# Generate + Build + Run
+./OpenABL -i ../examples/circle.abl -o ./output -b c -R
+```
 
 ## Help
 
 Output of `./OpenABL --help`:
 
 ```
-Usage: ./OpenABL -i input.abl -o ./output-dir
+Usage: ./OpenABL -i input.abl -o ./output-dir -b backend
 
 Options:
   -A, --asset-dir    Asset directory (default: ./asset)
