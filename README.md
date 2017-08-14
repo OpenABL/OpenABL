@@ -67,3 +67,17 @@ Available backends:
  * mason    (mostly working)
  * dmason   (mostly working)
 ```
+
+## Environment configuration
+
+To use the automatic build and run scripts, some environment configuration is required for the
+different backends.
+
+ * `c` backend: No dependencies.
+ * `flame` backend: `libmboard` must be in PATH. The `FLAME_XPARSER_DIR` environment variable must
+   be set to the xparser directory.
+ * `flamegpu` backend: The `FLAMEGPU_DIR` environment variable must be set to the FLAMEGPU directory.
+ * `mason` backend: Mason must be in the `CLASS_PATH`.
+ * `dmason` backend: TODO.
+
+Please report if any necessary environment configuration is missing.
