@@ -51,6 +51,10 @@ std::map<std::string, std::unique_ptr<Backend>> getBackends() {
 
 }
 
+struct OptionError : public std::runtime_error {
+  OptionError(const std::string &msg) : std::runtime_error(msg) {}
+};
+
 struct Options {
   bool help;
   bool lintOnly;
@@ -61,7 +65,19 @@ struct Options {
   std::string outputDir;
   std::string assetDir;
   std::map<std::string, std::string> params;
+  std::map<std::string, std::string> config;
 };
+
+std::pair<std::string, std::string> parsePair(const std::string &str, const char *type) {
+  size_t pos = str.find('=');
+  if (pos == std::string::npos) {
+    throw OptionError(std::string("Malformed ") + type + ": Missing \"=\"");
+  }
+
+  std::string name = std::string(str, 0, pos);
+  std::string value = std::string(str, pos + 1);
+  return { name, value };
+}
 
 static Options parseCliOptions(int argc, char **argv) {
   Options options = {};
@@ -84,9 +100,9 @@ static Options parseCliOptions(int argc, char **argv) {
     }
 
     if (i + 1 == argc) {
-      std::cerr << "Missing argument for option \"" << arg << "\"" << std::endl;
-      return {};
+      throw OptionError("Missing argument for option \"" + arg + "\"");
     }
+
     if (arg == "-b" || arg == "--backend") {
       options.backend = argv[++i];
     } else if (arg == "-i" || arg == "--input") {
@@ -96,25 +112,16 @@ static Options parseCliOptions(int argc, char **argv) {
     } else if (arg == "-A" || arg == "--asset-dir") {
       options.assetDir = argv[++i];
     } else if (arg == "-P" || arg == "--param") {
-      const std::string &val = argv[++i];
-      size_t pos = val.find('=');
-      if (pos == std::string::npos) {
-        std::cerr << "Malformed parameter: Missing \"=\"" << std::endl;
-        return {};
-      }
-
-      std::string name = std::string(val, 0, pos);
-      std::string value = std::string(val, pos + 1);
-      options.params.insert({ name, value });
+      options.params.insert(parsePair(argv[++i], "parameter"));
+    } else if (arg == "-C" || arg == "--config") {
+      options.config.insert(parsePair(argv[++i], "configuration value"));
     } else {
-      std::cerr << "Unknown option \"" << arg << "\"" << std::endl;
-      return {};
+      throw OptionError("Unknown option \"" + arg + "\"");
     }
   }
 
   if (options.fileName.empty()) {
-    std::cerr << "Missing input file (-i or --input)" << std::endl;
-    return {};
+    throw OptionError("Missing input file (-i or --input)");
   }
 
   if (options.assetDir.empty()) {
@@ -126,8 +133,7 @@ static Options parseCliOptions(int argc, char **argv) {
   }
 
   if (options.outputDir.empty()) {
-    std::cerr << "Missing output directory (-o or --output-dir)" << std::endl;
-    return {};
+    throw OptionError("Missing output directory (-o or --output-dir)");
   }
 
   if (options.backend.empty()) {
@@ -143,9 +149,11 @@ void printHelp() {
                "  -A, --asset-dir    Asset directory (default: ./asset)\n"
                "  -b, --backend      Backend (default: c)\n"
                "  -B, --build        Build the generated code\n"
+               "  -C, --config       Specify a configuration value (name=value)\n"
                "  -h, --help         Display this help\n"
                "  -i, --input        Input file\n"
                "  -o, --output-dir   Output directory\n"
+               "  -P, --param        Specify a simulation parameter (name=value)\n"
                "  -R, --run          Build and run the generated code\n"
                "\n"
                "Available backends:\n"
@@ -158,7 +166,15 @@ void printHelp() {
 }
 
 int main(int argc, char **argv) {
-  Options options = parseCliOptions(argc, argv);
+  Options options;
+  try {
+    options = parseCliOptions(argc, argv);
+  } catch (const OptionError &e) {
+    printHelp();
+    std::cerr << "\nERROR: " << e.what() << std::endl;
+    return 1;
+  }
+
   if (options.help) {
     printHelp();
     return 0;
