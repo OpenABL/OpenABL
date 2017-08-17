@@ -112,22 +112,21 @@ static std::string createMainFile(AST::Script &script) {
   return printer.extractStr();
 }
 
-void FlameBackend::generate(
-    AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
+void FlameBackend::generate(AST::Script &script, const BackendContext &ctx) {
   FlameModel model = FlameModel::generateFromScript(script);
 
-  writeToFile(outputDir + "/XMLModelFile.xml", createXmlModel(script, model));
-  writeToFile(outputDir + "/functions.c", createFunctionsFile(script, model));
-  writeToFile(outputDir + "/runner.c", createMainFile(script));
+  writeToFile(ctx.outputDir + "/XMLModelFile.xml", createXmlModel(script, model));
+  writeToFile(ctx.outputDir + "/functions.c", createFunctionsFile(script, model));
+  writeToFile(ctx.outputDir + "/runner.c", createMainFile(script));
 
-  copyFile(assetDir + "/c/libabl.h", outputDir + "/libabl.h");
-  copyFile(assetDir + "/c/libabl.c", outputDir + "/libabl.c");
-  copyFile(assetDir + "/flame/build.sh", outputDir + "/build.sh");
-  copyFile(assetDir + "/flame/run.sh", outputDir + "/run.sh");
-  makeFileExecutable(outputDir + "/build.sh");
-  makeFileExecutable(outputDir + "/run.sh");
+  copyFile(ctx.assetDir + "/c/libabl.h", ctx.outputDir + "/libabl.h");
+  copyFile(ctx.assetDir + "/c/libabl.c", ctx.outputDir + "/libabl.c");
+  copyFile(ctx.assetDir + "/flame/build.sh", ctx.outputDir + "/build.sh");
+  copyFile(ctx.assetDir + "/flame/run.sh", ctx.outputDir + "/run.sh");
+  makeFileExecutable(ctx.outputDir + "/build.sh");
+  makeFileExecutable(ctx.outputDir + "/run.sh");
 
-  createDirectory(outputDir + "/iterations");
+  createDirectory(ctx.outputDir + "/iterations");
 }
 
 }

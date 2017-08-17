@@ -27,7 +27,7 @@ static std::string generateLocalTestCode(AST::Script &script) {
 }
 
 void DMasonBackend::generate(
-    AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
+    AST::Script &script, const BackendContext &ctx) {
   if (script.envDecl) {
     if (script.envDecl->envDimension == 3) {
       throw NotSupportedError("3D environments are not supported by DMason");
@@ -39,17 +39,21 @@ void DMasonBackend::generate(
     }
   }
 
-  writeToFile(outputDir + "/Sim.java", generateMainCode(script));
-  writeToFile(outputDir + "/LocalTestSim.java", generateLocalTestCode(script));
+  writeToFile(ctx.outputDir + "/Sim.java", generateMainCode(script));
+  writeToFile(ctx.outputDir + "/LocalTestSim.java", generateLocalTestCode(script));
   
   for (AST::AgentDeclaration *agent : script.agents) {
-    writeToFile(outputDir + "/Remote" + agent->name + ".java", generateStubAgentCode(script, *agent));
-    writeToFile(outputDir + "/" + agent->name + ".java", generateAgentCode(script, *agent));
+    writeToFile(
+        ctx.outputDir + "/Remote" + agent->name + ".java",
+        generateStubAgentCode(script, *agent));
+    writeToFile(
+        ctx.outputDir + "/" + agent->name + ".java",
+        generateAgentCode(script, *agent));
   }
 
-  copyFile(assetDir + "/mason/Util.java", outputDir + "/Util.java");
-  copyFile(assetDir + "/mason/build.sh", outputDir + "/build.sh");
-  makeFileExecutable(outputDir + "/build.sh");
+  copyFile(ctx.assetDir + "/mason/Util.java", ctx.outputDir + "/Util.java");
+  copyFile(ctx.assetDir + "/mason/build.sh", ctx.outputDir + "/build.sh");
+  makeFileExecutable(ctx.outputDir + "/build.sh");
 }
 
 }

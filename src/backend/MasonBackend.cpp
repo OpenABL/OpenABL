@@ -17,18 +17,18 @@ static std::string generateAgentCode(AST::Script &script, AST::AgentDeclaration 
 }
 
 void MasonBackend::generate(
-    AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
-  writeToFile(outputDir + "/Sim.java", generateMainCode(script));
+    AST::Script &script, const BackendContext &ctx) {
+  writeToFile(ctx.outputDir + "/Sim.java", generateMainCode(script));
 
   for (AST::AgentDeclaration *agent : script.agents) {
-    writeToFile(outputDir + "/" + agent->name + ".java", generateAgentCode(script, *agent));
+    writeToFile(ctx.outputDir + "/" + agent->name + ".java", generateAgentCode(script, *agent));
   }
 
-  copyFile(assetDir + "/mason/Util.java", outputDir + "/Util.java");
-  copyFile(assetDir + "/mason/build.sh", outputDir + "/build.sh");
-  copyFile(assetDir + "/mason/run.sh", outputDir + "/run.sh");
-  makeFileExecutable(outputDir + "/build.sh");
-  makeFileExecutable(outputDir + "/run.sh");
+  copyFile(ctx.assetDir + "/mason/Util.java", ctx.outputDir + "/Util.java");
+  copyFile(ctx.assetDir + "/mason/build.sh", ctx.outputDir + "/build.sh");
+  copyFile(ctx.assetDir + "/mason/run.sh", ctx.outputDir + "/run.sh");
+  makeFileExecutable(ctx.outputDir + "/build.sh");
+  makeFileExecutable(ctx.outputDir + "/run.sh");
 }
 
 }

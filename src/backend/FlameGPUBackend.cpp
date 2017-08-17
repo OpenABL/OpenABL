@@ -195,26 +195,27 @@ static std::string createMainFile(AST::Script &script) {
   return printer.extractStr();
 }
 
-void FlameGPUBackend::generate(
-    AST::Script &script, const std::string &outputDir, const std::string &assetDir) {
+void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
   FlameModel model = FlameModel::generateFromScript(script);
 
-  createDirectory(outputDir + "/model");
-  createDirectory(outputDir + "/dynamic");
+  createDirectory(ctx.outputDir + "/model");
+  createDirectory(ctx.outputDir + "/dynamic");
 
-  writeToFile(outputDir + "/model/XMLModelFile.xml", createXmlModel(script, model));
-  writeToFile(outputDir + "/model/functions.c", createFunctionsFile(script, model));
-  writeToFile(outputDir + "/runner.c", createMainFile(script));
+  writeToFile(ctx.outputDir + "/model/XMLModelFile.xml", createXmlModel(script, model));
+  writeToFile(ctx.outputDir + "/model/functions.c", createFunctionsFile(script, model));
+  writeToFile(ctx.outputDir + "/runner.c", createMainFile(script));
 
-  copyFile(assetDir + "/flamegpu/libabl_flamegpu.h", outputDir + "/model/libabl_flamegpu.h");
-  copyFile(assetDir + "/flamegpu/Makefile", outputDir + "/Makefile");
-  copyFile(assetDir + "/flamegpu/build.sh", outputDir + "/build.sh");
+  copyFile(
+      ctx.assetDir + "/flamegpu/libabl_flamegpu.h",
+      ctx.outputDir + "/model/libabl_flamegpu.h");
+  copyFile(ctx.assetDir + "/flamegpu/Makefile", ctx.outputDir + "/Makefile");
+  copyFile(ctx.assetDir + "/flamegpu/build.sh", ctx.outputDir + "/build.sh");
 
   // These are required for runner.c
-  copyFile(assetDir + "/c/libabl.h", outputDir + "/libabl.h");
-  copyFile(assetDir + "/c/libabl.c", outputDir + "/libabl.c");
+  copyFile(ctx.assetDir + "/c/libabl.h", ctx.outputDir + "/libabl.h");
+  copyFile(ctx.assetDir + "/c/libabl.c", ctx.outputDir + "/libabl.c");
 
-  makeFileExecutable(outputDir + "/build.sh");
+  makeFileExecutable(ctx.outputDir + "/build.sh");
 }
 
 }

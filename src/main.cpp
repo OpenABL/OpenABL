@@ -249,7 +249,10 @@ int main(int argc, char **argv) {
 
   OpenABL::Backend &backend = *it->second;
   try {
-    backend.generate(mainScript, options.outputDir, options.assetDir);
+    OpenABL::BackendContext backendCtx = {
+      options.outputDir, options.assetDir, options.config
+    };
+    backend.generate(mainScript, backendCtx);
   } catch (const OpenABL::NotSupportedError &e) {
     std::cerr << e.what() << std::endl;
     return 1;
