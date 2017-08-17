@@ -9,8 +9,8 @@ namespace OpenABL {
 struct FlameGPUPrinter : public GenericPrinter {
   using GenericPrinter::print;
 
-  FlameGPUPrinter(AST::Script &script, const FlameModel &model)
-    : GenericPrinter(script, true), script(script), model(model) {}
+  FlameGPUPrinter(AST::Script &script, const FlameModel &model, bool useFloat)
+    : GenericPrinter(script, true), script(script), model(model), useFloat(useFloat) {}
 
   void print(const AST::Literal &);
   void print(const AST::AssignStatement &);
@@ -21,12 +21,13 @@ struct FlameGPUPrinter : public GenericPrinter {
   void print(const AST::MemberAccessExpression &);
   void print(const AST::ForStatement &);
   void print(const AST::SimulateStatement &);
-  void print(const AST::SimpleType &);
   void print(const AST::AgentMember &);
   void print(const AST::AgentDeclaration &);
   void print(const AST::ConstDeclaration &);
   void print(const AST::FunctionDeclaration &);
   void print(const AST::Script &);
+
+  void printType(Type t);
 
   virtual void printSpecialBinaryOp(
       const AST::BinaryOp, const AST::Expression &, const AST::Expression &);
@@ -36,6 +37,8 @@ struct FlameGPUPrinter : public GenericPrinter {
 private:
   AST::Script &script;
   const FlameModel &model;
+  bool useFloat;
+
   const FlameModel::Func *currentFunc = nullptr;
   // Current agent, input and output variables inside a step function
   const AST::AgentDeclaration *currentAgent = nullptr;

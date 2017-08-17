@@ -15,11 +15,11 @@ static uint64_t xorshift128plus() {
 	return xorshift_state[1] + y;
 }
 
-float random_float(float min, float max) {
+abl_float random_float(abl_float min, abl_float max) {
 	uint64_t x = xorshift128plus();
 	// This is a horrible way of generating a random float.
 	// It will do for now.
-	return min + (float) x / (float) (UINT64_MAX / (max - min));
+	return min + (abl_float) x / (abl_float) (UINT64_MAX / (max - min));
 }
 
 static size_t type_info_get_size(const type_info *info) {
@@ -51,7 +51,7 @@ static void save_json_agent(FILE *file, const char *agent, const type_info *info
 			}
 			case TYPE_FLOAT:
 			{
-				float f = *(float *) (agent + info->offset);
+				abl_float f = *(abl_float *) (agent + info->offset);
 				fprintf(file, "%f", f);
 				break;
 			}
@@ -118,7 +118,7 @@ static void save_flame_xml_member(FILE *file, const char *agent, const type_info
 		}
 		case TYPE_FLOAT:
 		{
-			float f = *(float *) (agent + info->offset);
+			abl_float f = *(abl_float *) (agent + info->offset);
 			fprintf(file, "<%s>%f</%s>\n", name, f, name);
 			break;
 		}

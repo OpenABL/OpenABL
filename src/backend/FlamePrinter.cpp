@@ -12,11 +12,12 @@ void FlamePrinter::print(const AST::SimulateStatement &) {}
 void FlamePrinter::print(const AST::AgentMember &) {}
 void FlamePrinter::print(const AST::AgentDeclaration &) {}
 
-void FlamePrinter::print(const AST::SimpleType &type) {
-  Type t = type.resolved;
+void FlamePrinter::printType(Type t) {
   if (t.isArray()) {
     // Print only the base type
-    *this << t.getBaseType();
+    printType(t.getBaseType());
+  } else if (t.isFloat()) {
+    *this << (useFloat ? "float" : "double");
   } else {
     *this << t;
   }
@@ -110,7 +111,9 @@ static void printTypeCtor(FlamePrinter &p, const AST::CallExpression &expr) {
     p.printArgs(expr);
     p << ")";
   } else {
-    p << "(" << t << ") " << *(*expr.args)[0];
+    p << "(";
+    p.printType(t);
+    p << ") " << expr.getArg(0);
   }
 }
 void FlamePrinter::print(const AST::CallExpression &expr) {

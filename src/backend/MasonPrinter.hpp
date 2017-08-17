@@ -20,12 +20,13 @@ struct MasonPrinter : public GenericPrinter {
   void print(const AST::VarDeclarationStatement &);
   void print(const AST::ForStatement &);
   void print(const AST::SimulateStatement &);
-  void print(const AST::SimpleType &);
   void print(const AST::FunctionDeclaration &);
   void print(const AST::AgentMember &);
   void print(const AST::AgentDeclaration &);
   void print(const AST::ConstDeclaration &);
   void print(const AST::Script &);
+
+  void printType(Type t);
 
   virtual void printSpecialBinaryOp(
       const AST::BinaryOp, const AST::Expression &, const AST::Expression &);

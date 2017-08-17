@@ -47,19 +47,25 @@ static inline void dyn_array_clean(dyn_array *ary) {
 	ary->len = ary->cap = 0;
 }
 
+#ifdef LIBABL_USE_FLOAT
+typedef float abl_float;
+#else
+typedef double abl_float;
+#endif
+
 /*
  * float2
  */
 
 typedef struct {
-	float x;
-	float y;
+	abl_float x;
+	abl_float y;
 } float2;
 
-static inline float2 float2_create(float x, float y) {
+static inline float2 float2_create(abl_float x, abl_float y) {
 	return (float2) { x, y };
 }
-static inline float2 float2_fill(float x) {
+static inline float2 float2_fill(abl_float x) {
 	return (float2) { x, x };
 }
 static inline float2 float2_add(float2 a, float2 b) {
@@ -68,10 +74,10 @@ static inline float2 float2_add(float2 a, float2 b) {
 static inline float2 float2_sub(float2 a, float2 b) {
 	return (float2) { a.x - b.x, a.y - b.y };
 }
-static inline float2 float2_mul_scalar(float2 a, float s) {
+static inline float2 float2_mul_scalar(float2 a, abl_float s) {
 	return (float2) { a.x * s, a.y * s };
 }
-static inline float2 float2_div_scalar(float2 a, float s) {
+static inline float2 float2_div_scalar(float2 a, abl_float s) {
 	return (float2) { a.x / s, a.y / s };
 }
 
@@ -80,15 +86,15 @@ static inline float2 float2_div_scalar(float2 a, float s) {
  */
 
 typedef struct {
-	float x;
-	float y;
-	float z;
+	abl_float x;
+	abl_float y;
+	abl_float z;
 } float3;
 
-static inline float3 float3_create(float x, float y, float z) {
+static inline float3 float3_create(abl_float x, abl_float y, abl_float z) {
 	return (float3) { x, y, z };
 }
-static inline float3 float3_fill(float x) {
+static inline float3 float3_fill(abl_float x) {
 	return (float3) { x, x, x };
 }
 static inline float3 float3_add(float3 a, float3 b) {
@@ -97,10 +103,10 @@ static inline float3 float3_add(float3 a, float3 b) {
 static inline float3 float3_sub(float3 a, float3 b) {
 	return (float3) { a.x - b.x, a.y - b.y, a.z - b.z };
 }
-static inline float3 float3_mul_scalar(float3 a, float s) {
+static inline float3 float3_mul_scalar(float3 a, abl_float s) {
 	return (float3) { a.x * s, a.y * s, a.z * s };
 }
-static inline float3 float3_div_scalar(float3 a, float s) {
+static inline float3 float3_div_scalar(float3 a, abl_float s) {
 	return (float3) { a.x / s, a.y / s, a.z / s };
 }
 
@@ -108,24 +114,24 @@ static inline float3 float3_div_scalar(float3 a, float s) {
  * Lengths and distances
  */
 
-static inline float dot_float2(float2 a, float2 b) {
+static inline abl_float dot_float2(float2 a, float2 b) {
 	return a.x * b.x + a.y * b.y;
 }
-static inline float dot_float3(float3 a, float3 b) {
+static inline abl_float dot_float3(float3 a, float3 b) {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-static inline float length_float2(float2 v) {
+static inline abl_float length_float2(float2 v) {
 	return sqrtf(v.x * v.x + v.y * v.y);
 }
-static inline float length_float3(float3 v) {
+static inline abl_float length_float3(float3 v) {
 	return sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
-static inline float dist_float2(float2 a, float2 b) {
+static inline abl_float dist_float2(float2 a, float2 b) {
 	return length_float2(float2_sub(a, b));
 }
-static inline float dist_float3(float3 a, float3 b) {
+static inline abl_float dist_float3(float3 a, float3 b) {
 	return length_float3(float3_sub(a, b));
 }
 
@@ -140,7 +146,7 @@ static inline float3 normalize_float3(float3 v) {
  * Random numbers
  */
 
-float random_float(float min, float max);
+abl_float random_float(abl_float min, abl_float max);
 
 /*
  * Runtime type information

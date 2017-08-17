@@ -14,6 +14,10 @@ static void printStringLiteral(Printer &p, const std::string &str) {
   p << '"';
 }
 
+void GenericPrinter::print(const AST::SimpleType &type) {
+  printType(type.resolved);
+}
+
 void GenericPrinter::print(const AST::Var &var) {
   *this << var.name;
 }

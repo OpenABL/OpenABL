@@ -1,17 +1,18 @@
 #pragma once
 
 #include "AST.hpp"
+#include "Config.hpp"
 
 namespace OpenABL {
 
-struct NotSupportedError : public std::logic_error {
-  NotSupportedError(const std::string &msg) : std::logic_error(msg) {}
+struct BackendError : public std::logic_error {
+  BackendError(const std::string &msg) : std::logic_error(msg) {}
 };
 
 struct BackendContext {
   const std::string &outputDir;
   const std::string &assetDir;
-  const std::map<std::string, std::string> &config;
+  const Config &config;
 };
 
 struct Backend {

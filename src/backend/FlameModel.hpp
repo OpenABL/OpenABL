@@ -35,9 +35,9 @@ struct FlameModel {
 
   static FlameModel generateFromScript(AST::Script &);
 
-  static MemberList getUnpackedMembers(const AST::AgentMemberList &, bool forGpu = false);
+  static MemberList getUnpackedMembers(const AST::AgentMemberList &, bool useFloat, bool forGpu);
   static MemberList getUnpackedMembers(
-      const std::vector<const AST::AgentMember *> &, bool forGpu = false);
+      const std::vector<const AST::AgentMember *> &, bool useFloat, bool forGpu);
 
   std::vector<Message> messages;
   std::vector<Func> funcs;

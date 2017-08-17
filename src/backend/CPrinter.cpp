@@ -3,28 +3,30 @@
 
 namespace OpenABL {
 
-static void printType(Printer &s, Type type) {
+void CPrinter::printType(Type type) {
   if (type.isArray()) {
     // Print only the base type
-    s << type.getBaseType();
+    *this << type.getBaseType();
   } else if (type.isAgent()) {
-    s << type.getAgentDecl()->name << '*';
+    *this << type.getAgentDecl()->name << '*';
+  } else if (type.isFloat()) {
+    *this << (useFloat ? "float" : "double");
   } else {
-    s << type;
+    *this << type;
   }
 }
 
 static CPrinter &operator<<(CPrinter &s, Type type) {
-  printType(s, type);
+  s.printType(type);
   return s;
 }
 
-static void printStorageType(Printer &s, Type type) {
-  if (type.isArray()) {
-    // Print only the base type
-    s << type.getBaseType();
+static void printStorageType(CPrinter &s, Type type) {
+  if (type.isAgent()) {
+    // Don't use a pointer
+    s << type.getAgentDecl()->name;
   } else {
-    s << type;
+    s.printType(type);
   }
 }
 
@@ -267,9 +269,6 @@ void CPrinter::print(const AST::SimulateStatement &stmt) {
 
   *this << outdent << nl << "}";
   // TODO Cleanup memory
-}
-void CPrinter::print(const AST::SimpleType &type) {
-  *this << type.resolved;
 }
 
 void CPrinter::print(const AST::AgentMember &member) {

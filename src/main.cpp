@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include "Cli.hpp"
 #include "ParserContext.hpp"
 #include "Analysis.hpp"
 #include "AnalysisVisitor.hpp"
@@ -49,100 +50,6 @@ std::map<std::string, std::unique_ptr<Backend>> getBackends() {
   return backends;
 }
 
-}
-
-struct OptionError : public std::runtime_error {
-  OptionError(const std::string &msg) : std::runtime_error(msg) {}
-};
-
-struct Options {
-  bool help;
-  bool lintOnly;
-  bool build;
-  bool run;
-  std::string fileName;
-  std::string backend;
-  std::string outputDir;
-  std::string assetDir;
-  std::map<std::string, std::string> params;
-  std::map<std::string, std::string> config;
-};
-
-std::pair<std::string, std::string> parsePair(const std::string &str, const char *type) {
-  size_t pos = str.find('=');
-  if (pos == std::string::npos) {
-    throw OptionError(std::string("Malformed ") + type + ": Missing \"=\"");
-  }
-
-  std::string name = std::string(str, 0, pos);
-  std::string value = std::string(str, pos + 1);
-  return { name, value };
-}
-
-static Options parseCliOptions(int argc, char **argv) {
-  Options options = {};
-  for (int i = 1; i < argc; i++) {
-    std::string arg = argv[i];
-    if (arg == "-h" || arg == "--help") {
-      options.help = true;
-      return options;
-    }
-
-    if (arg == "--lint-only") {
-      options.lintOnly = true;
-      continue;
-    } else if (arg == "--build" || arg == "-B") {
-      options.build = true;
-      continue;
-    } else if (arg == "--run" || arg == "-R") {
-      options.run = true;
-      continue;
-    }
-
-    if (i + 1 == argc) {
-      throw OptionError("Missing argument for option \"" + arg + "\"");
-    }
-
-    if (arg == "-b" || arg == "--backend") {
-      options.backend = argv[++i];
-    } else if (arg == "-i" || arg == "--input") {
-      options.fileName = argv[++i];
-    } else if (arg == "-o" || arg == "--output-dir") {
-      options.outputDir = argv[++i];
-    } else if (arg == "-A" || arg == "--asset-dir") {
-      options.assetDir = argv[++i];
-    } else if (arg == "-P" || arg == "--param") {
-      options.params.insert(parsePair(argv[++i], "parameter"));
-    } else if (arg == "-C" || arg == "--config") {
-      options.config.insert(parsePair(argv[++i], "configuration value"));
-    } else {
-      throw OptionError("Unknown option \"" + arg + "\"");
-    }
-  }
-
-  if (options.fileName.empty()) {
-    throw OptionError("Missing input file (-i or --input)");
-  }
-
-  if (options.assetDir.empty()) {
-    options.assetDir = "./asset";
-  }
-
-  if (options.lintOnly) {
-    return options;
-  }
-
-  if (options.outputDir.empty()) {
-    throw OptionError("Missing output directory (-o or --output-dir)");
-  }
-
-  if (options.backend.empty()) {
-    options.backend = "c";
-  }
-
-  return options;
-}
-
 void printHelp() {
   std::cout << "Usage: ./OpenABL -i input.abl -o ./output-dir -b backend\n\n"
                "Options:\n"
@@ -161,15 +68,18 @@ void printHelp() {
                " * flame    (mostly working)\n"
                " * flamegpu (mostly working)\n"
                " * mason    (mostly working)\n"
-               " * dmason   (mostly working)"
-            << std::endl;
+               " * dmason   (mostly working)\n"
+               "\n"
+               "Available configuration options:\n"
+               " * bool use_float (default: false)\n"
+            << std::flush;
 }
 
 int main(int argc, char **argv) {
-  Options options;
+  Cli::Options options;
   try {
-    options = parseCliOptions(argc, argv);
-  } catch (const OptionError &e) {
+    options = Cli::parseOptions(argc, argv);
+  } catch (const Cli::OptionError &e) {
     printHelp();
     std::cerr << "\nERROR: " << e.what() << std::endl;
     return 1;
@@ -190,7 +100,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  if (!OpenABL::directoryExists(options.assetDir)) {
+  if (!directoryExists(options.assetDir)) {
     std::cerr << "Asset directory \"" << options.assetDir << "\" does not exist "
               << "(override with -A or --asset-dir)" << std::endl;
     return 1;
@@ -203,25 +113,25 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  OpenABL::ParserContext mainCtx(mainFile);
-  OpenABL::ParserContext libCtx(libFile);
+  ParserContext mainCtx(mainFile);
+  ParserContext libCtx(libFile);
   if (!mainCtx.parse() || !libCtx.parse()) {
     return 1;
   }
 
-  OpenABL::AST::Script &mainScript = *mainCtx.script;
-  OpenABL::AST::Script &libScript = *libCtx.script;
+  AST::Script &mainScript = *mainCtx.script;
+  AST::Script &libScript = *libCtx.script;
 
   int numErrors = 0;
-  OpenABL::ErrorStream err([&numErrors](const OpenABL::Error &err) {
+  ErrorStream err([&numErrors](const Error &err) {
     std::cerr << err.msg << " on line " << err.loc.begin.line << std::endl;
     numErrors++;
   });
 
-  OpenABL::FunctionList funcs;
+  FunctionList funcs;
   registerBuiltinFunctions(funcs);
 
-  OpenABL::AnalysisVisitor visitor(mainScript, options.params, err, funcs);
+  AnalysisVisitor visitor(mainScript, options.params, err, funcs);
   visitor.handleLibScript(libScript);
   visitor.handleMainScript(mainScript);
 
@@ -235,49 +145,49 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  if (!OpenABL::createDirectory(options.outputDir)) {
+  if (!createDirectory(options.outputDir)) {
     std::cerr << "Failed to create directory \"" << options.outputDir << "\"." << std::endl;
     return 1;
   }
 
-  auto backends = OpenABL::getBackends();
+  auto backends = getBackends();
   auto it = backends.find(options.backend);
   if (it == backends.end()) {
     std::cerr << "Unknown backend \"" << options.backend << "\"" << std::endl;
     return 1;
   }
 
-  OpenABL::Backend &backend = *it->second;
+  Backend &backend = *it->second;
   try {
-    OpenABL::BackendContext backendCtx = {
-      options.outputDir, options.assetDir, options.config
+    BackendContext backendCtx = {
+      options.outputDir, options.assetDir, Config { options.config }
     };
     backend.generate(mainScript, backendCtx);
-  } catch (const OpenABL::NotSupportedError &e) {
+  } catch (const std::runtime_error &e) {
     std::cerr << e.what() << std::endl;
     return 1;
   }
 
   if (options.build || options.run) {
-    OpenABL::changeWorkingDirectory(options.outputDir);
-    if (!OpenABL::fileExists("./build.sh")) {
+    changeWorkingDirectory(options.outputDir);
+    if (!fileExists("./build.sh")) {
       std::cerr << "Build file for this backend not found" << std::endl;
       return 1;
     }
 
-    if (!OpenABL::executeCommand("./build.sh")) {
+    if (!executeCommand("./build.sh")) {
       std::cerr << "Build failed" << std::endl;
       return 1;
     }
 
     if (options.run) {
-      if (!OpenABL::fileExists("./run.sh")) {
+      if (!fileExists("./run.sh")) {
         std::cerr << "Run file for this backend not found" << std::endl;
         return 1;
       }
 
       auto start = std::chrono::high_resolution_clock::now();
-      if (!OpenABL::executeCommand("./run.sh")) {
+      if (!executeCommand("./run.sh")) {
         std::cerr << "Run failed" << std::endl;
         return 1;
       }
@@ -291,4 +201,10 @@ int main(int argc, char **argv) {
 
   fclose(mainFile);
   return 0;
+}
+
+}
+
+int main(int argc, char **argv) {
+  return OpenABL::main(argc, argv);
 }

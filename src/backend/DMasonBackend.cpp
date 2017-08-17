@@ -30,13 +30,18 @@ void DMasonBackend::generate(
     AST::Script &script, const BackendContext &ctx) {
   if (script.envDecl) {
     if (script.envDecl->envDimension == 3) {
-      throw NotSupportedError("3D environments are not supported by DMason");
+      throw BackendError("3D environments are not supported by DMason");
     }
     for (double d : script.envDecl->envMin.getVec()) {
       if (d < 0) {
-        throw NotSupportedError("Negative environment bounds are not supported by DMason");
+        throw BackendError("Negative environment bounds are not supported by DMason");
       }
     }
+  }
+
+  bool useFloat = ctx.config.getBool("use_float", false);
+  if (useFloat) {
+    throw BackendError("Floats are not supported by the Mason backend");
   }
 
   writeToFile(ctx.outputDir + "/Sim.java", generateMainCode(script));

@@ -55,9 +55,11 @@ Options:
   -A, --asset-dir    Asset directory (default: ./asset)
   -b, --backend      Backend (default: c)
   -B, --build        Build the generated code
+  -C, --config       Specify a configuration value (name=value)
   -h, --help         Display this help
   -i, --input        Input file
   -o, --output-dir   Output directory
+  -P, --param        Specify a simulation parameter (name=value)
   -R, --run          Build and run the generated code
 
 Available backends:
@@ -66,6 +68,9 @@ Available backends:
  * flamegpu (mostly working)
  * mason    (mostly working)
  * dmason   (mostly working)
+
+Available configuration options:
+ * bool use_float (default: false)
 ```
 
 ## Environment configuration

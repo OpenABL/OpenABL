@@ -7,12 +7,12 @@
 
 namespace OpenABL {
 
-static XmlElems createXmlAgents(AST::Script &script, const FlameModel &model) {
+static XmlElems createXmlAgents(AST::Script &script, const FlameModel &model, bool useFloat) {
   XmlElems agents;
   for (const AST::AgentDeclaration *decl : script.agents) {
     XmlElems members, functions;
 
-    auto unpackedMembers = FlameModel::getUnpackedMembers(*decl->members);
+    auto unpackedMembers = FlameModel::getUnpackedMembers(*decl->members, useFloat, false);
     for (const FlameModel::Member &member : unpackedMembers) {
       members.push_back({ "variable", {
         { "type", {{ member.second }} },
@@ -57,11 +57,11 @@ static XmlElems createXmlAgents(AST::Script &script, const FlameModel &model) {
   return agents;
 }
 
-static XmlElems createXmlMessages(const FlameModel &model) {
+static XmlElems createXmlMessages(const FlameModel &model, bool useFloat) {
   XmlElems messages;
   for (const FlameModel::Message &msg : model.messages) {
     XmlElems variables;
-    auto unpackedMembers = FlameModel::getUnpackedMembers(msg.members);
+    auto unpackedMembers = FlameModel::getUnpackedMembers(msg.members, useFloat, false);
     for (const FlameModel::Member &member : unpackedMembers) {
       variables.push_back({ "variable", {
         { "type", {{ member.second }} },
@@ -77,9 +77,9 @@ static XmlElems createXmlMessages(const FlameModel &model) {
   return messages;
 }
 
-static std::string createXmlModel(AST::Script &script, const FlameModel &model) {
-  XmlElems agents = createXmlAgents(script, model);
-  XmlElems messages = createXmlMessages(model);
+static std::string createXmlModel(AST::Script &script, const FlameModel &model, bool useFloat) {
+  XmlElems agents = createXmlAgents(script, model, useFloat);
+  XmlElems messages = createXmlMessages(model, useFloat);
   XmlElem root("xmodel", {
     { "name", {{ "TODO" }} },
     { "version", {{ "01" }} },
@@ -100,30 +100,43 @@ static std::string createXmlModel(AST::Script &script, const FlameModel &model) 
   return writer.serialize(root);
 }
 
-static std::string createFunctionsFile(AST::Script &script, const FlameModel &model) {
-  FlamePrinter printer(script, model);
+static std::string createFunctionsFile(
+    AST::Script &script, const FlameModel &model, bool useFloat) {
+  FlamePrinter printer(script, model, useFloat);
   printer.print(script);
   return printer.extractStr();
 }
 
-static std::string createMainFile(AST::Script &script) {
-  FlameMainPrinter printer(script, false);
+static std::string createMainFile(AST::Script &script, bool useFloat) {
+  FlameMainPrinter printer(script, useFloat, false);
   printer.print(script);
   return printer.extractStr();
+}
+
+static std::string createBuildRunner(bool useFloat) {
+  if (useFloat) {
+    return "gcc -O2 -std=c99 -DLIBABL_USE_FLOAT=1 runner.c libabl.c -lm -o runner";
+  } else {
+    return "gcc -O2 -std=c99 runner.c libabl.c -lm -o runner";
+  }
 }
 
 void FlameBackend::generate(AST::Script &script, const BackendContext &ctx) {
+  bool useFloat = ctx.config.getBool("use_float", false);
+
   FlameModel model = FlameModel::generateFromScript(script);
 
-  writeToFile(ctx.outputDir + "/XMLModelFile.xml", createXmlModel(script, model));
-  writeToFile(ctx.outputDir + "/functions.c", createFunctionsFile(script, model));
-  writeToFile(ctx.outputDir + "/runner.c", createMainFile(script));
+  writeToFile(ctx.outputDir + "/XMLModelFile.xml", createXmlModel(script, model, useFloat));
+  writeToFile(ctx.outputDir + "/functions.c", createFunctionsFile(script, model, useFloat));
+  writeToFile(ctx.outputDir + "/runner.c", createMainFile(script, useFloat));
 
   copyFile(ctx.assetDir + "/c/libabl.h", ctx.outputDir + "/libabl.h");
   copyFile(ctx.assetDir + "/c/libabl.c", ctx.outputDir + "/libabl.c");
   copyFile(ctx.assetDir + "/flame/build.sh", ctx.outputDir + "/build.sh");
   copyFile(ctx.assetDir + "/flame/run.sh", ctx.outputDir + "/run.sh");
+  writeToFile(ctx.outputDir + "/build_runner.sh", createBuildRunner(useFloat));
   makeFileExecutable(ctx.outputDir + "/build.sh");
+  makeFileExecutable(ctx.outputDir + "/build_runner.sh");
   makeFileExecutable(ctx.outputDir + "/run.sh");
 
   createDirectory(ctx.outputDir + "/iterations");

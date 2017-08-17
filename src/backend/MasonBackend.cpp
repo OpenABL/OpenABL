@@ -18,6 +18,11 @@ static std::string generateAgentCode(AST::Script &script, AST::AgentDeclaration 
 
 void MasonBackend::generate(
     AST::Script &script, const BackendContext &ctx) {
+  bool useFloat = ctx.config.getBool("use_float", false);
+  if (useFloat) {
+    throw BackendError("Floats are not supported by the Mason backend");
+  }
+
   writeToFile(ctx.outputDir + "/Sim.java", generateMainCode(script));
 
   for (AST::AgentDeclaration *agent : script.agents) {

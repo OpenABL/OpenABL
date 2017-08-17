@@ -13,6 +13,7 @@ struct GenericPrinter : public Printer {
   GenericPrinter(AST::Script &script, bool supportsOverloads)
     : script(script), supportsOverloads(supportsOverloads) {}
 
+  virtual void print(const AST::SimpleType &);
   virtual void print(const AST::Var &);
   virtual void print(const AST::Literal &);
   virtual void print(const AST::VarExpression &);
@@ -33,6 +34,8 @@ struct GenericPrinter : public Printer {
   virtual void print(const AST::ConstDeclaration &);
   virtual void print(const AST::Param &);
   virtual void print(const AST::FunctionDeclaration &);
+
+  virtual void printType(Type t) = 0;
 
   virtual void printSpecialBinaryOp(
       const AST::BinaryOp, const AST::Expression &, const AST::Expression &) {

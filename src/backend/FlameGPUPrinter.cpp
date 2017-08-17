@@ -11,37 +11,34 @@ void FlameGPUPrinter::print(const AST::AgentDeclaration &) {}
 
 void FlameGPUPrinter::print(const AST::Literal &lit) {
   GenericPrinter::print(lit);
-  if (dynamic_cast<const AST::FloatLiteral *>(&lit)) {
-    // We're using floats for FlameGPU
+  if (useFloat && dynamic_cast<const AST::FloatLiteral *>(&lit)) {
     *this << "f";
   }
 }
 
-static void printType(Printer &p, Type t) {
+void FlameGPUPrinter::printType(Type t) {
   switch (t.getTypeId()) {
     case Type::VOID:
     case Type::BOOL:
     case Type::INT32:
+      *this << t;
+      return;
     case Type::FLOAT32:
-      p << t;
+      *this << (useFloat ? "float" : "double");
       return;
     case Type::VEC2:
-      p << "glm::vec2";
+      *this << (useFloat ? "glm::vec2" : "glm::dvec2");
       return;
     case Type::VEC3:
-      p << "glm::vec3";
+      *this << (useFloat ? "glm::vec3" : "glm::dvec3");
       return;
     case Type::ARRAY:
       // Print base type only
-      printType(p, t.getBaseType());
+      printType(t.getBaseType());
       return;
     default:
       assert(0);
   }
-}
-
-void FlameGPUPrinter::print(const AST::SimpleType &type) {
-  printType(*this, type.resolved);
 }
 
 bool FlameGPUPrinter::isSpecialBinaryOp(
@@ -77,7 +74,7 @@ void FlameGPUPrinter::print(const AST::AssignStatement &stmt) {
           varName = var->var->name;
         } else {
           varName = makeAnonLabel();
-          printType(*this, memAcc->type);
+          printType(memAcc->type);
           *this << " " << varName << " = " << *stmt.right << ";";
         }
 
@@ -110,7 +107,9 @@ static void printTypeCtor(FlameGPUPrinter &p, const AST::CallExpression &expr) {
     p.printArgs(expr);
     p << ")";
   } else {
-    p << "(" << t << ") " << *(*expr.args)[0];
+    p << "(";
+    p.printType(t);
+    p << ") " << expr.getArg(0);
   }
 }
 void FlameGPUPrinter::print(const AST::CallExpression &expr) {
@@ -213,8 +212,8 @@ void FlameGPUPrinter::print(const AST::ForStatement &stmt) {
     std::string posName = posMember->name;
     *this << "xmachine_message_" << msgName << "* " << msgVar
           << " = get_first_" << msgName << "_message(" << msgName + "_messages, "
-          << "partition_matrix, (float) " << agentVar << "->x, "
-          << "(float) " << agentVar << "->y, (float) " << agentVar << "->z"
+          << "partition_matrix, " << agentVar << "->x, "
+          << agentVar << "->y, " << agentVar << "->z"
           << ");" << nl << "while (" << msgVar << ") {" << indent;
     extractMsgMembers(*this, msg, stmt.var->name);
 
@@ -279,7 +278,7 @@ void FlameGPUPrinter::print(const AST::Script &script) {
             << msgName << "_messages) {" << indent
             << nl << "add_" << msgName << "_message("
             << msgName << "_messages";
-      for (const auto &member : FlameModel::getUnpackedMembers(msg->members, true)) {
+      for (const auto &member : FlameModel::getUnpackedMembers(msg->members, useFloat, true)) {
         const std::string &name = member.first;
         *this << ", xmemory->" << name;
       }

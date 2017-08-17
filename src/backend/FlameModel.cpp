@@ -63,15 +63,18 @@ FlameModel FlameModel::generateFromScript(AST::Script &script) {
 
 // Conversion to unpacked types
 static void pushMemberInfo(
-    FlameModel::MemberList &result, const AST::AgentMember &member, bool forGpu) {
+    FlameModel::MemberList &result, const AST::AgentMember &member, bool useFloat, bool forGpu) {
   const std::string &name = member.name;
   Type type = member.type->resolved;
 
+  // We support both float and double types
+  const char *floatType = useFloat ? "float" : "double";
+
   // FlameGPU requires that the position members are always 3D with names x, y, z
   if (forGpu && member.isPosition) {
-    result.push_back({ "x", "float" });
-    result.push_back({ "y", "float" });
-    result.push_back({ "z", "float" });
+    result.push_back({ "x", floatType });
+    result.push_back({ "y", floatType });
+    result.push_back({ "z", floatType });
     // If we are in a 2D environment, technically we only need the "z" member in the
     // message type (because FlameGPU assumes it exists), but not in the agent type.
     // I'm including it in the agent anyway, both for simplicity and because I'm not
@@ -84,16 +87,16 @@ static void pushMemberInfo(
       result.push_back({ name, "int" });
       break;
     case Type::FLOAT32:
-      result.push_back({ name, "float" });
+      result.push_back({ name, floatType });
       break;
     case Type::VEC2:
-      result.push_back({ name + "_x", "float" });
-      result.push_back({ name + "_y", "float" });
+      result.push_back({ name + "_x", floatType });
+      result.push_back({ name + "_y", floatType });
       break;
     case Type::VEC3:
-      result.push_back({ name + "_x", "float" });
-      result.push_back({ name + "_y", "float" });
-      result.push_back({ name + "_z", "float" });
+      result.push_back({ name + "_x", floatType });
+      result.push_back({ name + "_y", floatType });
+      result.push_back({ name + "_z", floatType });
       break;
     default:
       assert(0);
@@ -102,19 +105,19 @@ static void pushMemberInfo(
 }
 
 FlameModel::MemberList FlameModel::getUnpackedMembers(
-    const AST::AgentMemberList &members, bool forGpu) {
+    const AST::AgentMemberList &members, bool useFloat, bool forGpu) {
   FlameModel::MemberList result;
   for (const AST::AgentMemberPtr &member : members) {
-    pushMemberInfo(result, *member, forGpu);
+    pushMemberInfo(result, *member, useFloat, forGpu);
   }
   return result;
 }
 
 FlameModel::MemberList FlameModel::getUnpackedMembers(
-    const std::vector<const AST::AgentMember *> &members, bool forGpu) {
+    const std::vector<const AST::AgentMember *> &members, bool useFloat, bool forGpu) {
   FlameModel::MemberList result;
   for (const AST::AgentMember *member : members) {
-    pushMemberInfo(result, *member, forGpu);
+    pushMemberInfo(result, *member, useFloat, forGpu);
   }
   return result;
 }

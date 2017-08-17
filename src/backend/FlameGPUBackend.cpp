@@ -24,11 +24,12 @@ static std::string doubleToString(double d) {
   assert(0);
 }
 
-static XmlElems createXmlAgents(const AST::Script &script, const FlameModel &model) {
+static XmlElems createXmlAgents(
+    const AST::Script &script, const FlameModel &model, bool useFloat) {
   XmlElems xagents;
   for (const AST::AgentDeclaration *decl : script.agents) {
     XmlElems members;
-    auto unpackedMembers = FlameModel::getUnpackedMembers(*decl->members, true);
+    auto unpackedMembers = FlameModel::getUnpackedMembers(*decl->members, useFloat, true);
     for (const FlameModel::Member &member : unpackedMembers) {
       members.push_back({ "gpu:variable", {
         { "type", {{ member.second }} },
@@ -102,11 +103,12 @@ static XmlElems createXmlAgents(const AST::Script &script, const FlameModel &mod
   return xagents;
 }
 
-static XmlElems createXmlMessages(const AST::Script &script, const FlameModel &model) {
+static XmlElems createXmlMessages(
+    const AST::Script &script, const FlameModel &model, bool useFloat) {
   XmlElems messages;
   for (const FlameModel::Message &msg : model.messages) {
     XmlElems variables;
-    auto unpackedMembers = FlameModel::getUnpackedMembers(msg.members, true);
+    auto unpackedMembers = FlameModel::getUnpackedMembers(msg.members, useFloat, true);
     for (const FlameModel::Member &member : unpackedMembers) {
       variables.push_back({ "gpu:variable", {
         { "type", {{ member.second }} },
@@ -162,9 +164,9 @@ static XmlElems createXmlLayers(const FlameModel &model) {
   return layers;
 }
 
-static std::string createXmlModel(AST::Script &script, const FlameModel &model) {
-  XmlElems xagents = createXmlAgents(script, model);
-  XmlElems messages = createXmlMessages(script, model);
+static std::string createXmlModel(AST::Script &script, const FlameModel &model, bool useFloat) {
+  XmlElems xagents = createXmlAgents(script, model, useFloat);
+  XmlElems messages = createXmlMessages(script, model, useFloat);
   XmlElems layers = createXmlLayers(model);
   XmlElem root("gpu:xmodel", {
     { "name", {{ "TODO" }} },
@@ -183,39 +185,52 @@ static std::string createXmlModel(AST::Script &script, const FlameModel &model) 
   return writer.serialize(root);
 }
 
-static std::string createFunctionsFile(AST::Script &script, const FlameModel &model) {
-  FlameGPUPrinter printer(script, model);
+static std::string createFunctionsFile(
+    AST::Script &script, const FlameModel &model, bool useFloat) {
+  FlameGPUPrinter printer(script, model, useFloat);
   printer.print(script);
   return printer.extractStr();
 }
 
-static std::string createMainFile(AST::Script &script) {
-  FlameMainPrinter printer(script, true);
+static std::string createMainFile(AST::Script &script, bool useFloat) {
+  FlameMainPrinter printer(script, useFloat, true);
   printer.print(script);
   return printer.extractStr();
+}
+
+static std::string createBuildRunner(bool useFloat) {
+  if (useFloat) {
+    return "gcc -O2 -std=c99 -DLIBABL_USE_FLOAT=1 runner.c libabl.c -lm -o runner";
+  } else {
+    return "gcc -O2 -std=c99 runner.c libabl.c -lm -o runner";
+  }
 }
 
 void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
+  bool useFloat = ctx.config.getBool("use_float", false);
+
   FlameModel model = FlameModel::generateFromScript(script);
 
   createDirectory(ctx.outputDir + "/model");
   createDirectory(ctx.outputDir + "/dynamic");
 
-  writeToFile(ctx.outputDir + "/model/XMLModelFile.xml", createXmlModel(script, model));
-  writeToFile(ctx.outputDir + "/model/functions.c", createFunctionsFile(script, model));
-  writeToFile(ctx.outputDir + "/runner.c", createMainFile(script));
+  writeToFile(ctx.outputDir + "/model/XMLModelFile.xml", createXmlModel(script, model, useFloat));
+  writeToFile(ctx.outputDir + "/model/functions.c", createFunctionsFile(script, model, useFloat));
+  writeToFile(ctx.outputDir + "/runner.c", createMainFile(script, useFloat));
 
   copyFile(
       ctx.assetDir + "/flamegpu/libabl_flamegpu.h",
       ctx.outputDir + "/model/libabl_flamegpu.h");
   copyFile(ctx.assetDir + "/flamegpu/Makefile", ctx.outputDir + "/Makefile");
   copyFile(ctx.assetDir + "/flamegpu/build.sh", ctx.outputDir + "/build.sh");
+  writeToFile(ctx.outputDir + "/build_runner.sh", createBuildRunner(useFloat));
 
   // These are required for runner.c
   copyFile(ctx.assetDir + "/c/libabl.h", ctx.outputDir + "/libabl.h");
   copyFile(ctx.assetDir + "/c/libabl.c", ctx.outputDir + "/libabl.c");
 
   makeFileExecutable(ctx.outputDir + "/build.sh");
+  makeFileExecutable(ctx.outputDir + "/build_runner.sh");
 }
 
 }
