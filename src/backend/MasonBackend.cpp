@@ -22,12 +22,22 @@ static std::string generateUICode(AST::Script &script) {
   return printer.extractStr();
 }
 
+static std::string generateRunScript(bool visualize) {
+  if (visualize) {
+    return "java SimWithUI";
+  } else {
+    return "java Sim";
+  }
+}
+
 void MasonBackend::generate(
     AST::Script &script, const BackendContext &ctx) {
   bool useFloat = ctx.config.getBool("use_float", false);
   if (useFloat) {
     throw BackendError("Floats are not supported by the Mason backend");
   }
+
+  bool visualize = ctx.config.getBool("visualize", false);
 
   writeToFile(ctx.outputDir + "/Sim.java", generateMainCode(script));
   writeToFile(ctx.outputDir + "/SimWithUI.java", generateUICode(script));
@@ -38,7 +48,7 @@ void MasonBackend::generate(
 
   copyFile(ctx.assetDir + "/mason/Util.java", ctx.outputDir + "/Util.java");
   copyFile(ctx.assetDir + "/mason/build.sh", ctx.outputDir + "/build.sh");
-  copyFile(ctx.assetDir + "/mason/run.sh", ctx.outputDir + "/run.sh");
+  writeToFile(ctx.outputDir + "/run.sh", generateRunScript(visualize));
   makeFileExecutable(ctx.outputDir + "/build.sh");
   makeFileExecutable(ctx.outputDir + "/run.sh");
 }
