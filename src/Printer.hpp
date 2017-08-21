@@ -82,7 +82,7 @@ struct Printer {
   }
 
   template<typename T>
-  Printer &operator <<(std::vector<std::unique_ptr<T>> &nodes) {
+  Printer &operator <<(const std::vector<std::unique_ptr<T>> &nodes) {
     for (const auto &node : nodes) {
       *this << nl << *node;
     }
@@ -90,7 +90,7 @@ struct Printer {
   }
 
   template<typename T>
-  Printer &operator <<(std::vector<T *> &nodes) {
+  Printer &operator <<(const std::vector<T *> &nodes) {
     for (const auto *node : nodes) {
       *this << nl << *node;
     }

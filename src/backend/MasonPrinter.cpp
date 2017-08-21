@@ -135,13 +135,13 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
 
       *this << type << " " << aLabel << " = " << arg << ";" << nl;
       if (posMember) {
-        *this << "_sim.env.setObjectLocation(" << aLabel << ", "
+        *this << "env.setObjectLocation(" << aLabel << ", "
               << aLabel << "." << posMember->name << ");" << nl;
       }
 
       // TODO There are some ordering issues here, which we ignore for now
       // This does not fully respect the order between different agent types
-      *this << "_sim.schedule.scheduleRepeating(" << aLabel << ")";
+      *this << "schedule.scheduleRepeating(" << aLabel << ")";
     } else if (name == "save") {
       // TODO Handle save
       *this << "//save()";
@@ -386,14 +386,18 @@ void MasonPrinter::print(const AST::Script &script) {
 
   AST::FunctionDeclaration *mainFunc = script.mainFunc;
   inMain = true;
-  /**this << "public void setup() {" << indent
-        << nl << "super.setup();"
+  *this << "public void start() {" << indent
+        << nl << "super.start();"
         << nl << mainFunc->getStmtsBeforeSimulate()
-        << outdent << nl << "}";*/
-  *this << "public static void main(String[] args) {" << indent
+        << outdent << nl << "}"
+        << nl << "public void finish() {" << indent
+        << nl << "super.finish();"
+        << nl << mainFunc->getStmtsAfterSimulate()
+        << outdent << nl << "}"
+        << nl << "public static void main(String[] args) {" << indent
         << nl << "Sim _sim = new Sim(System.currentTimeMillis());"
         << nl << "_sim.start();"
-        << *mainFunc->stmts
+        << *script.simStmt
         << nl << "_sim.finish();"
         << nl << "System.exit(0);"
         << outdent << nl << "}";

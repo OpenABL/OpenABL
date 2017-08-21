@@ -35,7 +35,7 @@ struct MasonPrinter : public GenericPrinter {
 
 protected:
   const char *getSimVarName() const {
-    return inAgent || inMain ? "_sim" : "this";
+    return inAgent ? "_sim" : "this";
   }
 
   // Current input and output variables inside a step function
