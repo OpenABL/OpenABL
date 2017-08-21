@@ -415,21 +415,24 @@ void MasonPrinter::print(const AST::Script &script) {
 }
 
 void MasonPrinter::printUI() {
-  // TODO This is probably going to need some customization...
+  int dim = script.envDecl->envDimension;
   *this <<
   "import sim.portrayal.continuous.*;\n"
   "import sim.portrayal.simple.*;\n"
+  "import sim.portrayal3d.continuous.*;\n"
+  "import sim.portrayal3d.simple.*;\n"
   "import sim.engine.*;\n"
   "import sim.display.*;\n"
+  "import sim.display3d.*;\n"
   "import javax.swing.*;\n"
   "import java.awt.Color;\n"
   "\n"
   "public class SimWithUI extends GUIState\n"
   "{\n"
   "    private static final int SIZE = 500;\n"
-  "    public Display2D display;\n"
+  "    public Display" << dim << "D display;\n"
   "    public JFrame displayFrame;\n"
-  "    ContinuousPortrayal2D envPortrayal = new ContinuousPortrayal2D();\n"
+  "    ContinuousPortrayal" << dim << "D envPortrayal = new ContinuousPortrayal" << dim << "D();\n"
   "\n"
   "    public static void main(String[] args) {\n"
   "        SimWithUI vid = new SimWithUI();\n"
@@ -460,18 +463,31 @@ void MasonPrinter::printUI() {
   "        Sim sim = (Sim) state;\n"
   "        double scale = 4 * sim.env.width / SIZE;\n"
   "\n"
-  "        envPortrayal.setField(sim.env);\n"
-  "        envPortrayal.setPortrayalForAll(new OvalPortrayal2D(scale));\n"
+  "        envPortrayal.setField(sim.env);\n";
+  if (dim == 2) {
+    *this << "        envPortrayal.setPortrayalForAll(new OvalPortrayal2D(scale));\n";
+  } else {
+    *this << "        envPortrayal.setPortrayalForAll(new SpherePortrayal3D(scale));\n";
+  }
+  *this <<
   "\n"
-  "        display.reset();\n"
-  "        display.setBackdrop(Color.white);\n"
-  "        display.repaint();\n"
+  "        display.reset();\n";
+
+  if (dim == 2) {
+    *this << "        display.setBackdrop(Color.white);\n";
+    *this << "        display.repaint();\n";
+  } else {
+    *this << "        display.createSceneGraph();\n";
+    *this << "        display.reset();\n";
+  }
+
+  *this <<
   "    }\n"
   "\n"
   "    public void init(Controller c) {\n"
   "        super.init(c);\n"
   "\n"
-  "        display = new Display2D(SIZE, SIZE, this);\n"
+  "        display = new Display" << dim << "D(SIZE, SIZE, this);\n"
   "        //display.setClipping(false);\n"
   "\n"
   "        displayFrame = display.createFrame();\n"
