@@ -1,0 +1,8 @@
+agent Foo {}
+void step(Foo in -> out) {}
+
+void main() {
+  if (true) {
+    simulate(100) { step }
+  }
+}

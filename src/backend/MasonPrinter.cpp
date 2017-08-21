@@ -386,6 +386,10 @@ void MasonPrinter::print(const AST::Script &script) {
 
   AST::FunctionDeclaration *mainFunc = script.mainFunc;
   inMain = true;
+  /**this << "public void setup() {" << indent
+        << nl << "super.setup();"
+        << nl << mainFunc->getStmtsBeforeSimulate()
+        << outdent << nl << "}";*/
   *this << "public static void main(String[] args) {" << indent
         << nl << "Sim _sim = new Sim(System.currentTimeMillis());"
         << nl << "_sim.start();"

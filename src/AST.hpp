@@ -501,6 +501,31 @@ struct FunctionDeclaration : public Declaration {
     return *stepParam().type->resolved.getAgentDecl();
   }
 
+  // These two functions are for use with main(). They retrieve
+  // simulation setup and teardown code.
+  std::vector<const Statement *> getStmtsBeforeSimulate() const {
+    std::vector<const Statement *> result;
+    for (const StatementPtr &stmt : *stmts) {
+      if (dynamic_cast<const SimulateStatement *>(&*stmt)) {
+        break;
+      }
+      result.push_back(&*stmt);
+    }
+    return result;
+  }
+  std::vector<const Statement *> getStmtsAfterSimulate() const {
+    std::vector<const Statement *> result;
+    bool collect = false;
+    for (const StatementPtr &stmt : *stmts) {
+      if (dynamic_cast<const SimulateStatement *>(&*stmt)) {
+        collect = true;
+      } else if (collect) {
+        result.push_back(&*stmt);
+      }
+    }
+    return result;
+  }
+
   void accept(Visitor &);
   void print(Printer &) const;
 };

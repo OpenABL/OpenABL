@@ -90,6 +90,14 @@ struct Printer {
   }
 
   template<typename T>
+  Printer &operator <<(std::vector<T *> &nodes) {
+    for (const auto *node : nodes) {
+      *this << nl << *node;
+    }
+    return *this;
+  }
+
+  template<typename T>
   typename std::enable_if<!std::is_convertible<T, const AST::Node &>::value, Printer &>::type
   operator <<(T &&a) {
     str << a; return *this;

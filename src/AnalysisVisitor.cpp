@@ -1153,6 +1153,19 @@ void AnalysisVisitor::leave(AST::Script &script) {
     err << "Script must have a main function" << AST::Location{};
     return;
   }
+
+  if (script.simStmt) {
+    bool hasTopLevelSimulate = false;
+    for (const AST::StatementPtr &stmt : *script.mainFunc->stmts) {
+      if (dynamic_cast<const AST::SimulateStatement *>(&*stmt)) {
+        hasTopLevelSimulate = true;
+      }
+    }
+    if (!hasTopLevelSimulate) {
+      err << "Simulate statement cannot be used conditionally" << script.simStmt->loc;
+      return;
+    }
+  }
 };
 
 }
