@@ -33,6 +33,8 @@ struct MasonPrinter : public GenericPrinter {
   virtual bool isSpecialBinaryOp(
       const AST::BinaryOp, const AST::Expression &, const AST::Expression &);
 
+  void printUI();
+
 protected:
   const char *getSimVarName() const {
     return inAgent ? "_sim" : "this";

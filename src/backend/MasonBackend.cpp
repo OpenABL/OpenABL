@@ -16,6 +16,12 @@ static std::string generateAgentCode(AST::Script &script, AST::AgentDeclaration 
   return printer.extractStr();
 }
 
+static std::string generateUICode(AST::Script &script) {
+  MasonPrinter printer(script);
+  printer.printUI();
+  return printer.extractStr();
+}
+
 void MasonBackend::generate(
     AST::Script &script, const BackendContext &ctx) {
   bool useFloat = ctx.config.getBool("use_float", false);
@@ -24,6 +30,7 @@ void MasonBackend::generate(
   }
 
   writeToFile(ctx.outputDir + "/Sim.java", generateMainCode(script));
+  writeToFile(ctx.outputDir + "/SimWithUI.java", generateUICode(script));
 
   for (AST::AgentDeclaration *agent : script.agents) {
     writeToFile(ctx.outputDir + "/" + agent->name + ".java", generateAgentCode(script, *agent));

@@ -388,6 +388,7 @@ void MasonPrinter::print(const AST::Script &script) {
   inMain = true;
   *this << "public void start() {" << indent
         << nl << "super.start();"
+        << nl << "env.clear();"
         << nl << mainFunc->getStmtsBeforeSimulate()
         << outdent << nl << "}"
         << nl << "public void finish() {" << indent
@@ -411,6 +412,82 @@ void MasonPrinter::print(const AST::Script &script) {
   }
 
   *this << outdent << nl << "}";
+}
+
+void MasonPrinter::printUI() {
+  // TODO This is probably going to need some customization...
+  *this <<
+  "import sim.portrayal.continuous.*;\n"
+  "import sim.portrayal.simple.*;\n"
+  "import sim.engine.*;\n"
+  "import sim.display.*;\n"
+  "import javax.swing.*;\n"
+  "import java.awt.Color;\n"
+  "\n"
+  "public class SimWithUI extends GUIState\n"
+  "{\n"
+  "    private static final int SIZE = 500;\n"
+  "    public Display2D display;\n"
+  "    public JFrame displayFrame;\n"
+  "    ContinuousPortrayal2D envPortrayal = new ContinuousPortrayal2D();\n"
+  "\n"
+  "    public static void main(String[] args) {\n"
+  "        SimWithUI vid = new SimWithUI();\n"
+  "        Console c = new Console(vid);\n"
+  "        c.setVisible(true);\n"
+  "    }\n"
+  "\n"
+  "    public SimWithUI() {\n"
+  "        super(new Sim(System.currentTimeMillis()));\n"
+  "    }\n"
+  "    public SimWithUI(SimState state) {\n"
+  "        super(state);\n"
+  "    }\n"
+  "    public static String getName() {\n"
+  "        return \"Visualization\";\n"
+  "    }\n"
+  "\n"
+  "    public void start() {\n"
+  "        super.start();\n"
+  "        setupPortrayals();\n"
+  "    }\n"
+  "    public void load(SimState state) {\n"
+  "        super.load(state);\n"
+  "        setupPortrayals();\n"
+  "    }\n"
+  "\n"
+  "    public void setupPortrayals() {\n"
+  "        Sim sim = (Sim) state;\n"
+  "        double scale = 4 * sim.env.width / SIZE;\n"
+  "\n"
+  "        envPortrayal.setField(sim.env);\n"
+  "        envPortrayal.setPortrayalForAll(new OvalPortrayal2D(scale));\n"
+  "\n"
+  "        display.reset();\n"
+  "        display.setBackdrop(Color.white);\n"
+  "        display.repaint();\n"
+  "    }\n"
+  "\n"
+  "    public void init(Controller c) {\n"
+  "        super.init(c);\n"
+  "\n"
+  "        display = new Display2D(SIZE, SIZE, this);\n"
+  "        //display.setClipping(false);\n"
+  "\n"
+  "        displayFrame = display.createFrame();\n"
+  "        displayFrame.setTitle(\"Visualization Display\");\n"
+  "        c.registerFrame(displayFrame);\n"
+  "        displayFrame.setVisible(true);\n"
+  "        display.attach(envPortrayal, \"Environment\");\n"
+  "    }\n"
+  "\n"
+  "    public void quit() {\n"
+  "        super.quit();\n"
+  "        if (displayFrame != null) displayFrame.dispose();\n"
+  "        displayFrame = null;\n"
+  "        display = null;\n"
+  "    }\n"
+  "}\n";
 }
 
 }
