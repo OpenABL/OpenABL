@@ -97,11 +97,20 @@ struct Printer {
     return *this;
   }
 
-  template<typename T>
-  typename std::enable_if<!std::is_convertible<T, const AST::Node &>::value, Printer &>::type
-  operator <<(T &&a) {
-    str << a; return *this;
-  }
+  /* We do not use universal forwarding here, because it shadows other overloads way too easily.
+   * Instead we explicitly specify all supported operations, as necessary. */
+
+  Printer &operator <<(char s) { str << s; return *this; }
+  Printer &operator <<(int32_t i) { str << i; return *this; }
+  Printer &operator <<(uint32_t i) { str << i; return *this; }
+  Printer &operator <<(int64_t i) { str << i; return *this; }
+  Printer &operator <<(uint64_t i) { str << i; return *this; }
+  Printer &operator <<(double f) { str << f; return *this; }
+  Printer &operator <<(const char *s) { str << s; return *this; }
+  Printer &operator <<(const std::string &s) { str << s; return *this; }
+
+  Printer &operator <<(const Value &v) { str << v; return *this; }
+  Printer &operator <<(Type t) { str << t; return *this; }
 
   std::string makeAnonLabel() {
     return "_var" + std::to_string(nextAnonLabel++);
