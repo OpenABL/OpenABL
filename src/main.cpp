@@ -145,10 +145,7 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  if (!createDirectory(options.outputDir)) {
-    std::cerr << "Failed to create directory \"" << options.outputDir << "\"." << std::endl;
-    return 1;
-  }
+  createDirectory(options.outputDir);
 
   auto backends = getBackends();
   auto it = backends.find(options.backend);
