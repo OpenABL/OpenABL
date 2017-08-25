@@ -96,6 +96,9 @@ static void printTypeCtor(MasonPrinter &p, const AST::CallExpression &expr) {
     p << "new Double" << vecLen << "D(";
     printVecCtorArgs(p, expr);
     p << ")";
+  } else if (t.isInt() && expr.getArg(0).type.isBool()) {
+    // Java does not allow bool to int casts, even explicitly
+    p << "(" << expr.getArg(0) << " ? 1 : 0)";
   } else {
     p << "(" << t << ") " << expr.getArg(0);
   }
