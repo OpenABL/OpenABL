@@ -35,10 +35,13 @@ void main() {
   for (int x : 0..size) {
     for (int y : 0..size) {
       add(Cell {
-        pos: float2(x + 0.5, y + 0.5), alive: x < 3 && y < 3
+        pos: float2(x + 0.5, y + 0.5),
+        alive: (x == 10 || x == 11 || x == 12) && y == 10
       });
     }
   }
 
   simulate(num_timesteps) { step }
+
+  save("result.json");
 }

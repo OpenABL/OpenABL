@@ -83,7 +83,7 @@ static void save_json_agents(FILE *file, dyn_array *arr, const type_info *info) 
 
 	fputs("[", file);
 	for (size_t i = 0; i < arr->len; i++) {
-		if (!first) fputs(",", file);
+		if (!first) fputs(",\n", file);
 		first = false;
 
 		char *agent = ((char *) arr->values) + elem_size * i;
