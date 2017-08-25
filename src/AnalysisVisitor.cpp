@@ -15,7 +15,7 @@ static Type tryResolveNameToSimpleType(const std::string &name) {
     } else if (name == "int") {
       return { Type::INT32 };
     } else if (name == "float") {
-      return { Type::FLOAT32 };
+      return { Type::FLOAT };
     } else if (name == "string") {
       return { Type::STRING };
     } else if (name == "float2") {
@@ -88,7 +88,7 @@ bool promoteTo(AST::ExpressionPtr &expr, Type type) {
       args->emplace_back(origExpr);
       auto *cast = new AST::CallExpression("float", args, origExpr->loc);
       cast->kind = AST::CallExpression::Kind::CTOR;
-      cast->type = Type::FLOAT32;
+      cast->type = Type::FLOAT;
       expr.reset(cast);
     }
     return true;
@@ -253,7 +253,7 @@ Value AnalysisVisitor::evalExpression(const AST::Expression &expr) {
           return evalExpression(call->getArg(0)).toBoolExplicit();
         case Type::INT32:
           return evalExpression(call->getArg(0)).toIntExplicit();
-        case Type::FLOAT32:
+        case Type::FLOAT:
           return evalExpression(call->getArg(0)).toFloatExplicit();
         case Type::VEC2:
           if (call->getNumArgs() == 1) {
@@ -720,7 +720,7 @@ void AnalysisVisitor::leave(AST::Literal &lit) {
   if (dynamic_cast<AST::IntLiteral *>(&lit)) {
     lit.type = { Type::INT32 };
   } else if (dynamic_cast<AST::FloatLiteral *>(&lit)) {
-    lit.type = { Type::FLOAT32 };
+    lit.type = { Type::FLOAT };
   } else if (dynamic_cast<AST::BoolLiteral *>(&lit)) {
     lit.type = { Type::BOOL };
   } else if (dynamic_cast<AST::StringLiteral *>(&lit)) {
@@ -746,7 +746,7 @@ static Type getBinaryOpType(
       }
       if (l != r) {
         if (promoteBinary(left, right)) {
-          return { Type::FLOAT32 };
+          return { Type::FLOAT };
         } else {
           return { Type::INVALID };
         }
@@ -761,19 +761,19 @@ static Type getBinaryOpType(
         return { Type::INVALID };
       }
       if (l.isVec()) {
-        promoteTo(right, Type::FLOAT32);
+        promoteTo(right, Type::FLOAT);
         return l;
       }
       if (r.isVec()) {
         if (op == AST::BinaryOp::DIV) {
           return { Type::INVALID };
         }
-        promoteTo(left, Type::FLOAT32);
+        promoteTo(left, Type::FLOAT);
         return r;
       }
       if (l != r) {
         if (promoteBinary(left, right)) {
-          return { Type::FLOAT32 };
+          return { Type::FLOAT };
         } else {
           return { Type::INVALID };
         }
@@ -784,7 +784,7 @@ static Type getBinaryOpType(
         return { Type::INT32 };
       }
       if (promoteBinary(left, right)) {
-        return { Type::FLOAT32 };
+        return { Type::FLOAT };
       }
       return { Type::INVALID };
     case AST::BinaryOp::BITWISE_OR:
@@ -962,7 +962,7 @@ void AnalysisVisitor::leave(AST::MemberAccessExpression &expr) {
       return;
     }
 
-    expr.type = Type::FLOAT32;
+    expr.type = Type::FLOAT;
   } else if (type.isAgent()) {
     AST::AgentDeclaration *agent = type.getAgentDecl();
     AST::AgentMember *member = findAgentMember(*agent, name);
@@ -1026,7 +1026,7 @@ static bool isTypeCtorValid(Type t, const std::vector<Type> &argTypes) {
       return false;
     case Type::BOOL:
     case Type::INT32:
-    case Type::FLOAT32:
+    case Type::FLOAT:
     {
       if (numArgs != 1) {
         return false;
@@ -1042,12 +1042,12 @@ static bool isTypeCtorValid(Type t, const std::vector<Type> &argTypes) {
       if (numArgs != 1 && numArgs != 2) {
         return false;
       }
-      return areAllPromotableTo(argTypes, Type::FLOAT32);
+      return areAllPromotableTo(argTypes, Type::FLOAT);
     case Type::VEC3:
       if (numArgs != 1 && numArgs != 3) {
         return false;
       }
-      return areAllPromotableTo(argTypes, Type::FLOAT32);
+      return areAllPromotableTo(argTypes, Type::FLOAT);
     default:
       assert(0);
   }

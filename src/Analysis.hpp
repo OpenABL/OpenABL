@@ -93,7 +93,7 @@ struct Value {
       case Type::INT32:
         ival = other.ival;
         break;
-      case Type::FLOAT32:
+      case Type::FLOAT:
         fval = other.fval;
         break;
       case Type::STRING:
@@ -134,7 +134,7 @@ struct Value {
   }
 
   Value(double f) {
-    type = Type::FLOAT32;
+    type = Type::FLOAT;
     fval = f;
   }
 

@@ -10,34 +10,34 @@
 namespace OpenABL {
 
 void registerBuiltinFunctions(FunctionList &funcs) {
-  funcs.add("dot", "dot_float2", { Type::VEC2, Type::VEC2 }, Type::FLOAT32);
-  funcs.add("dot", "dot_float3", { Type::VEC3, Type::VEC3 }, Type::FLOAT32);
-  funcs.add("length", "length_float2", { Type::VEC2 }, Type::FLOAT32);
-  funcs.add("length", "length_float3", { Type::VEC3 }, Type::FLOAT32);
-  funcs.add("dist", "dist_float2", { Type::VEC2, Type::VEC2 }, Type::FLOAT32);
-  funcs.add("dist", "dist_float3", { Type::VEC3, Type::VEC3 }, Type::FLOAT32);
+  funcs.add("dot", "dot_float2", { Type::VEC2, Type::VEC2 }, Type::FLOAT);
+  funcs.add("dot", "dot_float3", { Type::VEC3, Type::VEC3 }, Type::FLOAT);
+  funcs.add("length", "length_float2", { Type::VEC2 }, Type::FLOAT);
+  funcs.add("length", "length_float3", { Type::VEC3 }, Type::FLOAT);
+  funcs.add("dist", "dist_float2", { Type::VEC2, Type::VEC2 }, Type::FLOAT);
+  funcs.add("dist", "dist_float3", { Type::VEC3, Type::VEC3 }, Type::FLOAT);
   funcs.add("normalize", "normalize_float2", { Type::VEC2 }, Type::VEC2);
   funcs.add("normalize", "normalize_float3", { Type::VEC3 }, Type::VEC3);
-  funcs.add("random", "random_float", { Type::FLOAT32, Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("random", "random_float", { Type::FLOAT, Type::FLOAT }, Type::FLOAT);
 
-  funcs.add("sin", { Type::FLOAT32 }, Type::FLOAT32);
-  funcs.add("cos", { Type::FLOAT32 }, Type::FLOAT32);
-  funcs.add("tan", { Type::FLOAT32 }, Type::FLOAT32);
-  funcs.add("sinh", { Type::FLOAT32 }, Type::FLOAT32);
-  funcs.add("cosh", { Type::FLOAT32 }, Type::FLOAT32);
-  funcs.add("tanh", { Type::FLOAT32 }, Type::FLOAT32);
-  funcs.add("asin", { Type::FLOAT32 }, Type::FLOAT32);
-  funcs.add("acos", { Type::FLOAT32 }, Type::FLOAT32);
-  funcs.add("atan", { Type::FLOAT32 }, Type::FLOAT32);
-  funcs.add("exp", { Type::FLOAT32 }, Type::FLOAT32);
-  funcs.add("log", { Type::FLOAT32 }, Type::FLOAT32);
-  funcs.add("sqrt", { Type::FLOAT32 }, Type::FLOAT32);
-  funcs.add("round", { Type::FLOAT32 }, Type::FLOAT32);
-  funcs.add("pow", { Type::FLOAT32, Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("sin", { Type::FLOAT }, Type::FLOAT);
+  funcs.add("cos", { Type::FLOAT }, Type::FLOAT);
+  funcs.add("tan", { Type::FLOAT }, Type::FLOAT);
+  funcs.add("sinh", { Type::FLOAT }, Type::FLOAT);
+  funcs.add("cosh", { Type::FLOAT }, Type::FLOAT);
+  funcs.add("tanh", { Type::FLOAT }, Type::FLOAT);
+  funcs.add("asin", { Type::FLOAT }, Type::FLOAT);
+  funcs.add("acos", { Type::FLOAT }, Type::FLOAT);
+  funcs.add("atan", { Type::FLOAT }, Type::FLOAT);
+  funcs.add("exp", { Type::FLOAT }, Type::FLOAT);
+  funcs.add("log", { Type::FLOAT }, Type::FLOAT);
+  funcs.add("sqrt", { Type::FLOAT }, Type::FLOAT);
+  funcs.add("round", { Type::FLOAT }, Type::FLOAT);
+  funcs.add("pow", { Type::FLOAT, Type::FLOAT }, Type::FLOAT);
 
   // Agent specific functions
   funcs.add("add", { Type::AGENT }, Type::VOID);
-  funcs.add("near", { Type::AGENT, Type::FLOAT32 }, { Type::ARRAY, Type::AGENT });
+  funcs.add("near", { Type::AGENT, Type::FLOAT }, { Type::ARRAY, Type::AGENT });
   funcs.add("save", { Type::STRING }, Type::VOID);
 }
 

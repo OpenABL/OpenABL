@@ -13,7 +13,7 @@ void MasonPrinter::printType(Type type) {
     case Type::INT32:
       *this << "int";
       return;
-    case Type::FLOAT32:
+    case Type::FLOAT:
       // TODO Use doubles, because that's what Mason uses.
       // Need to figure out what semantics we want to have here.
       *this << "double";

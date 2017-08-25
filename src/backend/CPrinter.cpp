@@ -279,7 +279,7 @@ static void printTypeIdentifier(CPrinter &p, Type type) {
   switch (type.getTypeId()) {
     case Type::BOOL: p << "TYPE_BOOL"; break;
     case Type::INT32: p << "TYPE_INT"; break;
-    case Type::FLOAT32: p << "TYPE_FLOAT"; break;
+    case Type::FLOAT: p << "TYPE_FLOAT"; break;
     case Type::STRING: p << "TYPE_STRING"; break;
     case Type::VEC2: p << "TYPE_FLOAT2"; break;
     case Type::VEC3: p << "TYPE_FLOAT3"; break;

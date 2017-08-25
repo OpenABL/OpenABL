@@ -16,7 +16,7 @@ std::ostream &operator<<(std::ostream &s, const Value &value) {
     case Type::INT32:
       s << value.getInt();
       break;
-    case Type::FLOAT32:
+    case Type::FLOAT:
       s << value.getFloat();
       break;
     case Type::VEC2:
@@ -306,7 +306,7 @@ static inline AST::Expression *withType(AST::Expression *expr, Type t) {
 }
 
 static inline AST::Expression *makeFloatLiteral(double value) {
-  return withType(new AST::FloatLiteral(value, location{}), Type::FLOAT32);
+  return withType(new AST::FloatLiteral(value, location{}), Type::FLOAT);
 }
 
 AST::Expression *Value::toExpression() const {
@@ -317,7 +317,7 @@ AST::Expression *Value::toExpression() const {
       return withType(new AST::BoolLiteral(bval, location{}), type);
     case Type::INT32:
       return withType(new AST::IntLiteral(ival, location{}), type);
-    case Type::FLOAT32:
+    case Type::FLOAT:
       return withType(new AST::FloatLiteral(fval, location{}), type);
     case Type::STRING:
       return withType(new AST::StringLiteral(str, location{}), type);

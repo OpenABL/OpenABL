@@ -13,7 +13,7 @@ static const char *getTypeIdStr(Type::TypeId t) {
     case Type::VOID: return "void";
     case Type::BOOL: return "bool";
     case Type::INT32: return "int";
-    case Type::FLOAT32: return "float";
+    case Type::FLOAT: return "float";
     case Type::STRING: return "string";
     case Type::VEC2: return "float2";
     case Type::VEC3: return "float3";

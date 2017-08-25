@@ -86,7 +86,7 @@ static void pushMemberInfo(
     case Type::INT32:
       result.push_back({ name, "int" });
       break;
-    case Type::FLOAT32:
+    case Type::FLOAT:
       result.push_back({ name, floatType });
       break;
     case Type::VEC2:

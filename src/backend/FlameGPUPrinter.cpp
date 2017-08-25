@@ -23,7 +23,7 @@ void FlameGPUPrinter::printType(Type t) {
     case Type::INT32:
       *this << t;
       return;
-    case Type::FLOAT32:
+    case Type::FLOAT:
       *this << (useFloat ? "float" : "double");
       return;
     case Type::VEC2:

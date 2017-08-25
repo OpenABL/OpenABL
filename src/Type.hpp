@@ -16,7 +16,7 @@ struct Type {
     VOID,
     BOOL,
     INT32,
-    FLOAT32,
+    FLOAT,
     STRING,
     VEC2,
     VEC3,
@@ -95,10 +95,10 @@ struct Type {
   bool isVec() const { return type == VEC2 || type == VEC3; }
   bool isVec2() const { return type == VEC2; }
   bool isVec3() const { return type == VEC3; }
-  bool isNum() const { return type == INT32 || type == FLOAT32; }
+  bool isNum() const { return type == INT32 || type == FLOAT; }
   bool isNumOrVec() const { return isNum() || isVec(); }
   bool isInt() const { return type == INT32; }
-  bool isFloat() const { return type == FLOAT32; }
+  bool isFloat() const { return type == FLOAT; }
   bool isBool() const { return type == BOOL; }
   bool isString() const { return type == STRING; }
 
@@ -117,7 +117,7 @@ private:
     if (type != other.type) {
       if (allowPromotion && type == INT32) {
         // Integer to float promotion
-        return other.type == FLOAT32;
+        return other.type == FLOAT;
       }
       return false;
     }
