@@ -247,51 +247,64 @@ Value AnalysisVisitor::evalExpression(const AST::Expression &expr) {
 
   // Casts and type constructors
   if (auto *call = dynamic_cast<const AST::CallExpression *>(&expr)) {
-    if (!call->isCtor()) {
-      return {};
+    if (call->isCtor()) {
+      switch (call->type.getTypeId()) {
+        case Type::BOOL:
+          return evalExpression(call->getArg(0)).toBoolExplicit();
+        case Type::INT32:
+          return evalExpression(call->getArg(0)).toIntExplicit();
+        case Type::FLOAT32:
+          return evalExpression(call->getArg(0)).toFloatExplicit();
+        case Type::VEC2:
+          if (call->getNumArgs() == 1) {
+            Value v = evalExpression(call->getArg(0)).toFloatImplicit();
+            if (v.isInvalid()) {
+              return {};
+            }
+            return { v.getFloat(), v.getFloat() };
+          } else {
+            Value v1 = evalExpression(call->getArg(0)).toFloatImplicit();
+            Value v2 = evalExpression(call->getArg(1)).toFloatImplicit();
+            if (v1.isInvalid() || v2.isInvalid()) {
+              return {};
+            }
+            return { v1.getFloat(), v2.getFloat() };
+          }
+        case Type::VEC3:
+          if (call->getNumArgs() == 1) {
+            Value v = evalExpression(call->getArg(0)).toFloatImplicit();
+            if (v.isInvalid()) {
+              return {};
+            }
+            return { v.getFloat(), v.getFloat(), v.getFloat() };
+          } else {
+            Value v1 = evalExpression(call->getArg(0)).toFloatImplicit();
+            Value v2 = evalExpression(call->getArg(1)).toFloatImplicit();
+            Value v3 = evalExpression(call->getArg(1)).toFloatImplicit();
+            if (v1.isInvalid() || v2.isInvalid() || v3.isInvalid()) {
+              return {};
+            }
+            return { v1.getFloat(), v2.getFloat(), v3.getFloat() };
+          }
+        default:
+          return {};
+      }
     }
 
-    switch (call->type.getTypeId()) {
-      case Type::BOOL:
-        return evalExpression(call->getArg(0)).toBoolExplicit();
-      case Type::INT32:
-        return evalExpression(call->getArg(0)).toIntExplicit();
-      case Type::FLOAT32:
-        return evalExpression(call->getArg(0)).toFloatExplicit();
-      case Type::VEC2:
-        if (call->getNumArgs() == 1) {
-          Value v = evalExpression(call->getArg(0)).toFloatImplicit();
-          if (v.isInvalid()) {
-            return {};
-          }
-          return { v.getFloat(), v.getFloat() };
-        } else {
-          Value v1 = evalExpression(call->getArg(0)).toFloatImplicit();
-          Value v2 = evalExpression(call->getArg(1)).toFloatImplicit();
-          if (v1.isInvalid() || v2.isInvalid()) {
-            return {};
-          }
-          return { v1.getFloat(), v2.getFloat() };
+    if (call->isBuiltin()) {
+      std::vector<Value> args;
+      for (const AST::ExpressionPtr &arg : *call->args) {
+        Value argVal = evalExpression(*arg);
+        if (argVal.isInvalid()) {
+          return {};
         }
-      case Type::VEC3:
-        if (call->getNumArgs() == 1) {
-          Value v = evalExpression(call->getArg(0)).toFloatImplicit();
-          if (v.isInvalid()) {
-            return {};
-          }
-          return { v.getFloat(), v.getFloat(), v.getFloat() };
-        } else {
-          Value v1 = evalExpression(call->getArg(0)).toFloatImplicit();
-          Value v2 = evalExpression(call->getArg(1)).toFloatImplicit();
-          Value v3 = evalExpression(call->getArg(1)).toFloatImplicit();
-          if (v1.isInvalid() || v2.isInvalid() || v3.isInvalid()) {
-            return {};
-          }
-          return { v1.getFloat(), v2.getFloat(), v3.getFloat() };
-        }
-      default:
-        return {};
+
+        args.push_back(argVal);
+      }
+      return Value::calcBuiltinCall(call->calledSig, args);
     }
+
+    return {};
   }
 
   // Unary expression

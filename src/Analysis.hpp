@@ -8,6 +8,8 @@
 
 namespace OpenABL {
 
+struct FunctionSignature;
+
 namespace AST {
   struct AgentDeclaration;
   struct FunctionDeclaration;
@@ -272,6 +274,7 @@ struct Value {
   static Value fromString(const std::string &str);
   static Value calcUnaryOp(AST::UnaryOp op, const Value &val);
   static Value calcBinaryOp(AST::BinaryOp op, const Value &left, const Value &right);
+  static Value calcBuiltinCall(const FunctionSignature &sig, const std::vector<Value> &args);
 
 private:
   Type type;

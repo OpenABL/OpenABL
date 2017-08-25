@@ -258,6 +258,36 @@ Value Value::calcBinaryOp(AST::BinaryOp op, const Value &l, const Value &r) {
   assert(0);
 }
 
+Value Value::calcBuiltinCall(const FunctionSignature &sig, const std::vector<Value> &args) {
+  // Currently all constexpr functions take a single double argument
+  if (args.size() != 1 || !args[0].isNum()) {
+    return {};
+  }
+
+  static std::map<std::string, double (*)(double)> funcs = {
+    { "sin", sin },
+    { "cos", cos },
+    { "tan", tan },
+    { "sinh", sinh },
+    { "cosh", cosh },
+    { "tanh", tanh },
+    { "asin", asin },
+    { "acos", acos },
+    { "atan", atan },
+    { "exp", exp },
+    { "log", log },
+    { "sqrt", sqrt },
+    { "round", round },
+  };
+
+  auto it = funcs.find(sig.name);
+  if (it == funcs.end()) {
+    return {};
+  }
+
+  return it->second(args[0].asFloat());
+}
+
 static inline AST::Expression *withType(AST::Expression *expr, Type t) {
   expr->type = t;
   return expr;
