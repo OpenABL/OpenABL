@@ -29,7 +29,10 @@ FlameModel FlameModel::generateFromScript(AST::Script &script) {
       AST::AgentDeclaration &accessedAgent = *func->accessedAgent;
       msg.name = func->name + "_message";
       for (const AST::AgentMemberPtr &member : *accessedAgent.members) {
-        if (accessedMembers.find(member->name) != accessedMembers.end()) {
+        // The position member is always included, as it is necessary for the distance
+        // comparison
+        if (member->isPosition ||
+            accessedMembers.find(member->name) != accessedMembers.end()) {
           msg.members.push_back(&*member);
         }
       }

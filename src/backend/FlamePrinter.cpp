@@ -216,15 +216,22 @@ void FlamePrinter::print(const AST::ForStatement &stmt) {
     assert(currentFunc);
     const std::string &msgName = currentFunc->inMsgName;
     const AST::AgentDeclaration &agent = *currentFunc->agent;
+    const AST::AgentMember &posMember = *agent.getPositionMember();
     const FlameModel::Message &msg = *model.getMessageByName(msgName);
+    const AST::Expression &agentExpr = stmt.getNearAgent();
+    const AST::Expression &radiusExpr = stmt.getNearRadius();
+    const char *dist_fn = posMember.type->resolved == Type::VEC2
+      ? "dist_float2" : "dist_float3";
 
     std::string msgVar = msgName + "_message";
     std::string upperMsgName = msgVar;
     for (char &c : upperMsgName) c = toupper(c);
 
-    std::string posMember = agent.getPositionMember()->name;
     *this << "START_" << upperMsgName << "_LOOP" << indent;
     extractMsgMembers(*this, msg, stmt.var->name);
+    *this << nl << "if (" << dist_fn << "(" << stmt.var->name << "_" << posMember.name
+          << ", " << agentExpr << "_" << posMember.name
+          << ") >= " << radiusExpr << ") continue;";
 
     currentNearVar = &*stmt.var;
     *this << nl << *stmt.stmt;

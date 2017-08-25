@@ -204,18 +204,21 @@ void FlameGPUPrinter::print(const AST::ForStatement &stmt) {
     assert(currentFunc);
     const std::string &msgName = currentFunc->inMsgName;
     const AST::AgentDeclaration &agent = *currentFunc->agent;
+    const AST::AgentMember &posMember = *agent.getPositionMember();
     const FlameModel::Message &msg = *model.getMessageByName(msgName);
+    const AST::Expression &radiusExpr = stmt.getNearRadius();
     const std::string &agentVar = (*currentFunc->func->params)[0]->var->name;
 
     std::string msgVar = msgName + "_message";
-    const AST::AgentMember *posMember = agent.getPositionMember();
-    std::string posName = posMember->name;
     *this << "xmachine_message_" << msgName << "* " << msgVar
           << " = get_first_" << msgName << "_message(" << msgName + "_messages, "
           << "partition_matrix, " << agentVar << "->x, "
           << agentVar << "->y, " << agentVar << "->z"
           << ");" << nl << "while (" << msgVar << ") {" << indent;
     extractMsgMembers(*this, msg, stmt.var->name);
+    *this << nl << "if (glm::distance(" << stmt.var->name << "_" << posMember.name
+          << ", " << agentVar << "_" << posMember.name
+          << ") >= " << radiusExpr << ") continue;";
 
     currentNearVar = &*stmt.var;
     *this << nl << *stmt.stmt;
