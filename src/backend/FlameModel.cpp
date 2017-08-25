@@ -83,6 +83,11 @@ static void pushMemberInfo(
   }
 
   switch (type.getTypeId()) {
+    case Type::BOOL:
+      // Flame/FlameGPU do not support booleans in agent members.
+      // Rewrite to integer instead.
+      result.push_back({ name, "int" });
+      break;
     case Type::INT32:
       result.push_back({ name, "int" });
       break;

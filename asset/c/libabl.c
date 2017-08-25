@@ -110,6 +110,13 @@ void save_json(void *agents, const agent_info *info, FILE *file) {
 static void save_flame_xml_member(FILE *file, const char *agent, const type_info *info) {
 	const char *name = info->name;
 	switch (info->type) {
+		case TYPE_BOOL:
+		{
+			// Boolean members are stored as integers for Flame/FlameGPU
+			int i = *(int *) (agent + info->offset);
+			fprintf(file, "<%s>%d</%s>\n", name, i, name);
+			break;
+		}
 		case TYPE_INT:
 		{
 			int i = *(int *) (agent + info->offset);
@@ -136,7 +143,6 @@ static void save_flame_xml_member(FILE *file, const char *agent, const type_info
 				name, f->x, name, name, f->y, name, name, f->z, name);
 			break;
 		}
-		case TYPE_BOOL:
 		default:
 			assert(0);
 			break;
