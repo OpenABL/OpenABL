@@ -19,6 +19,9 @@ typedef struct {
 #define DYN_ARRAY_CREATE_FIXED(elem_type, len) \
 	dyn_array_create_fixed(sizeof(elem_type), len)
 
+#define DYN_ARRAY_COPY_FIXED(elem_type, other) \
+	dyn_array_copy_fixed(sizeof(elem_type), other)
+
 #define DYN_ARRAY_GET(ary, elem_type, idx) \
 	(&((elem_type *) (ary)->values)[idx])
 
@@ -31,6 +34,12 @@ static inline dyn_array dyn_array_create_fixed(size_t elem_size, size_t len) {
 		.len = len,
 		.cap = len,
 	};
+}
+
+static inline dyn_array dyn_array_copy_fixed(size_t elem_size, const dyn_array *other) {
+	dyn_array ary = dyn_array_create_fixed(elem_size, other->len);
+	memcpy(ary.values, other->values, elem_size * other->len);
+	return ary;
 }
 
 /* Returns place for new element */

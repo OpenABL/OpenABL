@@ -246,9 +246,10 @@ void CPrinter::print(const AST::SimulateStatement &stmt) {
     std::string inLabel = makeAnonLabel();
     std::string outLabel = makeAnonLabel();
 
-    *this << nl << "if (!" << dbufName << ".values) { "
-          << dbufName << " = DYN_ARRAY_CREATE_FIXED(" << type
-          << ", " << bufName << ".len); }" << nl
+    *this << nl << "if (!" << dbufName << ".values) {" << indent
+          << nl << dbufName << " = DYN_ARRAY_COPY_FIXED(" << type
+          << ", &" << bufName << ");"
+          << outdent << nl << "}" << nl
           << "#pragma omp parallel for" << nl
           << "for (size_t " << iLabel << " = 0; "
           << iLabel << " < " << bufName << ".len; "
@@ -264,7 +265,6 @@ void CPrinter::print(const AST::SimulateStatement &stmt) {
           << "tmp = " << bufName << ";" << nl
           << bufName << " = " << dbufName << ";" << nl
           << dbufName << " = tmp;";
-    // TODO Semantics: At which point should be double buffer switch occur?
   }
 
   *this << outdent << nl << "}";
