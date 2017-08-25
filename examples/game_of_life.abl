@@ -1,1 +1,44 @@
+agent Cell {
+  position float2 pos;
+  bool alive;
+}
 
+// Should be > sqrt(2) and < 2 so as to catch only
+// the neighbors
+float radius = 1.5;
+
+param int size = 20;
+param int num_timesteps = 100;
+
+environment {
+  max: float2(size)
+}
+
+void step(Cell in -> out) {
+  // Number of live neighbors *INCLUDING* current cell
+  int living_neighbors = 0;
+
+  for (Cell nx : near(in, radius)) {
+    living_neighbors += int(nx.alive);
+  }
+
+  if (in.alive) {
+    living_neighbors -= 1;
+    out.alive = living_neighbors >= 2 && living_neighbors <= 3;
+  } else {
+    out.alive = living_neighbors == 3;
+  }
+}
+
+void main() {
+  // TODO Reasonable initialization
+  for (int x : 0..size) {
+    for (int y : 0..size) {
+      add(Cell {
+        pos: float2(x + 0.5, y + 0.5), alive: x < 3 && y < 3
+      });
+    }
+  }
+
+  simulate(num_timesteps) { step }
+}
