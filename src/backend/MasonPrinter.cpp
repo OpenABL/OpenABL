@@ -294,7 +294,8 @@ void MasonPrinter::print(const AST::FunctionDeclaration &decl) {
     currentInVar = param.var->id;
     currentOutVar = param.outVar->id;
 
-    *this << "public void " << decl.name << "(SimState state) {" << indent << nl
+    // Use a leading "_" to avoid clashes with existing methods like "step()"
+    *this << "public void _" << decl.name << "(SimState state) {" << indent << nl
           << "Sim _sim = (Sim) state;"
           << *decl.stmts;
     if (posMember) {
@@ -338,7 +339,7 @@ void MasonPrinter::print(const AST::AgentDeclaration &decl) {
   *this << "public void step(SimState state) {" << indent;
   for (const AST::FunctionDeclaration *stepFn : script.simStmt->stepFuncDecls) {
     if (&stepFn->stepAgent() == &decl) {
-      *this << nl << stepFn->name << "(state);";
+      *this << nl << "_" << stepFn->name << "(state);";
     }
   }
   *this << outdent << nl << "}";
