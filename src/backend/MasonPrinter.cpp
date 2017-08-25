@@ -120,7 +120,7 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
             || name == "sinh" || name == "cosh" || name == "tanh"
             || name == "asin" || name == "acos" || name == "atan"
             || name == "exp" || name == "log" || name == "sqrt"
-            || name == "round"
+            || name == "round" || name == "pow"
     ) {
       // Basic math functions
       *this << "java.lang.Math." << name << "(";

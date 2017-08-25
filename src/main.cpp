@@ -33,6 +33,7 @@ void registerBuiltinFunctions(FunctionList &funcs) {
   funcs.add("log", { Type::FLOAT32 }, Type::FLOAT32);
   funcs.add("sqrt", { Type::FLOAT32 }, Type::FLOAT32);
   funcs.add("round", { Type::FLOAT32 }, Type::FLOAT32);
+  funcs.add("pow", { Type::FLOAT32, Type::FLOAT32 }, Type::FLOAT32);
 
   // Agent specific functions
   funcs.add("add", { Type::AGENT }, Type::VOID);

@@ -259,33 +259,45 @@ Value Value::calcBinaryOp(AST::BinaryOp op, const Value &l, const Value &r) {
 }
 
 Value Value::calcBuiltinCall(const FunctionSignature &sig, const std::vector<Value> &args) {
-  // Currently all constexpr functions take a single double argument
-  if (args.size() != 1 || !args[0].isNum()) {
-    return {};
+  if (args.size() == 1) {
+    // Currently all constexpr functions take a single double argument
+    if (!args[0].isNum()) {
+      return {};
+    }
+
+    static std::map<std::string, double (*)(double)> funcs = {
+      { "sin", sin },
+      { "cos", cos },
+      { "tan", tan },
+      { "sinh", sinh },
+      { "cosh", cosh },
+      { "tanh", tanh },
+      { "asin", asin },
+      { "acos", acos },
+      { "atan", atan },
+      { "exp", exp },
+      { "log", log },
+      { "sqrt", sqrt },
+      { "round", round },
+    };
+
+    auto it = funcs.find(sig.name);
+    if (it == funcs.end()) {
+      return {};
+    }
+
+    return it->second(args[0].asFloat());
   }
 
-  static std::map<std::string, double (*)(double)> funcs = {
-    { "sin", sin },
-    { "cos", cos },
-    { "tan", tan },
-    { "sinh", sinh },
-    { "cosh", cosh },
-    { "tanh", tanh },
-    { "asin", asin },
-    { "acos", acos },
-    { "atan", atan },
-    { "exp", exp },
-    { "log", log },
-    { "sqrt", sqrt },
-    { "round", round },
-  };
+  if (args.size() == 2) {
+    if (sig.name != "pow" || !args[0].isNum() || !args[1].isNum()) {
+      return {};
+    }
 
-  auto it = funcs.find(sig.name);
-  if (it == funcs.end()) {
-    return {};
+    return pow(args[0].asFloat(), args[1].asFloat());
   }
 
-  return it->second(args[0].asFloat());
+  return {};
 }
 
 static inline AST::Expression *withType(AST::Expression *expr, Type t) {
