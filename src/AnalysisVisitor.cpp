@@ -174,6 +174,14 @@ void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
     sigName += "_" + std::to_string(fn->signatures.size());
   }
 
+  // TODO Ignore getColor() function for non-mason backends, they'll not be able to
+  // codegen it. A more general solution would be to not emit functions that aren't
+  // used.
+  if (decl.name == "getColor" && backend != "mason") {
+    currentFunc = &decl;
+    return;
+  }
+
   decl.sig = FunctionSignature { decl.name, sigName, paramTypes, returnType, &decl };
   funcs.add(decl.sig);
 

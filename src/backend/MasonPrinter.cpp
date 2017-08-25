@@ -27,6 +27,9 @@ void MasonPrinter::printType(Type type) {
     case Type::VEC3:
       *this << "Double3D";
       return;
+    case Type::AGENT:
+      *this << type.getAgentDecl()->name;
+      return;
     case Type::ARRAY:
       printType(type.getBaseType());
       *this << "[]";
@@ -404,6 +407,9 @@ void MasonPrinter::print(const AST::Script &script) {
         << nl << *script.simStmt
         << nl << "_sim.finish();"
         << nl << "System.exit(0);"
+        << outdent << nl << "}"
+        << nl << "public static int getColor(Object obj) {" << indent
+        << nl << "return 0;"
         << outdent << nl << "}";
   inMain = false;
 
@@ -422,13 +428,14 @@ void MasonPrinter::printUI() {
   *this <<
   "import sim.portrayal.continuous.*;\n"
   "import sim.portrayal.simple.*;\n"
+  "import sim.portrayal.*;\n"
   "import sim.portrayal3d.continuous.*;\n"
   "import sim.portrayal3d.simple.*;\n"
   "import sim.engine.*;\n"
   "import sim.display.*;\n"
   "import sim.display3d.*;\n"
   "import javax.swing.*;\n"
-  "import java.awt.Color;\n"
+  "import java.awt.*;\n"
   "\n"
   "public class SimWithUI extends GUIState\n"
   "{\n"
@@ -468,7 +475,16 @@ void MasonPrinter::printUI() {
   "\n"
   "        envPortrayal.setField(sim.env);\n";
   if (dim == 2) {
-    *this << "        envPortrayal.setPortrayalForAll(new OvalPortrayal2D(scale));\n";
+    for (const AST::AgentDeclaration *agent : script.agents) {
+      *this << "        envPortrayal.setPortrayalForClass("
+            << agent->name << ".class, new OvalPortrayal2D(scale) {\n"
+            "            public void draw(Object object, Graphics2D graphics, DrawInfo2D info) {\n"
+            "                " << agent->name << " agent = (" << agent->name << ") object;\n"
+            "                paint = new Color(sim.getColor(agent));\n"
+            "                super.draw(object, graphics, info);\n"
+            "            }\n"
+            "        });\n";
+    }
   } else {
     *this << "        envPortrayal.setPortrayalForAll(new SpherePortrayal3D(scale));\n";
   }

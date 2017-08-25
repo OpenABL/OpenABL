@@ -11,8 +11,9 @@ namespace OpenABL {
 struct AnalysisVisitor : public AST::Visitor {
   AnalysisVisitor(
       AST::Script &script, const std::map<std::string, std::string> &params,
-      ErrorStream &err, FunctionList &builtins
-  ) : script(script), params(params), funcs(builtins), err(err), scope(script.scope) {}
+      ErrorStream &err, FunctionList &builtins, const std::string &backend
+  ) : script(script), params(params), funcs(builtins), err(err),
+      scope(script.scope), backend(backend) {}
 
   void enter(AST::Var &);
   void enter(AST::Literal &);
@@ -104,6 +105,10 @@ private:
   FunctionList &funcs;
   // Stream for error reporting
   ErrorStream &err;
+  // Information about *all* variables, indexed by unique VarId's
+  Scope &scope;
+  // The backend that is going to be used
+  const std::string &backend;
 
   // Whether the current script is a library or main script
   bool isLib;
@@ -112,8 +117,6 @@ private:
   // Stack of previous visible variable scopes
   // This is inefficient, but we don't actually care...
   std::stack<VarMap> varMapStack;
-  // Information about *all* variables, indexed by unique VarId's
-  Scope &scope;
   // Current function
   AST::FunctionDeclaration *currentFunc;
   // Declared agents by name

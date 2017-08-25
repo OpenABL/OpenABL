@@ -3,6 +3,11 @@ agent Cell {
   bool alive;
 }
 
+// For visualization
+int getColor(Cell cell) {
+  return cell.alive ? 0 : 0xffffff;
+}
+
 // Should be > sqrt(2) and < 2 so as to catch only
 // the neighbors
 float radius = 1.5;

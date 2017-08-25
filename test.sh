@@ -56,7 +56,7 @@ for file in $DIR/examples/*abl; do
     if [ -f $BACKEND_DIR/build.sh ]; then
       echo "BUILD"
       pushd $BACKEND_DIR
-      ./build.sh > build.log
+      ./build.sh > build.log 2>&1
       if [ $? -ne 0 ]; then
         echo "BUILD-FAIL $BACKEND_DIR/build.log"
         cat build.log
