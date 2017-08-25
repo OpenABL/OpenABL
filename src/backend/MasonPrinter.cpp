@@ -146,8 +146,7 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
       // This does not fully respect the order between different agent types
       *this << "schedule.scheduleRepeating(" << aLabel << ")";
     } else if (name == "save") {
-      // TODO Handle save
-      *this << "//save()";
+      *this << "Util.save(env.getAllObjects(), " << expr.getArg(0) << ")";
     } else {
       // TODO Handle other builtins
       *this << name << "(";
@@ -402,7 +401,7 @@ void MasonPrinter::print(const AST::Script &script) {
         << nl << "public static void main(String[] args) {" << indent
         << nl << "Sim _sim = new Sim(System.currentTimeMillis());"
         << nl << "_sim.start();"
-        << *script.simStmt
+        << nl << *script.simStmt
         << nl << "_sim.finish();"
         << nl << "System.exit(0);"
         << outdent << nl << "}";
