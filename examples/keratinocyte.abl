@@ -143,12 +143,9 @@ void resolve_forces(Keratinocyte in -> out) {
         num_stem_bonds += 1;
       }
 
-      float force;
-      if (separation_distance > 0) {
-        force = FORCE_MATRIX[in.type + 5*other.type];
-      } else {
-        force = FORCE_REP;
-      }
+      float force = separation_distance > 0
+        ? FORCE_MATRIX[in.type + 5*other.type]
+        : FORCE_REP;
 
       if (on_substrate_surface(in.pos.z)) {
         force *= DOWNWARD_FORCE[in.type];

@@ -487,16 +487,21 @@ void AnalysisVisitor::leave(AST::EnvironmentDeclaration &decl) {
 
 void AnalysisVisitor::leave(AST::VarDeclarationStatement &decl) {
   declareVar(*decl.var, decl.type->resolved, false, false, {});
-  if (decl.initializer) {
-    Type declType = decl.type->resolved;
-    Type initType = decl.initializer->type;
-    SKIP_INVALID(declType);
-    SKIP_INVALID(initType);
+  if (!decl.initializer) {
+    // TODO We may want to relax this in the future, but we'd have to ensure it's at least
+    // compatible with Java (while requires an initialization on all code-paths)
+    err << "Variable declaration must have an initializer" << decl.loc;
+    return;
+  }
 
-    if (!promoteTo(decl.initializer, declType)) {
-      err << "Trying to assign value of type " << initType
-          << " to variable of type " << declType << decl.initializer->loc;
-    }
+  Type declType = decl.type->resolved;
+  Type initType = decl.initializer->type;
+  SKIP_INVALID(declType);
+  SKIP_INVALID(initType);
+
+  if (!promoteTo(decl.initializer, declType)) {
+    err << "Trying to assign value of type " << initType
+        << " to variable of type " << declType << decl.initializer->loc;
   }
 };
 

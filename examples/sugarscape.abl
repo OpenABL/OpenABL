@@ -50,7 +50,7 @@ void metabolise_and_growback(Agent in -> out) {
 void movement_request(Agent in -> out) {
   if (in.state == AGENT_STATE_MOVEMENT_UNRESOLVED) {
     int best_sugar_level = -1;
-    float2 best_pos;
+    float2 best_pos = float2(0);
     for (Agent nx : near(in, 1)) {
       if (nx.pos == in.pos) continue;
       if (nx.state == AGENT_STATE_UNOCCUPIED && nx.env_sugar_level > best_sugar_level) {
