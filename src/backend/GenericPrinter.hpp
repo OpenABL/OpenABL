@@ -31,6 +31,8 @@ struct GenericPrinter : public Printer {
   virtual void print(const AST::WhileStatement &);
   virtual void print(const AST::VarDeclarationStatement &);
   virtual void print(const AST::ReturnStatement &);
+  virtual void print(const AST::BreakStatement &);
+  virtual void print(const AST::ContinueStatement &);
   virtual void print(const AST::ConstDeclaration &);
   virtual void print(const AST::Param &);
   virtual void print(const AST::FunctionDeclaration &);

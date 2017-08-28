@@ -426,6 +426,26 @@ struct ReturnStatement : public Statement {
   void print(Printer &) const;
 };
 
+struct BreakStatement : public Statement {
+  ExpressionPtr expr;
+
+  BreakStatement(Location loc)
+    : Statement{loc} {}
+
+  void accept(Visitor &);
+  void print(Printer &) const;
+};
+
+struct ContinueStatement : public Statement {
+  ExpressionPtr expr;
+
+  ContinueStatement(Location loc)
+    : Statement{loc} {}
+
+  void accept(Visitor &);
+  void print(Printer &) const;
+};
+
 struct Type : public Node {
   OpenABL::Type resolved;
 

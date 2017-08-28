@@ -128,6 +128,12 @@ void GenericPrinter::print(const AST::ReturnStatement &stmt) {
     *this << "return;";
   }
 }
+void GenericPrinter::print(const AST::BreakStatement &) {
+  *this << "break;";
+}
+void GenericPrinter::print(const AST::ContinueStatement &) {
+  *this << "continue;";
+}
 void GenericPrinter::print(const AST::ConstDeclaration &decl) {
   *this << *decl.type << " " << *decl.var
         << (decl.isArray ? "[]" : "")

@@ -113,9 +113,10 @@ void AnalysisVisitor::enter(AST::ExpressionStatement &) {}
 void AnalysisVisitor::enter(AST::AssignStatement &) {}
 void AnalysisVisitor::enter(AST::AssignOpStatement &) {}
 void AnalysisVisitor::enter(AST::IfStatement &) {}
-void AnalysisVisitor::enter(AST::WhileStatement &) {}
 void AnalysisVisitor::enter(AST::SimulateStatement &) {}
 void AnalysisVisitor::enter(AST::ReturnStatement &) {}
+void AnalysisVisitor::enter(AST::BreakStatement &) {}
+void AnalysisVisitor::enter(AST::ContinueStatement &) {}
 void AnalysisVisitor::enter(AST::AgentMember &) {}
 void AnalysisVisitor::enter(AST::Script &) {}
 void AnalysisVisitor::enter(AST::VarExpression &) {}
@@ -509,6 +510,7 @@ void AnalysisVisitor::leave(AST::Param &param) {
 }
 
 void AnalysisVisitor::enter(AST::ForStatement &stmt) {
+  loopNestingLevel++;
   pushVarScope();
 
   Type declType = resolveAstType(*stmt.type); // Not resolved yet
@@ -544,6 +546,7 @@ void AnalysisVisitor::enter(AST::ForStatement &stmt) {
   }
 };
 void AnalysisVisitor::leave(AST::ForStatement &stmt) {
+  loopNestingLevel--;
   popVarScope();
 
   if (stmt.isNear()) {
@@ -590,7 +593,12 @@ void AnalysisVisitor::leave(AST::IfStatement &stmt) {
   }
 }
 
+void AnalysisVisitor::enter(AST::WhileStatement &) {
+  loopNestingLevel++;
+}
 void AnalysisVisitor::leave(AST::WhileStatement &stmt) {
+  loopNestingLevel--;
+
   Type t = stmt.expr->type;
   SKIP_INVALID(t);
   if (!t.isBool()) {
@@ -668,6 +676,19 @@ void AnalysisVisitor::leave(AST::ReturnStatement &stmt) {
     }
   }
 };
+
+void AnalysisVisitor::leave(AST::BreakStatement &stmt) {
+  if (loopNestingLevel == 0) {
+    err << "Cannot use break outside a loop" << stmt.loc;
+    return;
+  }
+}
+void AnalysisVisitor::leave(AST::ContinueStatement &stmt) {
+  if (loopNestingLevel == 0) {
+    err << "Cannot use continue outside a loop" << stmt.loc;
+    return;
+  }
+}
 
 static bool isConst(const Scope &scope, AST::Expression &expr) {
   if (auto var = dynamic_cast<AST::VarExpression *>(&expr)) {

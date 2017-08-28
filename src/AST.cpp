@@ -168,6 +168,16 @@ void ReturnStatement::accept(Visitor &visitor) {
   visitor.leave(*this);
 }
 
+void BreakStatement::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  visitor.leave(*this);
+}
+
+void ContinueStatement::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  visitor.leave(*this);
+}
+
 void SimpleType::accept(Visitor &visitor) {
   visitor.enter(*this);
   visitor.leave(*this);
@@ -256,6 +266,8 @@ void WhileStatement::print(Printer &printer) const { printer.print(*this); }
 void ForStatement::print(Printer &printer) const { printer.print(*this); }
 void SimulateStatement::print(Printer &printer) const { printer.print(*this); }
 void ReturnStatement::print(Printer &printer) const { printer.print(*this); }
+void BreakStatement::print(Printer &printer) const { printer.print(*this); }
+void ContinueStatement::print(Printer &printer) const { printer.print(*this); }
 void SimpleType::print(Printer &printer) const { printer.print(*this); }
 void Param::print(Printer &printer) const { printer.print(*this); }
 void FunctionDeclaration::print(Printer &printer) const { printer.print(*this); }

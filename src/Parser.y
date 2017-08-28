@@ -32,6 +32,8 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   END 0 "end of file"
 
   AGENT
+  BREAK
+  CONTINUE
   ELSE
   ENVIRONMENT
   IF
@@ -231,6 +233,10 @@ statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
              { $$ = new ReturnStatement($2, @$); }
          | RETURN SEMI
              { $$ = new ReturnStatement(nullptr, @$); }
+         | BREAK SEMI
+             { $$ = new BreakStatement(@$); }
+         | CONTINUE SEMI
+             { $$ = new ContinueStatement(@$); }
          | SIMULATE LPAREN expression RPAREN LBRACE ident_list RBRACE
              { $$ = new SimulateStatement($3, $6, @$); }
 

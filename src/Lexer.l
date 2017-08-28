@@ -46,6 +46,8 @@ loc.step();
 %}
 
 "agent"    { return Parser::make_AGENT(loc); }
+"break"    { return Parser::make_BREAK(loc); }
+"continue" { return Parser::make_CONTINUE(loc); }
 "else"     { return Parser::make_ELSE(loc); }
 "environment" { return Parser::make_ENVIRONMENT(loc); }
 "if"       { return Parser::make_IF(loc); }

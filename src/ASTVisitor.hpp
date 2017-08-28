@@ -29,6 +29,8 @@ struct Visitor {
   virtual void enter(ForStatement &) {};
   virtual void enter(SimulateStatement &) {};
   virtual void enter(ReturnStatement &) {};
+  virtual void enter(BreakStatement &) {};
+  virtual void enter(ContinueStatement &) {};
   virtual void enter(SimpleType &) {};
   virtual void enter(Param &) {};
   virtual void enter(FunctionDeclaration &) {};
@@ -61,6 +63,8 @@ struct Visitor {
   virtual void leave(ForStatement &) {};
   virtual void leave(SimulateStatement &) {};
   virtual void leave(ReturnStatement &) {};
+  virtual void leave(BreakStatement &) {};
+  virtual void leave(ContinueStatement &) {};
   virtual void leave(SimpleType &) {};
   virtual void leave(Param &) {};
   virtual void leave(FunctionDeclaration &) {};

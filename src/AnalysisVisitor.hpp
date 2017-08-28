@@ -38,6 +38,8 @@ struct AnalysisVisitor : public AST::Visitor {
   void enter(AST::ForStatement &);
   void enter(AST::SimulateStatement &);
   void enter(AST::ReturnStatement &);
+  void enter(AST::BreakStatement &);
+  void enter(AST::ContinueStatement &);
   void enter(AST::SimpleType &);
   void enter(AST::Param &);
   void enter(AST::FunctionDeclaration &);
@@ -69,6 +71,8 @@ struct AnalysisVisitor : public AST::Visitor {
   void leave(AST::ForStatement &);
   void leave(AST::SimulateStatement &);
   void leave(AST::ReturnStatement &);
+  void leave(AST::BreakStatement &);
+  void leave(AST::ContinueStatement &);
   void leave(AST::SimpleType &);
   void leave(AST::Param &);
   void leave(AST::FunctionDeclaration &);
@@ -128,6 +132,8 @@ private:
   VarId collectAccessVar;
   // Radiuses used in near() loops
   std::vector<Value> radiuses;
+  // In how many loops we are right now
+  int loopNestingLevel = 0;
 };
 
 }
