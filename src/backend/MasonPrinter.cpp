@@ -139,7 +139,7 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
       AST::AgentDeclaration *agent = type.getAgentDecl();
       AST::AgentMember *posMember = agent->getPositionMember();
 
-      *this << type << " " << aLabel << " = " << arg << ";" << nl;
+      *this << "final " << type << " " << aLabel << " = " << arg << ";" << nl;
       if (posMember) {
         *this << "env.setObjectLocation(" << aLabel << ", "
               << aLabel << "." << posMember->name << ");" << nl;
@@ -147,7 +147,13 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
 
       // TODO There are some ordering issues here, which we ignore for now
       // This does not fully respect the order between different agent types
-      *this << "schedule.scheduleRepeating(" << aLabel << ")";
+      *this << "schedule.scheduleRepeating(" << aLabel << ");" << nl;
+      // Copy double-buffer after step
+      *this << "schedule.scheduleRepeating(schedule.EPOCH, 1, new Steppable() {" << indent << nl
+            << "public void step(SimState state) {" << indent << nl
+            << aLabel << "._dbuf_copy();"
+            << outdent << nl << "}"
+            << outdent << nl << "})";
     } else if (name == "save") {
       *this << "Util.save(env.getAllObjects(), " << expr.getArg(0) << ")";
     } else {
@@ -165,7 +171,11 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
 
 void MasonPrinter::print(const AST::AssignStatement &stmt) {
   if (auto *access = dynamic_cast<const AST::MemberAccessExpression *>(&*stmt.left)) {
-    if (access->expr->type.isVec()) {
+    if (access->expr->type.isAgent()) {
+      // Write to agent variable -- write to double buffer instead
+      *this << *access->expr << "._dbuf_" << access->member << " = " << *stmt.right << ";";
+      return;
+    } else if (access->expr->type.isVec()) {
       // Assignment to vector component
       // Convert into creation of new DoubleND, because it is immmutable
       // TODO Automatic conversion to MutableDoubleND would be nice
@@ -301,7 +311,7 @@ void MasonPrinter::print(const AST::FunctionDeclaration &decl) {
           << "Sim _sim = (Sim) state;"
           << *decl.stmts;
     if (posMember) {
-      *this << nl << "_sim.env.setObjectLocation(this, this." << posMember->name << ");";
+      *this << nl << "_sim.env.setObjectLocation(this, this._dbuf_" << posMember->name << ");";
     }
     *this << outdent << nl << "}";
     
@@ -316,6 +326,7 @@ void MasonPrinter::print(const AST::FunctionDeclaration &decl) {
 
 void MasonPrinter::print(const AST::AgentMember &member) {
   *this << *member.type << " " << member.name << ";";
+  *this << nl << *member.type << " _dbuf_" << member.name << ";";
 }
 
 void MasonPrinter::print(const AST::AgentDeclaration &decl) {
@@ -334,6 +345,7 @@ void MasonPrinter::print(const AST::AgentDeclaration &decl) {
   *this << ") {" << indent;
   for (AST::AgentMemberPtr &member : *decl.members) {
     *this << nl << "this." << member->name << " = " << member->name << ";";
+    *this << nl << "this._dbuf_" << member->name << " = " << member->name << ";";
   }
   *this << outdent << nl << "}" << nl;
 
@@ -343,6 +355,13 @@ void MasonPrinter::print(const AST::AgentDeclaration &decl) {
     if (&stepFn->stepAgent() == &decl) {
       *this << nl << "_" << stepFn->name << "(state);";
     }
+  }
+  *this << outdent << nl << "}" << nl;
+
+  // Copy double-buffered properties to main properties
+  *this << "public void _dbuf_copy() {" << indent;
+  for (const AST::AgentMemberPtr &member : *decl.members) {
+    *this << nl << member->name << " = _dbuf_" << member->name << ";";
   }
   *this << outdent << nl << "}";
 

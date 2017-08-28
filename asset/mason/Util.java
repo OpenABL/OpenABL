@@ -14,6 +14,8 @@ public class Util {
 		writer.print("{");
 		boolean first = true;
 		for (Field field : cls.getDeclaredFields()) {
+			if (field.getName().startsWith("_dbuf_")) continue;
+
 			if (!first) writer.print(",");
 			first = false;
 			writer.format("\"%s\":", field.getName());
