@@ -21,9 +21,16 @@ int SUGAR_MAX_CAPACITY = 4;
 
 param int num_timesteps = 100;
 param int grid_width = 30;
+param float occupiedFrac = 0.3;
 
 environment {
   max: float2(grid_width)
+}
+
+// For visualization
+int getColor(Agent cell) {
+  // TODO Show more state
+  return cell.state == AGENT_STATE_UNOCCUPIED ? 0xffffff : 0;
 }
 
 void metabolise_and_growback(Agent in -> out) {
@@ -113,6 +120,23 @@ void movement_transaction(Agent in -> out) {
 // Movement request + response + transaction ???
 
 void main() {
+  for (int x : 0..grid_width) {
+    for (int y : 0..grid_width) {
+      // TODO The starting data in FlameGPU looks odd to me. The env_sugar_level clearly
+      // goes beyong SUGAR_MAX_CAPACITY, while sugar_level stays below it. I think that
+      // SUGAR_MAX_CAPACITY is supposed to be applied to sugar_level, not env_sugar_level.
+      bool occupied = random(1.0) < occupiedFrac;
+      add(Agent {
+        pos: float2(x + 0.5, y + 0.5),
+        target_pos: float2(0),
+        state: occupied ? AGENT_STATE_OCCUPIED : AGENT_STATE_UNOCCUPIED,
+        sugar_level: occupied ? randomInt(1, SUGAR_MAX_CAPACITY) : 0,
+        metabolism: occupied ? 1 : 0,
+        env_sugar_level: randomInt(1, SUGAR_MAX_CAPACITY),
+      });
+    }
+  }
+
   simulate(num_timesteps) {
     metabolise_and_growback,
     movement_request,

@@ -9,6 +9,10 @@ public class Util {
 		return min + rng.nextDouble() * (max - min);
 	}
 
+  public static int randomInt(MersenneTwisterFast rng, int min, int max) {
+    return min + rng.nextInt() * (max - min + 1);
+  }
+
 	private static void saveAgent(PrintWriter writer, Object agent, Class<?> cls)
 			throws IllegalAccessException {
 		writer.print("{");

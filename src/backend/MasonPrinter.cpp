@@ -125,8 +125,8 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
       *this << expr.getArg(0) << ".length()";
     } else if (name == "normalize") {
       *this << expr.getArg(0) << ".normalize()";
-    } else if (name == "random") {
-      *this << "Util.random(" << getSimVarName() << ".random, ";
+    } else if (name == "random" || name == "randomInt") {
+      *this << "Util." << name << "(" << getSimVarName() << ".random, ";
       printArgs(expr);
       *this << ")";
     } else if (name == "sin" || name == "cos" || name == "tan"

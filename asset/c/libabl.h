@@ -168,6 +168,7 @@ static inline float3 normalize_float3(float3 v) {
  */
 
 abl_float random_float(abl_float min, abl_float max);
+int random_int(int min, int max);
 
 /*
  * Runtime type information

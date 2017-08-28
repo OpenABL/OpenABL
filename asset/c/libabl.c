@@ -1,6 +1,7 @@
 #include "libabl.h"
 #include <stdio.h>
 #include <assert.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -20,6 +21,21 @@ abl_float random_float(abl_float min, abl_float max) {
 	// This is a horrible way of generating a random float.
 	// It will do for now.
 	return min + (abl_float) x / (abl_float) (UINT64_MAX / (max - min));
+}
+
+int random_int(int min, int max) {
+	unsigned n = max-min+1;
+	if ((n & (n-1)) == 0) {
+		return xorshift128plus() & (n - 1);
+	}
+
+	// Not the fastest way to do this
+	unsigned r = UINT_MAX % n;
+	unsigned x;
+	do {
+		x = xorshift128plus();
+	} while (x >= UINT_MAX - r);
+	return min + x % n;
 }
 
 static size_t type_info_get_size(const type_info *info) {
