@@ -210,11 +210,16 @@ void FlameGPUPrinter::print(const AST::ForStatement &stmt) {
     const std::string &agentVar = (*currentFunc->func->params)[0]->var->name;
 
     std::string msgVar = msgName + "_message";
-    *this << "xmachine_message_" << msgName << "* " << msgVar
-          << " = get_first_" << msgName << "_message(" << msgName + "_messages, "
+    *this << "xmachine_message_" << msgName << "* " << msgVar << ";"
+          << nl << "for (" << indent
+          << nl << msgVar << " = get_first_" << msgName << "_message(" << msgName + "_messages, "
           << "partition_matrix, " << agentVar << "->x, "
           << agentVar << "->y, " << agentVar << "->z"
-          << ");" << nl << "while (" << msgVar << ") {" << indent;
+          << ");"
+          << nl << "" << msgVar << ";"
+          << nl << msgVar << " = get_next_" << msgName << "_message(" << msgVar
+          << ", " << msgName << "_messages, partition_matrix)"
+          << outdent << nl << ") {" << indent;
     extractMsgMembers(*this, msg, stmt.var->name);
     *this << nl << "if (glm::distance(" << stmt.var->name << "_" << posMember.name
           << ", " << agentVar << "_" << posMember.name
@@ -224,9 +229,7 @@ void FlameGPUPrinter::print(const AST::ForStatement &stmt) {
     *this << nl << *stmt.stmt;
     currentNearVar = nullptr;
 
-    *this << nl << msgVar << " = get_next_" << msgName << "_message(" << msgVar
-          << ", " << msgName << "_messages, partition_matrix);"
-          << outdent << nl << "}";
+    *this << outdent << nl << "}";
 
     // TODO What are our semantics on agent self-interaction?
     return;
