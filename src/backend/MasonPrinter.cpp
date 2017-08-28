@@ -264,7 +264,7 @@ void MasonPrinter::print(const AST::ForStatement &stmt) {
     AST::AgentDeclaration *nearAgentDecl = nearAgent.type.getAgentDecl();
     const AST::Expression &nearRadius = stmt.getNearRadius();
 
-    *this << "Bag _bag = _sim.env.getNeighborsWithinDistance("
+    *this << "Bag _bag = _sim.env.getNeighborsExactlyWithinDistance("
           << nearAgent << "." << nearAgentDecl->getPositionMember()->name
           << ", " << nearRadius << ");" << nl
           << "for (int " << iLabel << " = 0; " << iLabel << " < _bag.size(); "
