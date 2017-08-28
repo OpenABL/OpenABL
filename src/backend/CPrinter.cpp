@@ -54,6 +54,8 @@ void CPrinter::printSpecialBinaryOp(
       case AST::BinaryOp::SUB: *this << "sub"; break;
       case AST::BinaryOp::DIV: *this << "div_scalar"; break;
       case AST::BinaryOp::MUL: *this << "mul_scalar"; break;
+      case AST::BinaryOp::EQUALS: *this << "equals"; break;
+      case AST::BinaryOp::NOT_EQUALS: *this << "not_equals"; break;
       default:
         assert(0);
     }

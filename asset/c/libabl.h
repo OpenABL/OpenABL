@@ -89,6 +89,12 @@ static inline float2 float2_mul_scalar(float2 a, abl_float s) {
 static inline float2 float2_div_scalar(float2 a, abl_float s) {
 	return (float2) { a.x / s, a.y / s };
 }
+static inline bool float2_equals(float2 a, float2 b) {
+	return a.x == b.x && a.y == b.y;
+}
+static inline bool float2_not_equals(float2 a, float2 b) {
+	return a.x != b.x || a.y != b.y;
+}
 
 /*
  * float3
@@ -117,6 +123,12 @@ static inline float3 float3_mul_scalar(float3 a, abl_float s) {
 }
 static inline float3 float3_div_scalar(float3 a, abl_float s) {
 	return (float3) { a.x / s, a.y / s, a.z / s };
+}
+static inline bool float3_equals(float3 a, float3 b) {
+	return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+static inline bool float3_not_equals(float3 a, float3 b) {
+	return a.x != b.x || a.y != b.y || a.z != b.z;
 }
 
 /*

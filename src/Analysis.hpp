@@ -75,11 +75,21 @@ struct Value {
   struct Vec2 {
     double x;
     double y;
+
+    bool operator==(const Vec2 &other) const {
+      return x == other.x && y == other.y;
+    }
+    bool operator!=(const Vec2 &other) const { return !(*this == other); }
   };
   struct Vec3 {
     double x;
     double y;
     double z;
+
+    bool operator==(const Vec3 &other) const {
+      return x == other.x && y == other.y && z == other.z;
+    }
+    bool operator!=(const Vec3 &other) const { return !(*this == other); }
   };
 
   Value(const Value &other) {

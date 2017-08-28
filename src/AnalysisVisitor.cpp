@@ -829,6 +829,14 @@ static Type getBinaryOpType(
       return { Type::INT32 };
     case AST::BinaryOp::EQUALS:
     case AST::BinaryOp::NOT_EQUALS:
+      if (l.isNum() && r.isNum()) {
+        return { Type:: BOOL };
+      }
+      if (l.isVec() && l == r) {
+        // Allow equality/inequality comparisons of vectors, but no greater etc.
+        return { Type:: BOOL };
+      }
+      return { Type::INVALID };
     case AST::BinaryOp::SMALLER:
     case AST::BinaryOp::SMALLER_EQUALS:
     case AST::BinaryOp::GREATER:

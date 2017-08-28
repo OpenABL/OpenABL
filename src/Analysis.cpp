@@ -222,6 +222,13 @@ Value Value::calcBinaryOp(AST::BinaryOp op, const Value &l, const Value &r) {
       return {};
     case AST::BinaryOp::EQUALS:
     case AST::BinaryOp::NOT_EQUALS:
+      if (l.isVec2() && r.isVec2()) {
+        return op == AST::BinaryOp::EQUALS ? l.vec2 == r.vec2 : l.vec2 != r.vec2;
+      }
+      if (l.isVec3() && r.isVec3()) {
+        return op == AST::BinaryOp::EQUALS ? l.vec2 == r.vec2 : l.vec2 != r.vec2;
+      }
+      /* break missing intentionally */
     case AST::BinaryOp::SMALLER:
     case AST::BinaryOp::SMALLER_EQUALS:
     case AST::BinaryOp::GREATER:

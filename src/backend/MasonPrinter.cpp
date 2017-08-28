@@ -61,6 +61,12 @@ bool MasonPrinter::isSpecialBinaryOp(
 }
 void MasonPrinter::printSpecialBinaryOp(
     AST::BinaryOp op, const AST::Expression &left, const AST::Expression &right) {
+  if (op == AST::BinaryOp::NOT_EQUALS) {
+    // Map to !equals()
+    *this << "!" << left << ".equals(" << right << ")";
+    return;
+  }
+
   *this << left << ".";
   switch (op) {
     case AST::BinaryOp::ADD: *this << "add"; break;
@@ -70,6 +76,7 @@ void MasonPrinter::printSpecialBinaryOp(
       // Emulate divide via multiply by reciprocal
       *this << "multiply(1. / " << right << ")";
       return;
+    case AST::BinaryOp::EQUALS: *this << "equals"; break;
     default:
       assert(0);
   }
