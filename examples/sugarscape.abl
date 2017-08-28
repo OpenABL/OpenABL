@@ -1,1 +1,122 @@
-// TODO sugarscape model
+// Based on FlameGPU implementation
+
+// TODO INITIAL PORT -- NOT TESTED!
+
+agent Agent {
+  position float2 pos;
+  float2 target_pos;
+  int state;
+  int sugar_level;
+  int metabolism;
+  int env_sugar_level;
+}
+
+int AGENT_STATE_UNOCCUPIED = 0;
+int AGENT_STATE_OCCUPIED = 1;
+int AGENT_STATE_MOVEMENT_REQUESTED = 2;
+int AGENT_STATE_MOVEMENT_UNRESOLVED = 3;
+
+int SUGAR_GROWBACK_RATE = 1;
+int SUGAR_MAX_CAPACITY = 4;
+
+param int num_timesteps = 100;
+param int grid_width = 30;
+
+environment {
+  max: float2(grid_width)
+}
+
+void metabolise_and_growback(Agent in -> out) {
+  if (in.state == AGENT_STATE_OCCUPIED) {
+    // Store sugar and metabolise
+    out.sugar_level = in.sugar_level + in.env_sugar_level - in.metabolism;
+    out.env_sugar_level = 0;
+
+    if (out.sugar_level == 0) {
+      // Agent dies
+      out.state = AGENT_STATE_UNOCCUPIED;
+      out.metabolism = 0;
+    } else {
+      // Agent may want to move
+      out.state = AGENT_STATE_MOVEMENT_UNRESOLVED;
+    }
+  } else if (in.state == AGENT_STATE_UNOCCUPIED) {
+    if (in.env_sugar_level < SUGAR_MAX_CAPACITY) {
+      out.env_sugar_level = in.env_sugar_level + SUGAR_GROWBACK_RATE;
+    }
+  }
+}
+
+void movement_request(Agent in -> out) {
+  if (in.state == AGENT_STATE_MOVEMENT_UNRESOLVED) {
+    int best_sugar_level = -1;
+    float2 best_pos;
+    for (Agent nx : near(in, 1)) {
+      if (nx.pos == in.pos) continue;
+      if (nx.state == AGENT_STATE_UNOCCUPIED && nx.env_sugar_level > best_sugar_level) {
+        best_sugar_level = nx.env_sugar_level;
+        best_pos = nx.pos;
+      }
+    }
+
+    if (best_sugar_level >= 0) {
+      out.state = AGENT_STATE_MOVEMENT_REQUESTED;
+      out.target_pos = best_pos;
+    } else {
+      out.state = AGENT_STATE_OCCUPIED;
+    }
+  }
+}
+
+void movement_response(Agent in -> out) {
+  if (in.state == AGENT_STATE_UNOCCUPIED) {
+    int best_priority = -1;
+    int best_sugar_level = -1;
+    int best_metabolism = -1;
+
+    for (Agent nx : near(in, 1)) {
+      if (nx.state == AGENT_STATE_MOVEMENT_REQUESTED && nx.target_pos == in.pos) {
+        // ??? FlameGPU model simply picks the first, effectively
+        int message_priority = 0;
+        if (message_priority > best_priority) {
+          best_priority = message_priority;
+          best_sugar_level = nx.sugar_level;
+          best_metabolism = nx.metabolism;
+        }
+      }
+    }
+
+    if (best_priority >= 0) {
+      out.state = AGENT_STATE_OCCUPIED;
+      out.sugar_level = best_sugar_level;
+      out.metabolism = best_metabolism;
+    }
+  }
+}
+
+void movement_transaction(Agent in -> out) {
+  if (in.state == AGENT_STATE_MOVEMENT_REQUESTED) {
+    for (Agent nx : near(in, 1)) {
+      if (nx.state == AGENT_STATE_OCCUPIED && nx.pos == in.target_pos) {
+        out.state = AGENT_STATE_UNOCCUPIED;
+        out.sugar_level = 0;
+        out.metabolism = 0;
+      }
+    }
+    if (out.state == AGENT_STATE_MOVEMENT_REQUESTED) {
+      // ??? Doesn't make sense to me to keep it unresolved. Shouldn't it go back to occupied?
+      out.state = AGENT_STATE_MOVEMENT_UNRESOLVED;
+    }
+  }
+}
+
+// Movement request + response + transaction ???
+
+void main() {
+  simulate(num_timesteps) {
+    metabolise_and_growback,
+    movement_request,
+    movement_response,
+    movement_transaction
+  }
+}

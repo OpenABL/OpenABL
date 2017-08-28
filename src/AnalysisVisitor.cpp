@@ -583,6 +583,7 @@ void AnalysisVisitor::leave(AST::ForStatement &stmt) {
 
 void AnalysisVisitor::leave(AST::IfStatement &stmt) {
   Type t = stmt.condExpr->type;
+  SKIP_INVALID(t);
   if (!t.isBool()) {
     err << "if() condition must be bool, but received " << t << stmt.condExpr->loc;
     return;
@@ -591,6 +592,7 @@ void AnalysisVisitor::leave(AST::IfStatement &stmt) {
 
 void AnalysisVisitor::leave(AST::WhileStatement &stmt) {
   Type t = stmt.expr->type;
+  SKIP_INVALID(t);
   if (!t.isBool()) {
     err << "while() condition must be bool, but received " << t << stmt.expr->loc;
     return;
