@@ -48,17 +48,15 @@ float food_radius = 2.0;
 // obstacle check, rewritten in vectorial form
 // obstacles are two ellipses
 bool obstacle(Ant ant){
-	float2 f1 = {ant.pos.x-45, ant.pos.y - 25}
+	float2 f1 = {ant.pos.x-45, ant.pos.y-25}
 	float2 s1 = f1 *  0.707;
 	
-	// if( ((x-45)*0.707+(y-25)*0.707)*((x-45)*0.707+(y-25)*0.707)/36+
-	//     ((x-45)*0.707-(y-25)*0.707)*((x-45)*0.707-(y-25)*0.707)/1024 <= 1 )
 	if( (s1.x+s1.y)*(s1.x+s1.y) / 36   + 
 	    (s1.x-s1.y)*(s1.x-s1.y) / 1024 <= 1 )
 		return true;
 	
 	float2 f2 = {ant.pos.x-35, ant.pos.y-70}
-	float2 s2 = f1 *  0.707;
+	float2 s2 = f2 *  0.707;
 	if( (s2.x+s2.y)*(s2.x+s2.y) / 36 + 
 	    (s2.x-s2.y)*(s2.x-s2.y) /1024 <= 1 )
 		return true;
@@ -122,7 +120,7 @@ void main() {
     });
   }
 
-  simulate(100) { update_ant  } // XXX pheromone ?
+  simulate(100) { update_ant  } // XXX how to add the pheromone step? Something is missing here
 
   save("ants.out"); // XXX what?
 }
