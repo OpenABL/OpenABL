@@ -31,8 +31,8 @@ environment {
 }
 
 
-float2 home = {75,75};
-float2 food = {25,25};
+float2 home = float2(75,75);
+float2 food = float2(25,25);
 
 
 
@@ -48,14 +48,14 @@ float food_radius = 2.0;
 // obstacle check, rewritten in vectorial form
 // obstacles are two ellipses
 bool obstacle(Ant ant){
-	float2 f1 = {ant.pos.x-45, ant.pos.y-25}
+	float2 f1 = float2(ant.pos.x-45, ant.pos.y-25);
 	float2 s1 = f1 *  0.707;
 	
 	if( (s1.x+s1.y)*(s1.x+s1.y) / 36   + 
 	    (s1.x-s1.y)*(s1.x-s1.y) / 1024 <= 1 )
 		return true;
 	
-	float2 f2 = {ant.pos.x-35, ant.pos.y-70}
+	float2 f2 = float2(ant.pos.x-35, ant.pos.y-70);
 	float2 s2 = f2 *  0.707;
 	if( (s2.x+s2.y)*(s2.x+s2.y) / 36 + 
 	    (s2.x-s2.y)*(s2.x-s2.y) /1024 <= 1 )
@@ -77,13 +77,12 @@ void update_ant(Ant in->out) {
   //  if the ant is close to food, generate pheromone
   // for each pheromone, for each ant  
   for(float2 fx : food) {
-	for (Pheromone px : near(fx, food_radius)) {
-		
-		food_count++;  
-	}
-	
-	// deposit food pheromone
-	xxx
+    for (Pheromone px : near(fx, food_radius)) {
+      food_count += 1;  
+    }
+    
+    // deposit food pheromone
+    // xxx
   }
   
   // follow home pheromone

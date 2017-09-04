@@ -1099,6 +1099,9 @@ static bool isTypeCtorValid(Type t, const std::vector<Type> &argTypes) {
 
 void AnalysisVisitor::leave(AST::CallExpression &expr) {
   std::vector<Type> argTypes = getArgTypes(expr);
+  for (Type t : argTypes) {
+    SKIP_INVALID(t);
+  }
 
   Type t = tryResolveNameToSimpleType(expr.name);
   if (!t.isInvalid()) {
