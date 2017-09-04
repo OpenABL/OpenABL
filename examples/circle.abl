@@ -3,9 +3,9 @@ agent Point {
 }
 
 // Repulsive force parameter
-float k_rep = 0.001;
+float k_rep = 0.1;
 // Attractive force parameter
-float k_att = 0.001;
+float k_att = 0.05;
 // Radius of agent (radius of repulsion)
 float r = 5;
 // Width/height of environment

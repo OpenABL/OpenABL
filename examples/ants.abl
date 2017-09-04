@@ -119,7 +119,10 @@ void main() {
     });
   }
 
-  simulate(100) { update_ant  } // XXX how to add the pheromone step? Something is missing here
+  simulate(100) {
+    update_ant,
+    update_pheromone
+  }
 
   save("ants.out"); // XXX what?
 }
