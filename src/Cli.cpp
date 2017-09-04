@@ -72,7 +72,7 @@ Options parseOptions(int argc, char **argv) {
   }
 
   if (options.backend.empty()) {
-    options.backend = "c";
+    throw OptionError("Missing backend (-b or --backend)");
   }
 
   return options;

@@ -53,7 +53,7 @@ Usage: ./OpenABL -i input.abl -o ./output-dir -b backend
 
 Options:
   -A, --asset-dir    Asset directory (default: ./asset)
-  -b, --backend      Backend (default: c)
+  -b, --backend      Backend
   -B, --build        Build the generated code
   -C, --config       Specify a configuration value (name=value)
   -h, --help         Display this help
@@ -64,9 +64,9 @@ Options:
 
 Available backends:
  * c        (working)
- * flame    (mostly working)
+ * flame    (working)
  * flamegpu (mostly working)
- * mason    (mostly working)
+ * mason    (working)
  * dmason   (mostly working)
 
 Available configuration options:
@@ -91,7 +91,7 @@ different backends.
  * `flame` backend: `libmboard` must be in PATH. The `FLAME_XPARSER_DIR` environment variable must
    be set to the xparser directory.
  * `flamegpu` backend: The `FLAMEGPU_DIR` environment variable must be set to the FLAMEGPU directory.
- * `mason` backend: Mason must be in the `CLASS_PATH`.
+ * `mason` backend: Mason must be in the `CLASSPATH`.
  * `dmason` backend: TODO.
 
 Please report if any necessary environment configuration is missing.
