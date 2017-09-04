@@ -21,7 +21,7 @@ int SUGAR_MAX_CAPACITY = 4;
 
 param int num_timesteps = 100;
 param int grid_width = 30;
-param float occupiedFrac = 0.3;
+param float occupiedFrac = 0.1;
 
 environment {
   max: float2(grid_width)

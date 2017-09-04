@@ -152,15 +152,30 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
               << aLabel << "." << posMember->name << ");" << nl;
       }
 
-      // TODO There are some ordering issues here, which we ignore for now
-      // This does not fully respect the order between different agent types
-      *this << "schedule.scheduleRepeating(" << aLabel << ");" << nl;
-      // Copy double-buffer after step
-      *this << "schedule.scheduleRepeating(schedule.EPOCH, 1, new Steppable() {" << indent << nl
-            << "public void step(SimState state) {" << indent << nl
-            << aLabel << "._dbuf_copy();"
-            << outdent << nl << "}"
-            << outdent << nl << "})";
+      size_t numStepFns = script.simStmt->stepFuncDecls.size();
+      for (size_t i = 0; i < numStepFns; i++) {
+        const AST::FunctionDeclaration *stepFn = script.simStmt->stepFuncDecls[i];
+        if (&stepFn->stepAgent() != agent) {
+          continue;
+        }
+
+        *this << "schedule.scheduleRepeating(schedule.EPOCH, " << (2*i)
+              << ", new Steppable() {" << indent << nl
+              << "public void step(SimState state) {" << indent << nl
+              << aLabel << "._" << stepFn->name << "(state);"
+              << outdent << nl << "}"
+              << outdent << nl << "});";
+        // Copy double-buffer after step
+        *this << nl << "schedule.scheduleRepeating(schedule.EPOCH, " << (2*i + 1)
+              << ", new Steppable() {" << indent << nl
+              << "public void step(SimState state) {" << indent << nl
+              << aLabel << "._dbuf_copy();"
+              << outdent << nl << "}"
+              << outdent << nl << "})";
+        if (i != numStepFns - 1) {
+          *this << ";" << nl;
+        }
+      }
     } else if (name == "save") {
       *this << "Util.save(env.getAllObjects(), " << expr.getArg(0) << ")";
     } else {
@@ -341,7 +356,7 @@ void MasonPrinter::print(const AST::AgentDeclaration &decl) {
 
   *this << "import sim.engine.*;" << nl
         << "import sim.util.*;" << nl << nl
-        << "public class " << decl.name << " implements Steppable {" << indent
+        << "public class " << decl.name << " {" << indent
         << *decl.members << nl << nl;
 
   // Print constructor
@@ -353,15 +368,6 @@ void MasonPrinter::print(const AST::AgentDeclaration &decl) {
   for (AST::AgentMemberPtr &member : *decl.members) {
     *this << nl << "this." << member->name << " = " << member->name << ";";
     *this << nl << "this._dbuf_" << member->name << " = " << member->name << ";";
-  }
-  *this << outdent << nl << "}" << nl;
-
-  // Print main step functions that dispatches to sub-steps
-  *this << "public void step(SimState state) {" << indent;
-  for (const AST::FunctionDeclaration *stepFn : script.simStmt->stepFuncDecls) {
-    if (&stepFn->stepAgent() == &decl) {
-      *this << nl << "_" << stepFn->name << "(state);";
-    }
   }
   *this << outdent << nl << "}" << nl;
 
