@@ -19,9 +19,13 @@ int AGENT_STATE_MOVEMENT_UNRESOLVED = 3;
 int SUGAR_GROWBACK_RATE = 1;
 int SUGAR_MAX_CAPACITY = 4;
 
+// TODO This takes into account all direct neightbors,
+//      should only use horizontal and vertical instead?
+float radius = 1.5;
+
 param int num_timesteps = 100;
 param int grid_width = 30;
-param float occupiedFrac = 0.1;
+param float occupiedFrac = 0.2;
 
 environment {
   max: float2(grid_width)
@@ -30,7 +34,9 @@ environment {
 // For visualization
 int getColor(Agent cell) {
   // TODO Show more state
-  return cell.state == AGENT_STATE_UNOCCUPIED ? 0xffffff : 0;
+  return cell.state == AGENT_STATE_OCCUPIED   ? 0x000000
+       : cell.state == AGENT_STATE_UNOCCUPIED ? 0xcccccc
+                                              : 0xff0000;
 }
 
 void metabolise_and_growback(Agent in -> out) {
@@ -58,7 +64,7 @@ void movement_request(Agent in -> out) {
   if (in.state == AGENT_STATE_MOVEMENT_UNRESOLVED) {
     int best_sugar_level = -1;
     float2 best_pos = float2(0);
-    for (Agent nx : near(in, 1)) {
+    for (Agent nx : near(in, radius)) {
       if (nx.pos == in.pos) continue;
       if (nx.state == AGENT_STATE_UNOCCUPIED && nx.env_sugar_level > best_sugar_level) {
         best_sugar_level = nx.env_sugar_level;
@@ -81,7 +87,7 @@ void movement_response(Agent in -> out) {
     int best_sugar_level = -1;
     int best_metabolism = -1;
 
-    for (Agent nx : near(in, 1)) {
+    for (Agent nx : near(in, radius)) {
       if (nx.state == AGENT_STATE_MOVEMENT_REQUESTED && nx.target_pos == in.pos) {
         // ??? FlameGPU model simply picks the first, effectively
         int message_priority = 0;
@@ -103,7 +109,7 @@ void movement_response(Agent in -> out) {
 
 void movement_transaction(Agent in -> out) {
   if (in.state == AGENT_STATE_MOVEMENT_REQUESTED) {
-    for (Agent nx : near(in, 1)) {
+    for (Agent nx : near(in, radius)) {
       if (nx.state == AGENT_STATE_OCCUPIED && nx.pos == in.target_pos) {
         out.state = AGENT_STATE_UNOCCUPIED;
         out.sugar_level = 0;
@@ -111,8 +117,7 @@ void movement_transaction(Agent in -> out) {
       }
     }
     if (out.state == AGENT_STATE_MOVEMENT_REQUESTED) {
-      // ??? Doesn't make sense to me to keep it unresolved. Shouldn't it go back to occupied?
-      out.state = AGENT_STATE_MOVEMENT_UNRESOLVED;
+      out.state = AGENT_STATE_OCCUPIED;
     }
   }
 }
