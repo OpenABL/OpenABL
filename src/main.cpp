@@ -73,7 +73,8 @@ void printHelp() {
                " * dmason   (mostly working)\n"
                "\n"
                "Available configuration options:\n"
-               " * bool use_float (default: false)\n"
+               " * bool use_float (default: false, flame/gpu only)\n"
+               " * bool visualize (default: false, mason only)\n"
             << std::flush;
 }
 
