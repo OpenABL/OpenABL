@@ -366,6 +366,8 @@ void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
       return;
     }
 
+    // TODO This should be migrated to evalExpression(). Right now the rules for constant
+    // expressions in arrays are different from everywhere else
     if (!isConstantExpression(*decl.expr)) {
       err << "Initializer of global constant must be a constant expression" << decl.expr->loc;
       return;
@@ -378,6 +380,10 @@ void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
       err << "Initializer of global constant must be a constant expression" << decl.expr->loc;
       return;
     }
+
+    // Update initializer expression, as backends may not support
+    // the same constant expressions we do
+    decl.expr.reset(val.toExpression());
   }
 
   Type declType = decl.type->resolved;
