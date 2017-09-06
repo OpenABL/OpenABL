@@ -34,6 +34,16 @@ void createDirectory(const std::string &name) {
   }
 }
 
+std::string createTemporaryDirectory() {
+  char dir[] = "/tmp/openabl_XXXXXX";
+  char *result = mkdtemp(dir);
+  if (!result) {
+    throw FileError("Failure to create temporary directory");
+  }
+
+  return result;
+}
+
 void writeToFile(const std::string &name, const std::string &contents) {
   std::ofstream f(name);
   if (!f.is_open()) {

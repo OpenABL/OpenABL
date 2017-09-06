@@ -67,10 +67,6 @@ Options parseOptions(int argc, char **argv) {
     return options;
   }
 
-  if (options.outputDir.empty()) {
-    throw OptionError("Missing output directory (-o or --output-dir)");
-  }
-
   if (options.backend.empty()) {
     throw OptionError("Missing backend (-b or --backend)");
   }

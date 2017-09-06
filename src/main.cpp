@@ -148,7 +148,15 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  createDirectory(options.outputDir);
+  if (!options.outputDir.empty()) {
+    createDirectory(options.outputDir);
+  } else if (options.build || options.run) {
+    options.outputDir = createTemporaryDirectory();
+    std::cout << "Writing to directory " << options.outputDir << std::endl;
+  } else {
+    std::cerr << "Missing output directory (-o or --output-dir)" << std::endl;
+    return 1;
+  }
 
   auto backends = getBackends();
   auto it = backends.find(options.backend);
