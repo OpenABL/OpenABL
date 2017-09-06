@@ -2,19 +2,20 @@ agent Point {
   position float2 pos;
 }
 
-// Density of agents
-param float rho = 0.01;
 // Number of timesteps
 param int num_timesteps = 100;
 // Number of agents
 param int num_agents = 1000;
 
+// Density of agents
+param float rho = 0.01;
 // Repulsive force parameter
-float k_rep = 0.1;
+param float k_rep = 0.05;
 // Attractive force parameter
-float k_att = 0.05;
+param float k_att = 0.05;
 // Radius of agent (radius of repulsion)
-float r = 5;
+param float r = 5;
+
 // Choose environment size to satisfy given
 // number of agents and density
 float W = sqrt(num_agents / rho);
