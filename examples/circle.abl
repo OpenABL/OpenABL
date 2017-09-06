@@ -2,24 +2,27 @@ agent Point {
   position float2 pos;
 }
 
+// Density of agents
+param float rho = 0.01;
+// Number of timesteps
+param int num_timesteps = 100;
+// Number of agents
+param int num_agents = 1000;
+
 // Repulsive force parameter
 float k_rep = 0.1;
 // Attractive force parameter
 float k_att = 0.05;
 // Radius of agent (radius of repulsion)
 float r = 5;
-// Width/height of environment
-float W = 500;
-// Density of agents
-param float rho = 0.01;
-// Number of timesteps
-param int num_timesteps = 100;
+// Choose environment size to satisfy given
+// number of agents and density
+float W = sqrt(num_agents / rho);
 
 // Specify environment size
 environment { max: float2(W) }
 
 // Step function
-// TODO Add keyword?
 void move_point(Point in -> out) {
   float2 new_pos = in.pos;
   for (Point nx : near(in, 2*r)) {
@@ -37,11 +40,8 @@ void move_point(Point in -> out) {
 }
 
 void main() {
-  // Determine population size and allocate agents
-  int A_pop = int(W*W * rho);
-
   // initialization (sequential)
-  for (int i : 0..A_pop) {
+  for (int i : 0..num_agents) {
     add(Point {
       pos: random(float2(W))
     });
