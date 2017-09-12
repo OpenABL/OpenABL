@@ -4,7 +4,7 @@ agent Boid {
 }
 
 float min_pos = 0;
-float max_pos = 1;
+float max_pos = 1; //for Dmason use the appropiate value
 
 float interaction_radius = 0.1;
 float separation_radius = 0.005;
