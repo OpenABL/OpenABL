@@ -338,6 +338,7 @@ void DMasonPrinter::print(const AST::Script &script) {
 
   *this << "public void start() {" << indent << nl
         << "super.start();" << nl
+	<< "Sim _sim = this;" << nl
 	<<"try { "<< indent << nl
 	<<"env = DContinuousGrid2DFactory.createDContinuous2D(8.0,gridWidth, gridHeight,this,"<< nl
 	<<"	super.AOI,TYPE.pos_i,TYPE.pos_j,super.rows,super.columns,MODE,\"env\", topicPrefix,false);" << nl
