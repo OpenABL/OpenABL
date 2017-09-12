@@ -388,10 +388,11 @@ void MasonPrinter::print(const AST::AgentDeclaration &decl) {
 }
 
 void MasonPrinter::print(const AST::SimulateStatement &stmt) {
-  *this << "do {" << indent << nl
+  /*
+    *this << "do {" << indent << nl
         << "if (!_sim.schedule.step(_sim)) break;" << outdent << nl
         << "} while (_sim.schedule.getSteps() < "
-        << *stmt.timestepsExpr << ");";
+        << *stmt.timestepsExpr << ");";*/
 }
 
 void MasonPrinter::print(const AST::Script &script) {
