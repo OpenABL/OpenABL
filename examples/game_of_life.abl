@@ -19,7 +19,7 @@ environment {
   max: float2(size)
 }
 
-void step(Cell in -> out) {
+void step_move(Cell in -> out) {
   // Number of live neighbors *INCLUDING* current cell
   int living_neighbors = 0;
 
@@ -46,7 +46,7 @@ void main() {
     }
   }
 
-  simulate(num_timesteps) { step }
+  simulate(num_timesteps) { step_move }
 
   save("result.json");
 }
