@@ -12,7 +12,7 @@ void DMasonPrinter::printLocalTestCode() {
 	<< "import it.isislab.dmason.sim.field.DistributedField2D;" << nl
 	<< "import it.isislab.dmason.util.connection.ConnectionType;" << nl
 	<< "import java.util.ArrayList;"   << nl
-	<< "public class TestSim {" << indent << nl
+	<< "public class LocalTestSim {" << indent << nl
 	<< "private static int numSteps = 3000; //only graphicsOn=false" << nl
 	<< "private static int rows = 2; //number of rows" << nl
 	<< "private static int columns = 2; //number of columns" << nl
