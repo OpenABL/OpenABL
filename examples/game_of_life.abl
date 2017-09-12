@@ -24,7 +24,7 @@ void step_move(Cell in -> out) {
   int living_neighbors = 0;
 
   for (Cell nx : near(in, radius)) {
-    living_neighbors += int(nx.alive);
+    living_neighbors += nx.alive?1:0;
   }
 
   if (in.alive) {
@@ -33,6 +33,7 @@ void step_move(Cell in -> out) {
   } else {
     out.alive = living_neighbors == 3;
   }
+  out.pos=in.pos;//fix an issue in Dmason backend
 }
 
 void main() {

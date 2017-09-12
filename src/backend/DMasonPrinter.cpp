@@ -105,7 +105,11 @@ void DMasonPrinter::print(const AST::FunctionDeclaration &decl) {
     currentOutVar = param.outVar->id;
 
     *this << "public void " << decl.name << "(SimState state) {" << indent << nl
-          << "Sim _sim = (Sim) state;"
+          << "Sim _sim = (Sim) state;" << nl;; 
+    if(posMember){
+	*this << "this.pos=_sim.ev.getObjectLocation(this);"<< nl;
+    }
+    *this
           << *decl.stmts;
     if (posMember) {
       *this << nl << " try {" << indent << nl
@@ -143,6 +147,7 @@ void DMasonPrinter::print(const AST::AgentDeclaration &decl) {
   *this << "super(sm);"<< nl;
   for (AST::AgentMemberPtr &member : *decl.members) {
     *this << nl << "this." << member->name << " = " << member->name << ";";
+    *this << nl << "this._dbuf_" << member->name << " = " << member->name << ";";
   }
   *this << outdent << nl << "}" << nl;
 
