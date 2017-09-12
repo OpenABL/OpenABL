@@ -37,7 +37,7 @@ void move_point(Point in -> out) {
     }
     new_pos += force;
   }
-  out.pos = clamp(new_pos, float2(W));
+  out.pos = clamp(new_pos,float2(1), float2(W-1));
 }
 
 void main() {
