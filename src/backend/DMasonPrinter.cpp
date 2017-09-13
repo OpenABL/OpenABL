@@ -346,7 +346,7 @@ void DMasonPrinter::print(const AST::Script &script) {
         << "super.start();" << nl
 	<<"try { "<< indent << nl
 	<<"env = DContinuousGrid2DFactory.createDContinuous2D(8.0,gridWidth, gridHeight,this,"<< nl
-	<<"	super.AOI,TYPE.pos_i,TYPE.pos_j,super.rows,super.columns,MODE,\"env\", topicPrefix,false);" << nl
+	<<"	super.AOI,TYPE.pos_i,TYPE.pos_j,super.rows,super.columns,MODE,\"env\", topicPrefix,true);" << nl
 	<<"init_connection();"<< outdent << nl
 	<<"} catch (DMasonException e) { e.printStackTrace();}" << nl << nl;
 
