@@ -35,8 +35,13 @@ def openabl_get_exec_time(model, backend, params):
         raise RuntimeError('Failed to extract execution time')
     return float(matches.group(1))
 
-model = 'circle'
-backend = 'mason'
+if len(sys.argv) < 3:
+    print('Usage: bench.py backend model')
+    sys.exit(1)
+
+backend = sys.argv[1]
+model = sys.argv[2]
+
 num_timesteps = 100
 min_num_agents = 1000
 max_num_agents = 200000

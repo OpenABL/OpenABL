@@ -14,8 +14,6 @@ void MasonPrinter::printType(Type type) {
       *this << "int";
       return;
     case Type::FLOAT:
-      // TODO Use doubles, because that's what Mason uses.
-      // Need to figure out what semantics we want to have here.
       *this << "double";
       return;
     case Type::STRING:

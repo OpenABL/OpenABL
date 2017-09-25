@@ -6,8 +6,8 @@ agent Boid {
 float min_pos = 0;
 float max_pos = 1;
 
-float interaction_radius = 0.1;
-float separation_radius = 0.005;
+param float interaction_radius = 0.05;
+param float separation_radius = 0.005;
 
 float time_scale = 0.0005;
 float global_scale = 0.15;
