@@ -12,6 +12,8 @@ int getColor(Cell cell) {
 // the neighbors
 float radius = 1.5;
 
+param float alive_fraction = 0.1;
+
 // Number of agents is only a hint,
 // we'll pick a square field size based on it
 param int num_agents = 20*20;
@@ -47,7 +49,10 @@ void main() {
     for (int y : 0..size) {
       add(Cell {
         pos: float2(x + 0.5, y + 0.5),
-        alive: (x == 10 || x == 11 || x == 12) && y == 10
+        // Random initialization
+        alive: random(0, 1) < alive_fraction
+        // Good initialization for testing
+        //alive: (x == 10 || x == 11 || x == 12) && y == 10
       });
     }
   }
