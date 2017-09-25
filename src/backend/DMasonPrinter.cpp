@@ -265,6 +265,10 @@ void DMasonPrinter::print(const AST::AgentCreationExpression &expr) {
   });
   *this <<")";
 }
+void DMasonPrinter::print(const AST::SimulateStatement &stmt) {
+  // Nothing
+}
+
 /*
 static void printVecCtorArgs(MasonPrinter &p, const AST::CallExpression &expr) {
   Type t = expr.type;
