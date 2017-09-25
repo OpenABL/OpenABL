@@ -12,8 +12,12 @@ int getColor(Cell cell) {
 // the neighbors
 float radius = 1.5;
 
-param int size = 20;
+// Number of agents is only a hint,
+// we'll pick a square field size based on it
+param int num_agents = 20*20;
 param int num_timesteps = 100;
+
+int size = int(sqrt(num_agents));
 
 environment {
   max: float2(size)
@@ -33,6 +37,7 @@ void step_move(Cell in -> out) {
   } else {
     out.alive = living_neighbors == 3;
   }
+
   out.pos=in.pos;//fix an issue in Dmason backend
 }
 
