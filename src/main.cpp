@@ -33,6 +33,7 @@ void registerBuiltinFunctions(FunctionList &funcs) {
   funcs.add("exp", { Type::FLOAT }, Type::FLOAT);
   funcs.add("log", { Type::FLOAT }, Type::FLOAT);
   funcs.add("sqrt", { Type::FLOAT }, Type::FLOAT);
+  funcs.add("cbrt", { Type::FLOAT }, Type::FLOAT);
   funcs.add("round", { Type::FLOAT }, Type::FLOAT);
   funcs.add("pow", { Type::FLOAT, Type::FLOAT }, Type::FLOAT);
 

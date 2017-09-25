@@ -285,6 +285,7 @@ Value Value::calcBuiltinCall(const FunctionSignature &sig, const std::vector<Val
       { "exp", exp },
       { "log", log },
       { "sqrt", sqrt },
+      { "cbrt", cbrt },
       { "round", round },
     };
 

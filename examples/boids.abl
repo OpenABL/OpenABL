@@ -3,11 +3,9 @@ agent Boid {
   float3 velocity;
 }
 
-float min_pos = 0;
-float max_pos = 1; //for Dmason use the appropiate value
-
-float interaction_radius = 0.1;
-float separation_radius = 0.005;
+param float interaction_radius = 0.05;
+param float separation_radius = 0.005;
+param float agent_density = 1000;
 
 float time_scale = 0.0005;
 float global_scale = 0.15;
@@ -17,6 +15,9 @@ float collision_scale = 0.75;
 float match_scale = 1.25;
 
 param int num_agents = 5000;
+
+float min_pos = 0;
+float max_pos = cbrt(num_agents/agent_density);
 
 environment {
   min: float3(min_pos),
