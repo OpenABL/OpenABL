@@ -127,12 +127,13 @@ static XmlElems createXmlMessages(
     const Value::Vec3 &size = envDecl->envSize.extendToVec3().getVec3();
     double radius = envDecl->envGranularity.asFloat();
 
-    // Adjust maximum environmen bound so that the size is a multiple of the radius
-    // This is a FlameGPU requirement
+    // Adjust maximum environment bound so that the size is a multiple of the radius
+    // Also make sure z dimension is at least one radius large, even if it's a 2D simulation
+    // Both of these are FlameGPU requirements
     Value::Vec3 max = {
       roundToMultiple(size.x, radius) + min.x,
       roundToMultiple(size.y, radius) + min.y,
-      roundToMultiple(size.z, radius) + min.z,
+      size.z != 0 ? roundToMultiple(size.z, radius) + min.z : radius,
     };
 
     XmlElems partitioningInfo {
