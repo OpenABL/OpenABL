@@ -255,9 +255,7 @@ help:
 	@echo "                                                                       *" 
 	@echo "************************************************************************"
  
-build: Console_mode 
-
-Console_mode:  CirclesBruteForce_float_console
+build: main 
 
 check.deps:
 ifeq ($(SAMPLE_ENABLED),0)
@@ -276,21 +274,12 @@ main.o: $(SRC_CUDA)main.cu
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(DEBUG) $(GENCODE_FLAGS) $(FLAMELIB) -o $@ -c $<
 
 
-CirclesBruteForce_float_console: BUILD_TYPE=$(Mode_TYPE)_Console
-CirclesBruteForce_float_console: io.o simulation.o  main.o 
+main: BUILD_TYPE=$(Mode_TYPE)_Console
+main: io.o simulation.o  main.o 
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-	$(EXEC) mkdir -p $(BIN_DIR)$(BUILD_TYPE)
-	$(EXEC) mv $@ $(BIN_DIR)$(BUILD_TYPE)
-	@echo ./$(BUILD_TYPE)/CirclesBruteForce_float_console ../../examples/CirclesBruteForce_float/$(INPUT_DATA) '$$'{1:-1}> $(BIN_DIR)CirclesBruteForce_float_console.sh
-	chmod +x $(BIN_DIR)CirclesBruteForce_float_console.sh
 
-
-run_console: CirclesBruteForce_float_console
-	cd $(BIN_DIR) && ./CirclesBruteForce_float_console.sh $(iter)
-
+.PHONY: clean
 clean:
 	rm -f *.o
 	rm -rf $(SRC_CUDA)*
-
-clobber: clean 
 

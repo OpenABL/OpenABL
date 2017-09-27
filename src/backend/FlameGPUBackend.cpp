@@ -223,6 +223,7 @@ void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
       ctx.outputDir + "/model/libabl_flamegpu.h");
   copyFile(ctx.assetDir + "/flamegpu/Makefile", ctx.outputDir + "/Makefile");
   copyFile(ctx.assetDir + "/flamegpu/build.sh", ctx.outputDir + "/build.sh");
+  copyFile(ctx.assetDir + "/flamegpu/run.sh", ctx.outputDir + "/run.sh");
   writeToFile(ctx.outputDir + "/build_runner.sh", createBuildRunner(useFloat));
 
   // These are required for runner.c
@@ -231,6 +232,9 @@ void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
 
   makeFileExecutable(ctx.outputDir + "/build.sh");
   makeFileExecutable(ctx.outputDir + "/build_runner.sh");
+  makeFileExecutable(ctx.outputDir + "/run.sh");
+
+  createDirectory(ctx.outputDir + "/iterations");
 }
 
 }
