@@ -24,6 +24,10 @@ static std::string doubleToString(double d) {
   assert(0);
 }
 
+static double roundToMultiple(double size, double radius) {
+  return ceil(size / radius) * radius;
+}
+
 static XmlElems createXmlAgents(
     const AST::Script &script, const FlameModel &model, bool useFloat, long bufferSize) {
   XmlElems xagents;
@@ -120,17 +124,16 @@ static XmlElems createXmlMessages(
     assert(envDecl);
 
     const Value::Vec3 &min = envDecl->envMin.extendToVec3().getVec3();
-    const Value::Vec3 &max = envDecl->envMax.extendToVec3().getVec3();
     const Value::Vec3 &size = envDecl->envSize.extendToVec3().getVec3();
     double radius = envDecl->envGranularity.asFloat();
 
-    double minSize = std::min({
-      size.x, size.y,
-      size.z != 0 ? size.z : std::numeric_limits<double>::infinity()
-    });
-
-    // Size is required to be a multiple of the radius, so adjust radius accordingly
-    radius = minSize / floor(minSize / radius);
+    // Adjust maximum environmen bound so that the size is a multiple of the radius
+    // This is a FlameGPU requirement
+    Value::Vec3 max = {
+      roundToMultiple(size.x, radius) + min.x,
+      roundToMultiple(size.y, radius) + min.y,
+      roundToMultiple(size.z, radius) + min.z,
+    };
 
     XmlElems partitioningInfo {
       { "gpu:radius", {{ doubleToString(radius) }} },
