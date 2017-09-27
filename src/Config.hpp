@@ -10,6 +10,7 @@ struct Config {
   std::map<std::string, std::string> config;
 
   bool getBool(const std::string &name, bool defaultValue) const;
+  long getInt(const std::string &name, long defaultValue) const;
 };
 
 }

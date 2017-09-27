@@ -25,7 +25,7 @@ static std::string doubleToString(double d) {
 }
 
 static XmlElems createXmlAgents(
-    const AST::Script &script, const FlameModel &model, bool useFloat) {
+    const AST::Script &script, const FlameModel &model, bool useFloat, long bufferSize) {
   XmlElems xagents;
   for (const AST::AgentDeclaration *decl : script.agents) {
     XmlElems members;
@@ -97,14 +97,14 @@ static XmlElems createXmlAgents(
         { "initialState", {{ defaultState }} },
       }},
       { "gpu:type", {{ "continuous" }} },
-      { "gpu:bufferSize", {{ "1024" }} }, // TODO dummy
+      { "gpu:bufferSize", {{ std::to_string(bufferSize) }} },
     }});
   }
   return xagents;
 }
 
 static XmlElems createXmlMessages(
-    const AST::Script &script, const FlameModel &model, bool useFloat) {
+    const AST::Script &script, const FlameModel &model, bool useFloat, long bufferSize) {
   XmlElems messages;
   for (const FlameModel::Message &msg : model.messages) {
     XmlElems variables;
@@ -146,7 +146,7 @@ static XmlElems createXmlMessages(
       { "name", {{ msg.name }} },
       { "variables", variables },
       { "gpu:partitioningSpatial", partitioningInfo },
-      { "gpu:bufferSize", {{ "1024" }} }, // TODO dummy
+      { "gpu:bufferSize", {{ std::to_string(bufferSize) }} },
     }});
   }
   return messages;
@@ -164,9 +164,10 @@ static XmlElems createXmlLayers(const FlameModel &model) {
   return layers;
 }
 
-static std::string createXmlModel(AST::Script &script, const FlameModel &model, bool useFloat) {
-  XmlElems xagents = createXmlAgents(script, model, useFloat);
-  XmlElems messages = createXmlMessages(script, model, useFloat);
+static std::string createXmlModel(
+    AST::Script &script, const FlameModel &model, bool useFloat, long bufferSize) {
+  XmlElems xagents = createXmlAgents(script, model, useFloat, bufferSize);
+  XmlElems messages = createXmlMessages(script, model, useFloat, bufferSize);
   XmlElems layers = createXmlLayers(model);
   XmlElem root("gpu:xmodel", {
     { "name", {{ "TODO" }} },
@@ -209,12 +210,17 @@ static std::string createBuildRunner(bool useFloat) {
 void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
   bool useFloat = ctx.config.getBool("use_float", false);
 
+  // TODO How to determine this value ???
+  // For now just using an explicit configuration parameter
+  long bufferSize = ctx.config.getInt("flamegpu.buffer_size", 1024);
+
   FlameModel model = FlameModel::generateFromScript(script);
 
   createDirectory(ctx.outputDir + "/model");
   createDirectory(ctx.outputDir + "/dynamic");
 
-  writeToFile(ctx.outputDir + "/model/XMLModelFile.xml", createXmlModel(script, model, useFloat));
+  writeToFile(ctx.outputDir + "/model/XMLModelFile.xml",
+      createXmlModel(script, model, useFloat, bufferSize));
   writeToFile(ctx.outputDir + "/model/functions.c", createFunctionsFile(script, model, useFloat));
   writeToFile(ctx.outputDir + "/runner.c", createMainFile(script, useFloat));
 
