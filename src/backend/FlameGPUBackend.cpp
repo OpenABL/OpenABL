@@ -130,7 +130,7 @@ static XmlElems createXmlMessages(
     });
 
     // Size is required to be a multiple of the radius, so adjust radius accordingly
-    radius = minSize / round(minSize / radius);
+    radius = minSize / floor(minSize / radius);
 
     XmlElems partitioningInfo {
       { "gpu:radius", {{ doubleToString(radius) }} },

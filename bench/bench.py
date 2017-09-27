@@ -43,7 +43,7 @@ backend = sys.argv[1]
 model = sys.argv[2]
 
 num_timesteps = 100
-min_num_agents = 1000
+min_num_agents = 250
 max_num_agents = 200000
 num_agents_factor = 2
 
