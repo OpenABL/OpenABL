@@ -1,3 +1,10 @@
+/*
+  Predator-Prey is a simulation with two different agent types:
+   - the predators follows the closest prey
+   - the prey try to escape from the predators  
+   This behavior is similar to the "Pursuit and Evasion" steering behavior.
+*/
+
 agent Predator {
   position float3 pos;
   float3 dir;

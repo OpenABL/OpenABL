@@ -4,11 +4,10 @@
   The model use two pheromones, which set up gradients and evaporate after some simulation steps, to the nest and to the food source respectively.
   
   The implementation is based on the sequential existing code taken from Mason, based on the following paper:
-  A Pheromone-Based Utility Model for Collaborative Foraging. Liviu Panait and Sean Luke. In AAMAS 2004
-  http://cs.gmu.edu/~eclab/papers/panait04pheromone.pdf
-  
+    + A Pheromone-Based Utility Model for Collaborative Foraging. Liviu Panait and Sean Luke. 
+      In AAMAS 2004 http://cs.gmu.edu/~eclab/papers/panait04pheromone.pdf  
   However, this code has been mainly rewritten in order to exploit the parallelism exposed by OpenABL.  
-  Here agent parallelsim is exposed twice: first, for each agent; second, each location marekd with a pheromone.    
+  Here agent parallelsim is exposed twice: first, for each agent; second, for each location marked with a pheromone, for the evaporation step.    
 */
 
 agent Ant {
@@ -33,7 +32,6 @@ environment {
 
 float2 home = float2(75,75);
 float2 food = float2(25,25);
-
 
 
 float evaporationConstant = 0.999;
@@ -87,7 +85,7 @@ void update_ant(Ant in->out) {
   
   // follow home pheromone
   if(count > 0){
-	  
+	
   }
   
    
