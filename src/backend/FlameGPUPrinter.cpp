@@ -135,7 +135,10 @@ void FlameGPUPrinter::print(const AST::CallExpression &expr) {
     }
     *this << "(";
     if (expr.calledFunc && expr.calledFunc->usesRng) {
-      *this << "rand48, ";
+      *this << "rand48";
+      if (!expr.args->empty()) {
+        *this << ", ";
+      }
     }
     printArgs(expr);
     *this << ")";
@@ -242,7 +245,10 @@ void FlameGPUPrinter::print(const AST::ForStatement &stmt) {
 void FlameGPUPrinter::print(const AST::FunctionDeclaration &decl) {
   *this << *decl.returnType << " " << decl.name << "(";
   if (decl.usesRng) {
-    *this << "RNG_rand48 *rand48, ";
+    *this << "RNG_rand48 *rand48";
+    if (!decl.params->empty()) {
+      *this << ", ";
+    }
   }
   printParams(decl);
   *this << ") {" << indent;
