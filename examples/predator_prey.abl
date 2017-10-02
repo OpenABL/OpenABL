@@ -6,25 +6,34 @@
 */
 
 agent Predator {
-  position float3 pos;
-  float3 dir;
+  position float2 pos;
+  float2 dir;
 }
 agent Prey {
-  position float3 pos;
-  float3 dir;
+  position float2 pos;
+  float2 dir;
+}
+
+int getColor(Predator p) {
+  return 0xff0000;
+}
+int getColor(Prey p) {
+  return 0x0000ff;
 }
 
 float radius = 5.0;
-float env_size = 100;
-float prey_fraction = 0.5;
+
+param float agent_density = 0.1;
+param float predator_fraction = 0.5;
 param int num_agents = 1000;
 
-environment { max: float3(env_size) }
+float env_size = sqrt(num_agents/agent_density);
+environment { max: float2(env_size) }
 
 // TODO Use a real model here
 void update_prey(Prey in -> out) {
   // Get average position of predators
-  float3 predPos = float3(0);
+  float2 predPos = float2(0);
   int predNum = 0;
   for (Predator pred : near(in, radius)) {
     predPos += pred.pos;
@@ -45,20 +54,20 @@ void update_predator(Predator in -> out) {
 }
 
 void main() {
-  int num_prey = int(prey_fraction * num_agents);
-  int num_predators = num_agents - num_prey;
+  int num_predators = int(predator_fraction * num_agents);
+  int num_prey = num_agents - num_predators;
 
   for (int i : 0..num_prey) {
     add(Prey {
-      pos: random(float3(env_size)),
-      dir: float3(0),
+      pos: random(float2(env_size)),
+      dir: float2(0),
     });
   }
 
   for (int i : 0..num_predators) {
     add(Predator {
-      pos: random(float3(env_size)),
-      dir: float3(0),
+      pos: random(float2(env_size)),
+      dir: float2(0),
     });
   }
 
