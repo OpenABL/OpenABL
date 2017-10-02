@@ -12,6 +12,9 @@ int getColor(Cell cell) {
 // the neighbors
 float radius = 1.5;
 
+// Debug initialization
+param bool debug = false;
+
 param float alive_fraction = 0.1;
 
 // Number of agents is only a hint,
@@ -43,16 +46,23 @@ void step_move(Cell in -> out) {
   out.pos=in.pos;//fix an issue in Dmason backend
 }
 
+bool getInit(int x, int y) {
+  if (debug) {
+    // Good initialization for testing
+    return (x == 10 || x == 11 || x == 12) && y == 10;
+  } else {
+    // Random initialization
+    return random(0, 1) < alive_fraction;
+  }
+}
+
 void main() {
   // TODO Reasonable initialization
   for (int x : 0..size) {
     for (int y : 0..size) {
       add(Cell {
         pos: float2(x + 0.5, y + 0.5),
-        // Random initialization
-        alive: random(0, 1) < alive_fraction
-        // Good initialization for testing
-        //alive: (x == 10 || x == 11 || x == 12) && y == 10
+        alive: getInit(x, y)
       });
     }
   }
