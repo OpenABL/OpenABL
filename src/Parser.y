@@ -265,7 +265,7 @@ statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
          ;
 
 arg_list: %empty { $$ = new ExpressionList(); }
-        | expression_list { $$ = $1; };
+        | expression_list optional_comma { $$ = $1; };
 
 optional_comma: %empty
               | COMMA;
