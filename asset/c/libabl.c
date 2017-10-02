@@ -123,8 +123,23 @@ void save_json(void *agents, const agent_info *info, FILE *file) {
 	fputs("}", file);
 }
 
-static void save_flame_xml_member(FILE *file, const char *agent, const type_info *info) {
+static void save_flame_xml_member(
+		FILE *file, const char *agent, const type_info *info, bool for_gpu) {
 	const char *name = info->name;
+	if (for_gpu && info->is_pos) {
+		// Positions on FlameGPU must always be x,y,z
+		if (info->type == TYPE_FLOAT2) {
+			float2 *f = (float2 *) (agent + info->offset);
+			fprintf(file, "<x>%f</x>\n<y>%f</y>\n<z>0.0</z>\n", f->x, f->y);
+		} else if (info->type == TYPE_FLOAT3) {
+			float3 *f = (float3 *) (agent + info->offset);
+			fprintf(file, "<x>%f</x>\n<y>%f</y>\n<z>%f</z>\n", f->x, f->y, f->z);
+		} else {
+			assert(0);
+		}
+		return;
+	}
+
 	switch (info->type) {
 		case TYPE_BOOL:
 		{
@@ -155,7 +170,7 @@ static void save_flame_xml_member(FILE *file, const char *agent, const type_info
 		case TYPE_FLOAT3:
 		{
 			float3 *f = (float3 *) (agent + info->offset);
-			fprintf(file, "<%s_x>%f</%s_x>\n<%s_y>%f</%s_y>\n<%s_z>%f</%s_z>",
+			fprintf(file, "<%s_x>%f</%s_x>\n<%s_y>%f</%s_y>\n<%s_z>%f</%s_z>\n",
 				name, f->x, name, name, f->y, name, name, f->z, name);
 			break;
 		}
@@ -166,7 +181,7 @@ static void save_flame_xml_member(FILE *file, const char *agent, const type_info
 }
 
 static void save_flame_xml_agents(
-		FILE *file, dyn_array *arr, const char *name, const type_info *info_start) {
+		FILE *file, dyn_array *arr, const char *name, const type_info *info_start, bool for_gpu) {
 	size_t elem_size = type_info_get_size(info_start);
 	for (size_t i = 0; i < arr->len; i++) {
 		char *agent = ((char *) arr->values) + elem_size * i;
@@ -174,14 +189,14 @@ static void save_flame_xml_agents(
 		fprintf(file, "<name>%s</name>\n", name);
 
 		for (const type_info *info = info_start; info->type != TYPE_END; info++) {
-			save_flame_xml_member(file, agent, info);
+			save_flame_xml_member(file, agent, info, for_gpu);
 		}
 
 		fputs("</xagent>\n", file);
 	}
 }
 
-void save_flame_xml(void *agents, const agent_info *info, FILE *file) {
+void save_flame_xml(void *agents, const agent_info *info, FILE *file, bool for_gpu) {
 	fputs("<states>\n", file);
 	fputs("<itno>0</itno>\n", file);
 	// TODO: Necessary?
@@ -190,7 +205,7 @@ void save_flame_xml(void *agents, const agent_info *info, FILE *file) {
 
 	while (info->name) {
 		dyn_array *arr = (dyn_array *) ((char *) agents + info->offset);
-		save_flame_xml_agents(file, arr, info->name, info->info);
+		save_flame_xml_agents(file, arr, info->name, info->info, for_gpu);
 		info++;
 	}
 
@@ -208,8 +223,8 @@ void save(void *agents, const agent_info *info, const char *path, save_type type
 
 	if (type == SAVE_JSON) {
 		save_json(agents, info, file);
-	} else if (type == SAVE_FLAME_XML) {
-		save_flame_xml(agents, info, file);
+	} else if (type == SAVE_FLAME_XML || type == SAVE_FLAMEGPU_XML) {
+		save_flame_xml(agents, info, file, type == SAVE_FLAMEGPU_XML);
 	}
 
 	fclose(file);

@@ -299,7 +299,8 @@ void CPrinter::print(const AST::AgentDeclaration &decl) {
     *this << "{ ";
     printTypeIdentifier(*this, member->type->resolved);
     *this << ", offsetof(" << decl.name << ", " << member->name
-          << "), \"" << member->name << "\" }," << nl;
+          << "), \"" << member->name << "\", "
+          << (member->isPosition ? "true" : "false") << " }," << nl;
   }
   *this << "{ TYPE_END, sizeof(" << decl.name << "), NULL }" << outdent << nl << "};" << nl;
 }

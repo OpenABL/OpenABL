@@ -188,6 +188,7 @@ typedef struct {
 	type_id type;
 	unsigned offset;
 	const char *name;
+	bool is_pos;
 } type_info;
 
 typedef struct {
@@ -199,6 +200,7 @@ typedef struct {
 typedef enum {
 	SAVE_JSON,
 	SAVE_FLAME_XML,
+	SAVE_FLAMEGPU_XML,
 } save_type;
 
 void save(void *agents, const agent_info *info, const char *path, save_type type);
