@@ -21,36 +21,69 @@ int getColor(Prey p) {
   return 0x0000ff;
 }
 
-float radius = 5.0;
+// TODO Add this to the language, duh
+float PI = 3.14159265358979323846;
+
+param float prey_radius = 5.0;
+param float predator_radius = 5.0;
+param float prey_velocity = 0.1;
+param float predator_velocity = 0.15;
 
 param float agent_density = 0.1;
-param float predator_fraction = 0.5;
+param float predator_fraction = 0.1;
 param int num_agents = 1000;
 
 float env_size = sqrt(num_agents/agent_density);
 environment { max: float2(env_size) }
+
+float2 wraparound(float2 pos, float2 max) {
+  return float2(
+    pos.x < 0 ? max.x - pos.x : pos.x > max.x ? pos.x - max.x : pos.x,
+    pos.y < 0 ? max.y - pos.y : pos.y > max.y ? pos.y - max.y : pos.y,
+  );
+}
+
+float2 random_direction() {
+  float phi = random(2*PI);
+  return float2(sin(phi), cos(phi));
+}
 
 // TODO Use a real model here
 void update_prey(Prey in -> out) {
   // Get average position of predators
   float2 predPos = float2(0);
   int predNum = 0;
-  for (Predator pred : near(in, radius)) {
+  for (Predator pred : near(in, prey_radius)) {
     predPos += pred.pos;
     predNum += 1;
   }
 
-  out.pos = in.pos + in.dir;
+  out.pos = wraparound(in.pos + prey_velocity * in.dir, float2(env_size));
   if (predNum != 0) {
     // Move in direction away from predators
     out.dir = normalize(in.pos - predPos / predNum);
   } else {
-    out.dir = in.dir;
+    //out.dir = in.dir;
+    out.dir = random_direction();
   }
 }
 void update_predator(Predator in -> out) {
-  // TODO
-  // out = in;
+  // Get average position of prey
+  float2 preyPos = float2(0);
+  int preyNum = 0;
+  for (Prey prey : near(in, predator_radius)) {
+    preyPos += prey.pos;
+    preyNum += 1;
+  }
+
+  out.pos = wraparound(in.pos + predator_velocity * in.dir, float2(env_size));
+  if (preyNum != 0) {
+    // Move in direction towards prey
+    out.dir = normalize(preyPos / preyNum - in.pos);
+  } else {
+    //out.dir = in.dir;
+    out.dir = random_direction();
+  }
 }
 
 void main() {
