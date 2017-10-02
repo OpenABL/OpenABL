@@ -18,29 +18,69 @@ agent Ant {
 
 agent Pheromone {
   position float2 pos;
-  float2 velocity;  
+  float strenght;
+}
+
+agent Food {
+  position float2 pos;
 }
 
 
-float min_pos = 0;
-float max_pos = 100; // max x = max y = 100
-environment {
-  min: float2(min_pos),
-  max: float2(max_pos)
+// TODO Add this to the language
+float PI = 3.14159265358979323846;
+
+
+/* Colors used for visualization */
+int getColor(Pheromone p) {   
+  int r = int(255 * p.strenght);
+  return r << 16;
+}
+
+int getColor(Ant p) {
+  return 0x0000ff;
+}
+
+int getColor(Food p) {  
+  return 0x00ff00;
 }
 
 
-float2 home = float2(75,75);
-float2 food = float2(25,25);
 
 
-float evaporationConstant = 0.999;
-float reward = 1.0;
-float updateCutDown = 0.9;
-float momentumProbability = 0.8;
-float randomActionProbability = 0.1;
-        
-float food_radius = 2.0;
+
+param float2 home_pos = float2(75,75);
+param float2 food_pos = float2(25,25);
+
+param int num_agents = 1000;
+param float agent_density = 0.1;
+
+param float ant_velocity = 0.3;
+param float evaporationConstant = 0.999;
+param float reward = 1.0;
+param float updateCutDown = 0.9;
+param float momentumProbability = 0.8;
+param float randomActionProbability = 0.1;        
+param float food_radius = 1.0;
+
+
+// float max_pos = 100; // max x = max y = 100
+int env_size = int( sqrt(num_agents/agent_density) );
+environment { max: float2(env_size) }
+int num_pheromones = env_size * env_size;
+
+
+// TODO standard language library?
+float2 wraparound(float2 pos, float2 max) {
+  return float2(
+    pos.x < 0 ? max.x - pos.x : pos.x > max.x ? pos.x - max.x : pos.x,
+    pos.y < 0 ? max.y - pos.y : pos.y > max.y ? pos.y - max.y : pos.y,
+  );
+}
+
+float2 random_direction() {
+  float phi = random(2*PI);
+  return float2(sin(phi), cos(phi));
+}
 
 
 // obstacle check, rewritten in vectorial form
@@ -72,56 +112,86 @@ void update_ant(Ant in->out) {
   
   int food_count = 0;
   
+  Food food = Food{ pos: food_pos };
+  
   //  if the ant is close to food, generate pheromone
   // for each pheromone, for each ant  
-  for(float2 fx : food) {
-    for (Pheromone px : near(fx, food_radius)) {
-      food_count += 1;  
-    }
+//  for(float2 fx : food) {
+  for (Pheromone px : near(food, food_radius)) {
+    food_count += 1;  
+  }
+    
+  
     
     // deposit food pheromone
     // xxx
-  }
+//  }
   
   // follow home pheromone
-  if(count > 0){
+  if(food_count > 0){
 	
   }
   
    
   
   // random move
-  
+  out.pos = wraparound(in.pos + ant_velocity * in.velocity, float2(env_size));
+  out.velocity = random_direction();
   
   // obstacle
   
   
   
-  out.pos = new_pos;
-  out.velocity = new_velocity;
+//  out.pos = new_pos;
+//  out.velocity = new_velocity;
 }
 
 
 // update pheromone
-void update_pheromone(Pheromone in->out) {	
+void update_pheromone(Pheromone in->out) {
 
+  Food food = Food{ pos: food_pos }; // this should be global
+
+  int ants_count = 0;  
+  for (Ant ax : near(in, food_radius)) {  
+    ants_count += 1;          
+  }
+  
+  float new_strenght = in.strenght + ants_count * 0.1 - 0.001;
+  // clamping
+  if(new_strenght < 0.0) new_strenght = 0.0;    
+  if(new_strenght > 1.0) new_strenght = 1.0;  
+  
+  out.strenght = new_strenght;  
 }
 
 
-void main() {  
+void main() {    
 
   for (int i : 0..num_agents) {
     add(Ant {
-      pos: home,
-      velocity: random(float2(-1), float2(1))
+      pos: home_pos,
+      velocity: random(float2(-1), float2(1)),
+      hasFood: false
     });
   }
 
+  for (int i : 0..env_size ) {
+    for (int j : 0..env_size ) {
+      add(Pheromone {
+        pos: float2(i,j),
+        strenght: 0     
+      });
+    }
+  }
+
+  
+  
   simulate(100) {
     update_ant,
     update_pheromone
   }
 
-  save("ants.out"); // XXX what?
+  save("ants.out"); 
 }
 
