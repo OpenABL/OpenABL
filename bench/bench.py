@@ -30,7 +30,7 @@ def openabl_run(model, backend, params, config):
         args.append('-C')
         args.append(key + '=' + str(value))
 
-    return subprocess.check_output(args)
+    return subprocess.check_output(args, stderr=subprocess.STDOUT)
 
 def openabl_get_exec_time(model, backend, params, config):
     output = openabl_run(model, backend, params, config)
