@@ -352,22 +352,20 @@ struct FunctionSignature {
       return false;
     }
 
-    // For now we are very conservative and only allow overloads between float, float2 and float3.
-    // This may be extended as necessary in the future.
-    bool haveAllowedDiff = false, haveOtherDiff = false;
+    // Don't allow overloading between bool, int and float
+    bool haveDiff = false;
     for (size_t i = 0; i < newParamTypes.size(); i++) {
       Type newParamType = newParamTypes[i], paramType = paramTypes[i];
       if (newParamType != paramType) {
-        if ((paramType.isVec() || paramType.isFloat())
-            && (newParamType.isVec() || newParamType.isFloat())) {
-          haveAllowedDiff = true;
-        } else {
-          haveOtherDiff = true;
+        haveDiff = true;
+        if ((paramType.isBool() || paramType.isInt() || paramType.isFloat())
+            && (newParamType.isBool() || newParamType.isInt() || newParamType.isFloat())) {
+          return true;
         }
       }
     }
 
-    return haveOtherDiff || !haveAllowedDiff;
+    return !haveDiff;
   }
 
   // Concrete signature with any generic agent types replaced
