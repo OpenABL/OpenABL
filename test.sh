@@ -2,6 +2,9 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 shopt -s nullglob
 
+# Save compilation time (FlameGPU)
+export SMS=20
+
 # Perform lint-only tests in test/ directory.
 # These check that errors are detected correctly.
 for file in $DIR/test/*.abl; do
