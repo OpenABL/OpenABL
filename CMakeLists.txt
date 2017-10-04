@@ -12,6 +12,7 @@ set(OpenABL_SOURCES
     src/Type.cpp
     src/main.cpp
     src/backend/GenericPrinter.cpp
+	src/backend/GenericCPrinter.cpp
     src/backend/CBackend.cpp
     src/backend/CPrinter.cpp
     src/backend/FlameModel.cpp

@@ -1,17 +1,16 @@
 #pragma once
 
 #include "AST.hpp"
-#include "GenericPrinter.hpp"
+#include "GenericCPrinter.hpp"
 
 namespace OpenABL {
 
-struct CPrinter : public GenericPrinter {
-  using GenericPrinter::print;
+struct CPrinter : public GenericCPrinter {
+  using GenericCPrinter::print;
 
   CPrinter(AST::Script &script, bool useFloat)
-    : GenericPrinter(script, false), script(script), useFloat(useFloat) {}
+    : GenericCPrinter(script), script(script), useFloat(useFloat) {}
 
-  void print(const AST::UnaryOpExpression &);
   void print(const AST::CallExpression &);
   void print(const AST::MemberInitEntry &);
   void print(const AST::AgentCreationExpression &);
@@ -27,11 +26,6 @@ struct CPrinter : public GenericPrinter {
   void print(const AST::Script &);
 
   void printType(Type t);
-
-  virtual void printSpecialBinaryOp(
-      const AST::BinaryOp, const AST::Expression &, const AST::Expression &);
-  virtual bool isSpecialBinaryOp(
-      const AST::BinaryOp, const AST::Expression &, const AST::Expression &);
 
 private:
   AST::Script &script;

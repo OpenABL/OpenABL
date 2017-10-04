@@ -23,62 +23,6 @@ void FlamePrinter::printType(Type t) {
   }
 }
 
-bool FlamePrinter::isSpecialBinaryOp(
-    AST::BinaryOp op, const AST::Expression &left, const AST::Expression &right) {
-  Type l = left.type, r = right.type;
-  if (op == AST::BinaryOp::MOD && !(l.isInt() && r.isInt())) {
-    return true;
-  }
-  return l.isVec() || r.isVec();
-}
-
-void FlamePrinter::printSpecialBinaryOp(
-    AST::BinaryOp op, const AST::Expression &left, const AST::Expression &right) {
-  Type l = left.type;
-  Type r = right.type;
-  if (l.isVec() || r.isVec()) {
-    Type v = l.isVec() ? l : r;
-    *this << (v.getTypeId() == Type::VEC2 ? "float2_" : "float3_");
-    switch (op) {
-      case AST::BinaryOp::ADD: *this << "add"; break;
-      case AST::BinaryOp::SUB: *this << "sub"; break;
-      case AST::BinaryOp::DIV: *this << "div_scalar"; break;
-      case AST::BinaryOp::MUL: *this << "mul_scalar"; break;
-      case AST::BinaryOp::EQUALS: *this << "equals"; break;
-      case AST::BinaryOp::NOT_EQUALS: *this << "not_equals"; break;
-      default:
-        assert(0);
-    }
-    *this << "(" << left << ", " << right << ")";
-    return;
-  }
-
-  if (op == AST::BinaryOp::MOD && !(l.isInt() && r.isInt())) {
-    *this << "fmod(" << left << ", " << right << ")";
-    return;
-  }
-
-  assert(0);
-}
-void FlamePrinter::print(const AST::UnaryOpExpression &expr) {
-  Type t = expr.expr->type;
-  if (t.isVec()) {
-    if (expr.op == AST::UnaryOp::PLUS) {
-      // Nothing to do
-      *this << *expr.expr;
-    } else if (expr.op == AST::UnaryOp::MINUS) {
-      // Compile to multiplication by -1.0
-      AST::FloatLiteral negOne(-1.0, AST::Location());
-      printSpecialBinaryOp(AST::BinaryOp::MUL, *expr.expr, negOne);
-    } else {
-      assert(0);
-    }
-    return;
-  }
-
-  GenericPrinter::print(expr);
-}
-
 void FlamePrinter::print(const AST::AssignStatement &stmt) {
   if (auto memAcc = dynamic_cast<AST::MemberAccessExpression *>(&*stmt.left)) {
     if (memAcc->expr->type.isAgent()) {

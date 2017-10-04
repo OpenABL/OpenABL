@@ -1,0 +1,88 @@
+agent Boid {
+  position float2 pos;
+  float2 velocity;
+}
+
+param float interaction_radius = 10;
+param float agent_density = 0.004;
+
+param float steer_scale = 0.1;
+param float collision_scale = 400;
+param float match_scale = 1.0;
+param float randomness_scale = 0.05;
+param float momentum_scale = 1.0;
+param float time_scale = 0.7;
+
+param int num_agents = 1000;
+
+float max_pos = sqrt(num_agents/agent_density);
+
+environment {
+  max: float2(max_pos)
+}
+
+void update_boid(Boid in->out) {
+  float2 global_velocity = float2(0, 0);
+  float2 global_center = float2(0, 0);
+  float2 avoid_velocity = float2(0, 0);
+  int interaction_count = 0;
+
+  for (Boid nx : near(in, interaction_radius)) {
+    if (nx.pos == in.pos) continue;
+
+    interaction_count += 1;
+    global_center += nx.pos;
+    global_velocity += nx.velocity;
+
+    float2 sep = in.pos - nx.pos;
+    float lensquared = sep.x*sep.x+sep.y*sep.y; // TODO dist2 function
+    avoid_velocity += sep / (lensquared*lensquared + 1);
+  }
+
+  float2 velocity_change = float2(0, 0);
+
+  if (interaction_count > 0) {
+    // Rule 1) Steer towards perceived center of flock
+    global_center /= interaction_count;
+    velocity_change += (global_center - in.pos) * steer_scale;
+
+    // Rule 2) Match neighbours speeds
+    global_velocity /= interaction_count;
+    velocity_change += global_velocity * match_scale;
+
+    // Rule 3) Avoid close range neighbors
+    avoid_velocity /= interaction_count;
+    velocity_change += avoid_velocity * collision_scale;
+  }
+
+  // Random movement
+  float2 random_dir = normalize(random(float2(-1.0), float2(1.0)));
+  velocity_change += random_dir * randomness_scale;
+
+  float2 new_velocity = momentum_scale * in.velocity + velocity_change;
+  float new_velocity_scale = length(new_velocity);
+  if (new_velocity_scale > 0) {
+    new_velocity /= new_velocity_scale;
+  }
+
+  float2 new_pos = in.pos + new_velocity * time_scale;
+  new_pos = wraparound(new_pos, float2(max_pos));
+
+  out.pos = new_pos;
+  out.velocity = new_velocity;
+}
+
+void main() {
+  //load("boids.in");
+
+  for (int i : 0..num_agents) {
+    add(Boid {
+      pos: random(float2(max_pos)),
+      velocity: random(float2(-1), float2(1)),
+    });
+  }
+
+  simulate(100) { update_boid }
+
+  save("boids.out");
+}

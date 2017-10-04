@@ -73,7 +73,6 @@ bool random_boolean(float p){
   else return false;
 } 
 
-
 float2 random_direction() {
   float phi = random(2*PI);
   return float2(sin(phi), cos(phi));
