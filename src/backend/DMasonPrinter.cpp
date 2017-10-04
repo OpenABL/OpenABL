@@ -107,7 +107,7 @@ void DMasonPrinter::print(const AST::FunctionDeclaration &decl) {
     *this << "public void " << decl.name << "(SimState state) {" << indent << nl
           << "Sim _sim = (Sim) state;" << nl;; 
     if(posMember){
-	*this << "this.pos=_sim.ev.getObjectLocation(this);"<< nl;
+	*this << "this.pos=_sim.env.getObjectLocation(this);"<< nl;
     }
     *this
           << *decl.stmts;
