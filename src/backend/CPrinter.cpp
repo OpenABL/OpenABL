@@ -34,61 +34,6 @@ static bool typeRequiresStorage(Type type) {
   return type.isArray() || type.isAgent();
 }
 
-bool CPrinter::isSpecialBinaryOp(
-    AST::BinaryOp op, const AST::Expression &left, const AST::Expression &right) {
-  Type l = left.type, r = right.type;
-  if (op == AST::BinaryOp::MOD && !(l.isInt() && r.isInt())) {
-    return true;
-  }
-  return l.isVec() || r.isVec();
-}
-void CPrinter::printSpecialBinaryOp(
-    AST::BinaryOp op, const AST::Expression &left, const AST::Expression &right) {
-  Type l = left.type;
-  Type r = right.type;
-  if (l.isVec() || r.isVec()) {
-    Type v = l.isVec() ? l : r;
-    *this << "float" << v.getVecLen() << "_";
-    switch (op) {
-      case AST::BinaryOp::ADD: *this << "add"; break;
-      case AST::BinaryOp::SUB: *this << "sub"; break;
-      case AST::BinaryOp::DIV: *this << "div_scalar"; break;
-      case AST::BinaryOp::MUL: *this << "mul_scalar"; break;
-      case AST::BinaryOp::EQUALS: *this << "equals"; break;
-      case AST::BinaryOp::NOT_EQUALS: *this << "not_equals"; break;
-      default:
-        assert(0);
-    }
-    *this << "(" << left << ", " << right << ")";
-    return;
-  }
-
-  if (op == AST::BinaryOp::MOD && !(l.isInt() && r.isInt())) {
-    *this << "fmod(" << left << ", " << right << ")";
-    return;
-  }
-  
-  assert(0);
-}
-
-void CPrinter::print(const AST::UnaryOpExpression &expr) {
-  Type t = expr.expr->type;
-  if (t.isVec()) {
-    if (expr.op == AST::UnaryOp::PLUS) {
-      // Nothing to do
-      *this << *expr.expr;
-    } else if (expr.op == AST::UnaryOp::MINUS) {
-      // Compile to multiplication by -1.0
-      AST::FloatLiteral negOne(-1.0, AST::Location());
-      printSpecialBinaryOp(AST::BinaryOp::MUL, *expr.expr, negOne);
-    } else {
-      assert(0);
-    }
-    return;
-  }
-
-  GenericPrinter::print(expr);
-}
 static void printTypeCtor(CPrinter &p, const AST::CallExpression &expr) {
   Type t = expr.type;
   if (t.isVec()) {
@@ -303,25 +248,6 @@ void CPrinter::print(const AST::AgentDeclaration &decl) {
           << (member->isPosition ? "true" : "false") << " }," << nl;
   }
   *this << "{ TYPE_END, sizeof(" << decl.name << "), NULL }" << outdent << nl << "};" << nl;
-}
-
-void CPrinter::print(const AST::ConstDeclaration &decl) {
-  *this << *decl.type << " " << *decl.var
-        << (decl.isArray ? "[]" : "")
-        << " = ";
-  if (!decl.type->resolved.isVec()) {
-    *this << *decl.expr << ";";
-  } else if (const auto *call = dynamic_cast<const AST::CallExpression *>(&*decl.expr)) {
-    // This would usually generate a floatN_create() call, which is not legal in a constant
-    // initializer. Generate an explicit initializer expression instead.
-    *this << "{";
-    printCommaSeparated(*call->args, [&](const AST::ExpressionPtr &arg) {
-      *this << *arg;
-    });
-    *this << "};";
-  } else {
-    assert(0);
-  }
 }
 
 void CPrinter::print(const AST::FunctionDeclaration &decl) {
