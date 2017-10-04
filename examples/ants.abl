@@ -70,12 +70,6 @@ int num_pheromones = env_size * env_size;
 
 
 // TODO standard language library?
-float2 wraparound(float2 pos, float2 max) {
-  return float2(
-    pos.x < 0 ? max.x - pos.x : pos.x > max.x ? pos.x - max.x : pos.x,
-    pos.y < 0 ? max.y - pos.y : pos.y > max.y ? pos.y - max.y : pos.y,
-  );
-}
 
 float2 random_direction() {
   float phi = random(2*PI);

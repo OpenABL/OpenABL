@@ -36,13 +36,6 @@ param int num_agents = 1000;
 float env_size = sqrt(num_agents/agent_density);
 environment { max: float2(env_size) }
 
-float2 wraparound(float2 pos, float2 max) {
-  return float2(
-    pos.x < 0 ? max.x - pos.x : pos.x > max.x ? pos.x - max.x : pos.x,
-    pos.y < 0 ? max.y - pos.y : pos.y > max.y ? pos.y - max.y : pos.y,
-  );
-}
-
 float2 random_direction() {
   float phi = random(2*PI);
   return float2(sin(phi), cos(phi));

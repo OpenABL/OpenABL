@@ -21,18 +21,6 @@ environment {
   max: float2(max_pos)
 }
 
-// This function looks somewhat weird to me, but let's take it as-is
-float2 boundPosition(float2 pos) {
-  /*return float2(
-    pos.x < 0 ? max_pos : pos.x > max_pos ? 0 : pos.x,
-    pos.y < 0 ? max_pos : pos.y > max_pos ? 0 : pos.y
-  );*/
-  return float2(
-    pos.x < 0 ? max_pos + pos.x : pos.x > max_pos ? pos.x - max_pos : pos.x,
-    pos.y < 0 ? max_pos + pos.y : pos.y > max_pos ? pos.y - max_pos : pos.y,
-  );
-}
-
 void update_boid(Boid in->out) {
   float2 global_velocity = float2(0, 0);
   float2 global_center = float2(0, 0);
@@ -78,7 +66,7 @@ void update_boid(Boid in->out) {
   }
 
   float2 new_pos = in.pos + new_velocity * time_scale;
-  new_pos = boundPosition(new_pos);
+  new_pos = wraparound(new_pos, float2(max_pos));
 
   out.pos = new_pos;
   out.velocity = new_velocity;

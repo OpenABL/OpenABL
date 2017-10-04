@@ -27,14 +27,14 @@ float3 random(float3 max) {
 float2 clamp(float2 pos, float2 min, float2 max) {
   return float2(
     pos.x < min.x ? min.x : pos.x > max.x ? max.x : pos.x,
-    pos.y < min.y ? min.y : pos.y > max.y ? max.y : pos.y
+    pos.y < min.y ? min.y : pos.y > max.y ? max.y : pos.y,
   );
 }
 float3 clamp(float3 pos, float3 min, float3 max) {
   return float3(
     pos.x < min.x ? min.x : pos.x > max.x ? max.x : pos.x,
     pos.y < min.y ? min.y : pos.y > max.y ? max.y : pos.y,
-    pos.z < min.z ? min.z : pos.z > max.z ? max.z : pos.z
+    pos.z < min.z ? min.z : pos.z > max.z ? max.z : pos.z,
   );
 }
 
@@ -43,4 +43,18 @@ float2 clamp(float2 pos, float2 max) {
 }
 float3 clamp(float3 pos, float3 max) {
   return clamp(pos, float3(0), max);
+}
+
+float2 wraparound(float2 pos, float2 max) {
+  return float2(
+    pos.x < 0 ? max.x - pos.x : pos.x > max.x ? pos.x - max.x : pos.x,
+    pos.y < 0 ? max.y - pos.y : pos.y > max.y ? pos.y - max.y : pos.y,
+  );
+}
+float3 wraparound(float3 pos, float3 max) {
+  return float3(
+    pos.x < 0 ? max.x - pos.x : pos.x > max.x ? pos.x - max.x : pos.x,
+    pos.y < 0 ? max.y - pos.y : pos.y > max.y ? pos.y - max.y : pos.y,
+    pos.z < 0 ? max.z - pos.z : pos.z > max.z ? pos.z - max.z : pos.z,
+  );
 }
