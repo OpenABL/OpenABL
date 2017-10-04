@@ -228,16 +228,17 @@ void DMasonPrinter::print(const AST::CallExpression &expr) {
       AST::AgentMember *posMember = agent->getPositionMember();
       *this << type << " " << aLabel << " = " << arg << ";" << nl;
       //*this << type << " " << aLabel << " = new " << type << "(this,new Double2D(0,0));" << nl;
-      *this << aLabel << ".pos = env.getAvailableRandomLocation();"<< nl; 
+      *this << "if (" << aLabel << ".pos.x >= env.own_x && "
+            << aLabel << ".pos.y < env.own_x + env.my_width && "
+            << aLabel << ".pos.y >= env.own_y && "
+            << aLabel << ".pos.y < env.own_y + env.my_height) {" << indent << nl;
       *this << aLabel << ".setPos("<< aLabel <<".pos);" << nl;
-      if (posMember) {
-        *this << "env.setObjectLocation(" << aLabel << ", "
-              << aLabel << "." << posMember->name << ");" << nl;
-      }
-
+      *this << "env.setObjectLocation(" << aLabel << ", "
+            << aLabel << "." << posMember->name << ");" << nl;
       // TODO There are some ordering issues here, which we ignore for now
       // This does not fully respect the order between different agent types
-      *this << "schedule.scheduleOnce(" << aLabel << ")";
+      *this << "schedule.scheduleOnce(" << aLabel << ");";
+      *this << outdent << nl << "}" << nl;
     } else if (name == "save") {
       // TODO Handle save
       *this << "//save()";
