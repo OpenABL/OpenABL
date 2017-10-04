@@ -21,6 +21,7 @@ struct CPrinter : public GenericPrinter {
   void print(const AST::VarDeclarationStatement &);
   void print(const AST::ForStatement &);
   void print(const AST::SimulateStatement &);
+  void print(const AST::ConstDeclaration &);
   void print(const AST::FunctionDeclaration &);
   void print(const AST::AgentMember &);
   void print(const AST::AgentDeclaration &);

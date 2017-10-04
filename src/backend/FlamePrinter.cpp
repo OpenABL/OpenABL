@@ -249,6 +249,25 @@ void FlamePrinter::print(const AST::ForStatement &stmt) {
   assert(0);
 }
 
+void FlamePrinter::print(const AST::ConstDeclaration &decl) {
+  *this << *decl.type << " " << *decl.var
+        << (decl.isArray ? "[]" : "")
+        << " = ";
+  if (!decl.type->resolved.isVec()) {
+    *this << *decl.expr << ";";
+  } else if (const auto *call = dynamic_cast<const AST::CallExpression *>(&*decl.expr)) {
+    // This would usually generate a floatN_create() call, which is not legal in a constant
+    // initializer. Generate an explicit initializer expression instead.
+    *this << "{";
+    printCommaSeparated(*call->args, [&](const AST::ExpressionPtr &arg) {
+      *this << *arg;
+    });
+    *this << "};";
+  } else {
+    assert(0);
+  }
+}
+
 void FlamePrinter::print(const AST::Script &script) {
   *this << "#include \"header.h\"\n"
         << "#include \"libabl.h\"\n\n";

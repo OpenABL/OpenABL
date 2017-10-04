@@ -305,6 +305,25 @@ void CPrinter::print(const AST::AgentDeclaration &decl) {
   *this << "{ TYPE_END, sizeof(" << decl.name << "), NULL }" << outdent << nl << "};" << nl;
 }
 
+void CPrinter::print(const AST::ConstDeclaration &decl) {
+  *this << *decl.type << " " << *decl.var
+        << (decl.isArray ? "[]" : "")
+        << " = ";
+  if (!decl.type->resolved.isVec()) {
+    *this << *decl.expr << ";";
+  } else if (const auto *call = dynamic_cast<const AST::CallExpression *>(&*decl.expr)) {
+    // This would usually generate a floatN_create() call, which is not legal in a constant
+    // initializer. Generate an explicit initializer expression instead.
+    *this << "{";
+    printCommaSeparated(*call->args, [&](const AST::ExpressionPtr &arg) {
+      *this << *arg;
+    });
+    *this << "};";
+  } else {
+    assert(0);
+  }
+}
+
 void CPrinter::print(const AST::FunctionDeclaration &decl) {
   if (decl.isMain()) {
     // Return result code from main()
