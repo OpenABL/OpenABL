@@ -38,6 +38,11 @@ float3 clamp(float3 pos, float3 min, float3 max) {
   );
 }
 
+float clamp(float pos, float max) {
+  if(pos < 0) return 0;
+  if(pos > max) return max;
+  return pos;
+}
 float2 clamp(float2 pos, float2 max) {
   return clamp(pos, float2(0), max);
 }
