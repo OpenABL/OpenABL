@@ -195,7 +195,7 @@ void ant_act(Ant in->out) {
     }
   } 
   else { // the ants follows the food pheromone
-    if(food_max == 0)  // no home pheromones nearby
+    if(food_max == 0)  // no food pheromones nearby
       new_pos = random_move(in);
     else
       new_pos = food_pos_max;  
