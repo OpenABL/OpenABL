@@ -14,6 +14,8 @@ agent Ant {
   position float2 pos;
   float2 last_pos;
   float reward;
+  float max_home; // extra fields to allow the deposit in a second for loop
+  float max_food; //  
   bool hasFood;
 }
 
@@ -23,8 +25,10 @@ agent Pheromone {
   float home;
 }
 
-// TODO Add this to the language
+// TODO add this to the language
 float PI = 3.14159265358979323846;
+float SQRT2 = 1.41421356237;
+float max(float a, float b){ if(a>b) return a; return b; }
 
 // simulation model parameters
 param float evaporationConstant = 0.999;
@@ -36,14 +40,13 @@ param float randomActionProbability = 0.1;  // in [0,1]
 
 float2 home_pos = float2(75,75);
 float2 food_pos = float2(25,25);
-float ants_density = 0.1; // simulation scaling with constant density
-float pheromone_radius = 1.0;
+float ants_density = 0.1;      // simulation scaling with constant density
+float pheromone_radius = 1.42; // but to get 9 points as in the orignal code we need to extend it 
+float max_move = 2.83; // in the orginal code is 2 per dimension, thus potentially 2*sqrt(2)=2.82842712475
 
 int env_size = int( sqrt(num_ants/ants_density) );
 environment { max: float2(env_size) }
 int num_pheromones = env_size * env_size;
-
-float max(float a, float b){ if(a>b) return a; return b; }
 
 bool random_boolean(float p){
   float val = random(1.0);
@@ -56,7 +59,6 @@ float2 random_direction() {
   return float2(sin(phi), cos(phi));
 }
 
-
 /* obstacle check, rewritten in vectorial form (obstacles are two ellipses) */
 bool is_obstacle(float2 pos){
   float2 f1 = float2(pos.x-45, pos.y-25);
@@ -68,27 +70,27 @@ bool is_obstacle(float2 pos){
   return false; // no collision otherwise
 }
 
-bool is_home(float2 ant_pos) { return (dist(ant_pos, home_pos) <= 1.0); }
-bool is_food(float2 ant_pos) { return (dist(ant_pos, food_pos) <= 1.0); }
+bool is_home(float2 ant_pos) { return dist(ant_pos, home_pos) <= 1.0; }
+bool is_food(float2 ant_pos) { return dist(ant_pos, food_pos) <= 1.0; }
 
 float2 random_move(Ant ant){
-  if(random_boolean(momentumProbability))
+  if(random_boolean(momentumProbability)) // go to the same direction 
     return ant.pos + (ant.pos - ant.last_pos); 
-  else if(random_boolean(momentumProbability))
-    return ant.pos + random_direction();
+  else if(random_boolean(randomActionProbability)) // go to a random direction
+    return ant.pos + random_direction() * max_move;
   else
-    return ant.pos;
+    return ant.pos; // no move 
 }
 
 /* colors used for visualization */
 int getColor(Pheromone p) { 
   if(is_home(p.pos))     return 0x0000ff; // blue
-  if(is_food(p.pos))     return 0xff0000; // red
+  if(is_food(p.pos))     return 0x4b0082; // indigo 0x4B0082 - red 0xff0000  
   if(is_obstacle(p.pos)) return 0xA9A9A9; // gray
-  int r = int(255 * p.food);  // red
-  int g = int(255 * p.home); // green
+  int r = int(255 * p.food);  // red channel
+  int g = int(255 * p.home);  // green channel
   int b = 0;
-  return (r<<16) | (g<<8) | b;  // gradient
+  return (r<<16) | (g<<8) | b;  // mix color channels
 }
 
 int getColor(Ant p) {
@@ -96,57 +98,100 @@ int getColor(Ant p) {
   else          return 0xcc0000; // almost red
 }
 
-/*int getColor(Food p) {  
-  return 0xffffff;
-}*/
 
+/* Ant's step function logic is implemented in three steps: act_1, deposit and act_2. */
 
 /*
- Ant's step function logic is implemented in two steps: deposit and act.
+ ant_act_1: each ants looks for the nearby home and food pheromone. Pheromoens are only read.
+ (1st part of deposit)
  */
-void ant_act(Ant in->out) {
-  float new_reward = in.reward; // 0;  
-  float2 new_pos = in.pos;  
+void ant_deposit(Ant in->out) {  
+  float home_max = 0;
+  float food_max = 0;
+  for (Pheromone px : near(in, pheromone_radius)) {     
+    float home_m = px.home * cutDown + in.reward; // FIXME diagonal corner not handled      
+    home_max = max(home_max, home_m);    
+    float food_m = px.food * cutDown + in.reward; // FIXME diagonal corner not handled  
+    food_max = max(food_max, food_m);    
+  }  
   
-  Pheromone closest_pheromone = Pheromone { pos: float2(0,0), food: 0, home: 0 }; 
-  float closest_dist = 1000;
+  if(in.hasFood)
+    out.max_food = food_max; 
+  else
+    out.max_home = home_max;   
+  
+  out.reward = 0; 
+}
+
+/* 
+ pheromone_deposit: deposit of (home|food) pheromones. Each pheromone is written/updated.
+ (2n part of deposit)
+*/
+void pheromone_deposit(Pheromone in->out) {
+  // pheromone evaporation
+  float food = in.food * evaporationConstant;  
+  float home = in.home * evaporationConstant;
+
+  float closest_dist = env_size * env_size; // large enough value
+  Ant closest_ant = Ant {pos:float2(0), last_pos:float2(0), reward:0, max_home:0, max_food:0, hasFood:false};  
+
+  // find closest Ant (original code updated only the pheromone where the ant was lying)
+  for (Ant ax : near(in, 1.0)) {  
+    float ant_dist = dist(ax.pos, in.pos); 
+    if(closest_dist > ant_dist){
+      closest_ant = ax;       
+      closest_dist = ant_dist;
+    }      
+  }
+  
+  // if there are ant nearby, deposit food & home pheromones
+  if(closest_dist <= pheromone_radius){  
+    if(closest_ant.hasFood) 
+      food = max(closest_ant.max_food,in.food);
+    else
+      home = max(closest_ant.max_home,in.home);
+  }
+  
+  // final update
+  out.food = food ;
+  out.home = home; 
+}
+
+/* act: the ant moves according to the nearby pheromones, or does a random move */
+void ant_act(Ant in->out) {       
+  float2 new_pos = in.pos;  
     
-  float home_max = 0;      
   float food_max = 0;    
-  float2 home_pos_max = float2(0,0); 
-  float2 food_pos_max = float2(0,0); 
+  float home_max = 0;    
+  float2 food_pos_max = float2(0,0);   
+  float2 home_pos_max = float2(0,0);   
+  
+  float avoidSamePathProb = 0.3;
   
   // for each nearby pheromones
-  for (Pheromone px : near(in, pheromone_radius)) {     
+  for (Pheromone px : near(in, pheromone_radius)) {
     // check max food
-    if(food_max < px.food){   
-       food_max = max(food_max, px.food);
+    if(px.food > food_max || (food_max == px.food && random_boolean(avoidSamePathProb)) ){         
+       food_max     = px.food;
        food_pos_max = px.pos;
     }
     // check max home 
-    if(home_max < px.home){   
-       home_max = max(home_max, px.home);
+    if(px.home > home_max || (home_max == px.home && random_boolean(avoidSamePathProb)) ){   
+       home_max     = px.home;
        home_pos_max = px.pos;
-    }  
-    // check the closest pheromone
-    float p_dist = dist(px.pos,in.pos); 
-    if(closest_dist < p_dist){
-      closest_pheromone = px; 
-      closest_dist = p_dist;
     }     
   } // for 
   
-  
-  // if the ant has food, follows the home pheromone 
+  // (act) if the ant has food, follows the home pheromone 
   if(in.hasFood) { 
     if(home_max == 0)  // no home pheromones nearby
       new_pos = random_move(in);  // random move
     else
       new_pos = home_pos_max;   // otherwise, follow the pheromone
      
-    if(is_home(new_pos)){
-      //new_reward  = closest_pheromone.home + in.reward; 
+    if(is_home(new_pos)){      
       out.hasFood = false;
+      out.reward = 1.0;
     }
   } 
   else { // the ants follows the food pheromone
@@ -155,53 +200,33 @@ void ant_act(Ant in->out) {
     else
       new_pos = food_pos_max;  
     
-    if(is_food(new_pos)){
-      //new_reward  = closest_pheromone.food + in.reward; 
+    if(is_food(new_pos)){      
       out.hasFood = true;
+      out.reward = 1.0;
     }
   }
   
   // collision check 
-  if(is_obstacle(new_pos) || !is_inside(new_pos, float2(env_size))) new_pos = in.last_pos;
-  new_reward = clamp(new_reward, 1.0);
+  if(is_obstacle(new_pos) || !is_inside(new_pos, float2(env_size))) new_pos = in.last_pos;  
   
   // agent position update
+  out.max_home = home_max;
+  out.max_food = food_max;
   out.last_pos = in.pos;  
-  out.pos = new_pos; // FIXME clamping here? obstacles?
-  out.reward = new_reward;
+  out.pos      = new_pos;  
 }
 
-
-void pheromone_update(Pheromone in->out) {
-  
-  // deposit food & home pheromones
-  float food_max = 0;
-  float home_max = 0;
-  
-  for (Ant ax : near(in, pheromone_radius)) {  
-    if(ax.hasFood){
-      float food_m =  in.food * cutDown + ax.reward; // FIXME diagonal corner not handled      
-      food_max = max(food_max, food_m);
-    }
-    else{
-      float home_m =  in.home * cutDown + ax.reward; // FIXME diagonal corner not handled      
-      home_max = max(home_max, home_m);     
-    }    
-  }
-  
-  out.food = food_max * evaporationConstant;
-  out.home = home_max * evaporationConstant; 
-}
-
-
+/* main simulation */
 void main() {    
 
   for (int i : 0..num_ants) {
-    float2 pos = home_pos + random(float2(-1), float2(1)) * 2; 
+    float2 pos = home_pos; // + random(float2(-1), float2(1)) * 2; 
     add(Ant {
       pos: pos,
       last_pos: pos,
       reward: initialReward,
+      max_home: 0, 
+      max_food: 0,
       hasFood: false
     });
   }
@@ -215,7 +240,7 @@ void main() {
     }
   } 
   
-  simulate(100) { pheromone_update, ant_act  }
+  simulate(100) { ant_deposit, pheromone_deposit, ant_act  }
 
   save("ants.out"); 
 }
