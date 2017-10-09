@@ -43,7 +43,6 @@ float2 home_pos = float2(75,75);
 float2 food_pos = float2(25,25);
 float ants_density = 0.1;      // simulation scaling with constant density
 float pheromone_radius = 2.83; //1.42; // but to get 9 points as in the orignal code we need to extend it 
-float max_move = 2.83; //1.42 - 2.83; // in the orginal code is 2 per dimension, thus potentially 2*sqrt(2)=2.82842712475
 
 int env_size = int( sqrt(num_ants/ants_density) );
 environment { max: float2(env_size) }
@@ -51,14 +50,9 @@ int num_pheromones = env_size * env_size;
 
 bool random_boolean(float p){
   float val = random(1.0);
-  if(val > p) return true;
+  if(val < p) return true;
   else return false;
 } 
-
-float2 random_direction() {
-  float phi = random(2*PI);
-  return float2(sin(phi), cos(phi));
-}
 
 /* obstacle check, rewritten in vectorial form (obstacles are two ellipses) */
 bool is_obstacle(float2 pos){
@@ -74,13 +68,29 @@ bool is_obstacle(float2 pos){
 bool is_home(float2 ant_pos) { return dist(ant_pos, home_pos) <= 1.0; }
 bool is_food(float2 ant_pos) { return dist(ant_pos, food_pos) <= 1.0; }
 
-float2 random_move(Ant ant){
-  if(random_boolean(momentumProbability)) // go to the same direction 
+float2 random_displacement() {
+  int dx = randomInt(-1, 1);
+  int dy = randomInt(-1, 1);
+  return float2(dx, dy);
+}
+
+float2 default_move(Ant ant){
+  if(random_boolean(momentumProbability)) {
+    // go to the same direction 
     return ant.pos + (ant.pos - ant.last_pos); 
-  else if(random_boolean(randomActionProbability)) // go to a random direction
-    return ant.pos + random_direction() * max_move;
-  else
-    return ant.pos; // no move 
+  } else {
+    // go to a random direction
+    return ant.pos + random_displacement();
+  }
+}
+
+float2 pheromone_move(Ant ant, float2 max_pos) {
+  if(random_boolean(randomActionProbability)) {
+    // go to a random direction
+    return ant.pos + random_displacement(); 
+  } else {
+    return max_pos;
+  }
 }
 
 /* colors used for visualization */
@@ -170,8 +180,8 @@ void pheromone_deposit(Pheromone in->out) {
   }
 */ 
   // pheromone contribution from near ants
-  for (Ant ax : near(in, max_move)) {
-    float D = dist(ax.pos,in.pos) / max_move;
+  for (Ant ax : near(in, pheromone_radius)) {
+    float D = dist(ax.pos,in.pos) / pheromone_radius;
     float K = D * 0.350; // distance normalization constant (very sensitive, tested 0.32)
     //float K = D * D * 0.340;
     if(ax.hasFood) {
@@ -215,9 +225,9 @@ void ant_act(Ant in->out) {
   // (act) if the ant has food, follows the home pheromone 
   if(in.hasFood) { 
     if(home_max == 0)  // no home pheromones nearby
-      new_pos = random_move(in);  // random move
+      new_pos = default_move(in);
     else
-      new_pos = home_pos_max;   // otherwise, follow the pheromone
+      new_pos = pheromone_move(in, home_pos_max);
      
     if(is_home(new_pos)){      
       out.hasFood = false;
@@ -226,9 +236,9 @@ void ant_act(Ant in->out) {
   } 
   else { // the ants follows the food pheromone
     if(food_max == 0)  // no food pheromones nearby
-      new_pos = random_move(in);
+      new_pos = default_move(in);
     else
-      new_pos = food_pos_max;  
+      new_pos = pheromone_move(in, food_pos_max);
     
     if(is_food(new_pos)){      
       out.hasFood = true;
