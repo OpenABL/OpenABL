@@ -84,20 +84,20 @@ float2 random_displacement() {
   return float2(dx, dy);
 }
 
-float2 default_move(Ant ant){
+float2 default_move(float2 pos, float2 last_pos) {
   if(random_boolean(momentumProbability)) {
     // go to the same direction 
-    return ant.pos + (ant.pos - ant.last_pos); 
+    return pos + (pos - last_pos); 
   } else {
     // go to a random direction
-    return ant.pos + random_displacement();
+    return pos + random_displacement();
   }
 }
 
-float2 pheromone_move(Ant ant, float2 max_pos) {
+float2 pheromone_move(float2 pos, float2 max_pos) {
   if(random_boolean(randomActionProbability)) {
     // go to a random direction
-    return ant.pos + random_displacement(); 
+    return pos + random_displacement(); 
   } else {
     return max_pos;
   }
@@ -215,9 +215,9 @@ void ant_act(Ant in->out) {
   // (act) if the ant has food, follows the home pheromone 
   if(in.hasFood) { 
     if(home_max == 0)  // no home pheromones nearby
-      new_pos = default_move(in);
+      new_pos = default_move(in.pos, in.last_pos);
     else
-      new_pos = pheromone_move(in, home_pos_max);
+      new_pos = pheromone_move(in.pos, home_pos_max);
      
     if(is_home(new_pos)){      
       out.hasFood = false;
@@ -226,9 +226,9 @@ void ant_act(Ant in->out) {
   } 
   else { // the ants follows the food pheromone
     if(food_max == 0)  // no food pheromones nearby
-      new_pos = default_move(in);
+      new_pos = default_move(in.pos, in.last_pos);
     else
-      new_pos = pheromone_move(in, food_pos_max);
+      new_pos = pheromone_move(in.pos, food_pos_max);
     
     if(is_food(new_pos)){      
       out.hasFood = true;
