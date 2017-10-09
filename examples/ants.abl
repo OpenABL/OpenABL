@@ -32,18 +32,18 @@ float max(float a, float b){ if(a>b) return a; return b; }
 float min(float a, float b){ if(a<b) return a; return b; }
 
 // simulation model parameters
-param float evaporationConstant = 0.999;
+param float evaporationConstant = 0.999;//0.999;
 param float initialReward = 1.0;
 param int num_ants = 1000;
-param float cutDown = 1.05; //0.63; //0.9;                  // in [0,1]
+param float cutDown = .9; //0.63; //0.9;                  // in [0,1]
 param float momentumProbability = 0.8;      // in [0,1]
 param float randomActionProbability = 0.1;  // in [0,1]
 
 float2 home_pos = float2(75,75);
 float2 food_pos = float2(25,25);
 float ants_density = 0.1;      // simulation scaling with constant density
-float pheromone_radius = 1.42; // but to get 9 points as in the orignal code we need to extend it 
-float max_move = 1.42; //2.83; // in the orginal code is 2 per dimension, thus potentially 2*sqrt(2)=2.82842712475
+float pheromone_radius = 2.83; //1.42; // but to get 9 points as in the orignal code we need to extend it 
+float max_move = 2.83; //1.42 - 2.83; // in the orginal code is 2 per dimension, thus potentially 2*sqrt(2)=2.82842712475
 
 int env_size = int( sqrt(num_ants/ants_density) );
 environment { max: float2(env_size) }
@@ -87,19 +87,33 @@ float2 random_move(Ant ant){
 int getColor(Pheromone p) { 
   if(is_home(p.pos))     return 0x0000ff; // blue 
   if(is_food(p.pos))     return 0xff0000; // indigo 0x4B0082 - red 0xff0000  
-  if(is_obstacle(p.pos)) return 0xA9A9A9; // gray
-  // green 0x00ff00
-  int white = 0xffffff; 
-  int b = int(255*p.food);  
-  int g = int(255*p.home);  
-  int r = 0;
-  //return (g<<8) | 0xff00ff;  
-  //return 0xffffff &  ( (r<<16) | (g<<8) | b);  
-  return (r<<16) | (g<<8) | b;  // mix color channels  
+  if(is_obstacle(p.pos)) return 0xffff00; // return 0xA9A9A9; // gray  
+  int white = 0xffffff;  
+
+  // Nikita snippet
+  if (p.food != 0) {
+    int r = int(255* (1.0-p.food) );
+    int g = int(255* (1.0-p.food) );  
+    int b = 255;        
+      return ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | ((b & 0xFF) << 0);
+  } else {
+    int r = int(255* (1.0-p.home) );
+    int g = 255;  
+    int b = int(255* (1.0-p.home) );        
+      return ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | ((b & 0xFF) << 0);
+  }
+//  return (r<<16) | (g<<8) | b;  // mix color channels  
+
+/*  
+  int r = int(255* (1.0-max(p.food,p.home)) );
+  int g = int(255* (1.0-p.food) );  
+  int b = int(255* (1.0-p.home) );    
+  return ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | ((b & 0xFF) << 0); 
+*/
 }
 
 int getColor(Ant p) {
-  if(p.reward == 1)    return 0xffff00; // yellow
+//  if(p.reward == 1)    return 0xffff00; // yellow
   if(p.hasFood) return 0xff0000; // black
   else          return 0x000000; // red
 }
@@ -134,13 +148,13 @@ void ant_deposit(Ant in->out) {
 */
 void pheromone_deposit(Pheromone in->out) {
   // pheromone evaporation
-  float food = in.food; // * evaporationConstant;  
-  float home = in.home; // * evaporationConstant;
-
+  float food = in.food * evaporationConstant;  
+  float home = in.home * evaporationConstant;
+/*
   // find closest Ant (original code updated only the pheromone where the ant was lying)
   float closest_dist = env_size * env_size; // large enough value
   Ant closest_ant = Ant {pos:float2(0), last_pos:float2(0), reward:0, max_home:0, max_food:0, hasFood:false};  
-  for (Ant ax : near(in, pheromone_radius)) {  
+  for (Ant ax : near(in, 0.9 )) {   //pheromone_radius
     float ant_dist = dist(ax.pos, in.pos); 
     if(closest_dist > ant_dist){
       closest_ant = ax;       
@@ -154,10 +168,23 @@ void pheromone_deposit(Pheromone in->out) {
     else
       home = closest_ant.max_home; //max(closest_ant.max_home,in.home);
   }
+*/ 
+  // pheromone contribution from near ants
+  for (Ant ax : near(in, max_move)) {
+    float D = dist(ax.pos,in.pos) / max_move;
+    float K = D * 0.350; // distance normalization constant (very sensitive, tested 0.32)
+    //float K = D * D * 0.340;
+    if(ax.hasFood) {
+      food = max(dist(in.pos,ax.pos) * ax.max_food * K, food);  
+    }
+    else {
+      home = max(dist(in.pos,ax.pos) * ax.max_home * K, home);
+    }
+  }
   
   // final update
-  out.food = food ;
-  out.home = home; 
+  out.food = min(food,1);
+  out.home = min(home,1); 
 }
 
 /* act: the ant moves according to the nearby pheromones, or does a random move */
