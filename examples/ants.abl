@@ -127,10 +127,11 @@ void ant_deposit(Ant in->out) {
   float home_max = 0;
   float food_max = 0;
   for (Pheromone px : near(in, pheromone_radius)) {
-    float K = dist(px.pos,in.pos) / pheromone_radius; // distance normalization constant
-    float home_m = min(px.home * K * cutDown + in.reward,1); // FIXME diagonal corner not handled      
+    //float K = dist(px.pos,in.pos) / pheromone_radius; // distance normalization constant
+    float K = 1;
+    float home_m = px.home * K * cutDown + in.reward; // FIXME diagonal corner not handled      
     home_max = max(home_max, home_m);    
-    float food_m = min(px.food * K * cutDown + in.reward,1); // FIXME diagonal corner not handled  
+    float food_m = px.food * K * cutDown + in.reward; // FIXME diagonal corner not handled  
     food_max = max(food_max, food_m);    
   }  
   
@@ -146,8 +147,8 @@ void ant_deposit(Ant in->out) {
 */
 void pheromone_deposit(Pheromone in->out) {
   // pheromone evaporation
-  float food = in.food * evaporationConstant;  
-  float home = in.home * evaporationConstant;
+  float food = in.food;  
+  float home = in.home;
 
   // pheromone contribution from ants on this position
   for (Ant ax : near(in, 0.9)) {
@@ -160,8 +161,8 @@ void pheromone_deposit(Pheromone in->out) {
   }
   
   // final update
-  out.food = food;
-  out.home = home; 
+  out.food = food * evaporationConstant;
+  out.home = home * evaporationConstant; 
 }
 
 /* act: the ant moves according to the nearby pheromones, or does a random move */
