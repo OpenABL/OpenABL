@@ -42,7 +42,7 @@ param float randomActionProbability = 0.1;  // in [0,1]
 float2 home_pos = float2(75,75);
 float2 food_pos = float2(25,25);
 float ants_density = 0.1;      // simulation scaling with constant density
-float pheromone_radius = 2.83; //1.42; // but to get 9 points as in the orignal code we need to extend it 
+float pheromone_radius = 1.42; // 2.83; //1.42; // but to get 9 points as in the orignal code we need to extend it 
 
 int env_size = int( sqrt(num_ants/ants_density) );
 environment { max: float2(env_size) }
@@ -160,41 +160,20 @@ void pheromone_deposit(Pheromone in->out) {
   // pheromone evaporation
   float food = in.food * evaporationConstant;  
   float home = in.home * evaporationConstant;
-/*
-  // find closest Ant (original code updated only the pheromone where the ant was lying)
-  float closest_dist = env_size * env_size; // large enough value
-  Ant closest_ant = Ant {pos:float2(0), last_pos:float2(0), reward:0, max_home:0, max_food:0, hasFood:false};  
-  for (Ant ax : near(in, 0.9 )) {   //pheromone_radius
-    float ant_dist = dist(ax.pos, in.pos); 
-    if(closest_dist > ant_dist){
-      closest_ant = ax;       
-      closest_dist = ant_dist;
-    }      
-  }  
-  // if there are ant nearby, deposit food & home pheromones
-  if(closest_dist <= pheromone_radius){  
-    if(closest_ant.hasFood) 
-      food = closest_ant.max_food; //max(closest_ant.max_food,in.food);
-    else
-      home = closest_ant.max_home; //max(closest_ant.max_home,in.home);
-  }
-*/ 
-  // pheromone contribution from near ants
-  for (Ant ax : near(in, pheromone_radius)) {
-    float D = dist(ax.pos,in.pos) / pheromone_radius;
-    float K = D * 0.350; // distance normalization constant (very sensitive, tested 0.32)
-    //float K = D * D * 0.340;
+
+  // pheromone contribution from ants on this position
+  for (Ant ax : near(in, 0.9)) {
     if(ax.hasFood) {
-      food = max(dist(in.pos,ax.pos) * ax.max_food * K, food);  
+      food = max(ax.max_food, food);  
     }
     else {
-      home = max(dist(in.pos,ax.pos) * ax.max_home * K, home);
+      home = max(ax.max_home, home);
     }
   }
   
   // final update
-  out.food = min(food,1);
-  out.home = min(home,1); 
+  out.food = food;
+  out.home = home; 
 }
 
 /* act: the ant moves according to the nearby pheromones, or does a random move */
