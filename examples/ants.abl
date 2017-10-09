@@ -100,26 +100,14 @@ int getColor(Pheromone p) {
   if(is_obstacle(p.pos)) return 0xffff00; // return 0xA9A9A9; // gray  
   int white = 0xffffff;  
 
-  // Nikita snippet
-  if (p.food != 0) {
-    int r = int(255* (1.0-p.food) );
-    int g = int(255* (1.0-p.food) );  
-    int b = 255;        
-      return ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | ((b & 0xFF) << 0);
-  } else {
-    int r = int(255* (1.0-p.home) );
-    int g = 255;  
-    int b = int(255* (1.0-p.home) );        
-      return ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | ((b & 0xFF) << 0);
-  }
-//  return (r<<16) | (g<<8) | b;  // mix color channels  
+  float likely_max = 3.0;
+  float f = min(1.0, sqrt(sqrt(p.food / likely_max)));
+  float h = min(1.0, sqrt(sqrt(p.home / likely_max)));
 
-/*  
-  int r = int(255* (1.0-max(p.food,p.home)) );
-  int g = int(255* (1.0-p.food) );  
-  int b = int(255* (1.0-p.home) );    
+  int r = int(255* (1.0-max(f, h)) );
+  int g = int(255* (1.0-f) );  
+  int b = int(255* (1.0-h) );    
   return ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | ((b & 0xFF) << 0); 
-*/
 }
 
 int getColor(Ant p) {
