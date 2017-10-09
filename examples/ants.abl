@@ -222,6 +222,15 @@ void ant_act(Ant in->out) {
 /* main simulation */
 void main() {    
 
+  for (int i : 0..env_size ) {
+    for (int j : 0..env_size ) {
+      add(Pheromone {
+        pos: float2(i,j),
+        food: 0, home: 0
+      });
+    }
+  }
+
   for (int i : 0..num_ants) {
     float2 pos = home_pos; // + random(float2(-1), float2(1)) * 2; 
     add(Ant {
@@ -233,15 +242,6 @@ void main() {
       hasFood: false
     });
   }
-
-  for (int i : 0..env_size ) {
-    for (int j : 0..env_size ) {
-      add(Pheromone {
-        pos: float2(i,j),
-        food: 0, home: 0    
-      });
-    }
-  } 
   
   simulate(100) { ant_deposit, pheromone_deposit, ant_act  }
 
