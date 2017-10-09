@@ -184,20 +184,32 @@ void ant_act(Ant in->out) {
   float2 food_pos_max = float2(0,0);   
   float2 home_pos_max = float2(0,0);   
   
-  float avoidSamePathProb = 0.25;
+  int same_food_count = 0;
+  int same_home_count = 0;
   
   // for each nearby pheromones
   for (Pheromone px : near(in, pheromone_radius)) {
     // check max food
-    if(px.food > food_max || (food_max == px.food && random_boolean(avoidSamePathProb)) ){         
-       food_max     = px.food;
-       food_pos_max = px.pos;
+    if (px.food > food_max) {
+      food_max     = px.food;
+      food_pos_max = px.pos;
+      same_food_count = 1;
+    } else if (food_max == px.food && random_boolean(1. / (same_food_count + 1))) {
+      food_max     = px.food;
+      food_pos_max = px.pos;
+      same_food_count += 1;
     }
+
     // check max home 
-    if(px.home > home_max || (home_max == px.home && random_boolean(avoidSamePathProb)) ){   
-       home_max     = px.home;
-       home_pos_max = px.pos;
-    }     
+    if (px.home > home_max) {
+      home_max     = px.home;
+      home_pos_max = px.pos;
+      same_home_count = 1;
+    } else if (home_max == px.home && random_boolean(1. / (same_home_count + 1))) {
+      home_max     = px.home;
+      home_pos_max = px.pos;
+      same_home_count += 1;
+    }
   } // for 
   
   // (act) if the ant has food, follows the home pheromone 
