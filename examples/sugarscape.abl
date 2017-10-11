@@ -9,6 +9,7 @@ agent Agent {
   int sugar_level;
   int metabolism;
   int env_sugar_level;
+  int max_env_sugar_level;
 }
 
 int AGENT_STATE_UNOCCUPIED = 0;
@@ -17,15 +18,21 @@ int AGENT_STATE_MOVEMENT_REQUESTED = 2;
 int AGENT_STATE_MOVEMENT_UNRESOLVED = 3;
 
 int SUGAR_GROWBACK_RATE = 1;
-int SUGAR_MAX_CAPACITY = 4;
+int min_start_sugar_level = 1;
+int max_start_sugar_level = 10;
 
 // TODO This takes into account all direct neightbors,
 //      should only use horizontal and vertical instead?
 float radius = 1.5;
 
 param int num_timesteps = 100;
-param int grid_width = 30;
+param int grid_width = 50;
 param float occupiedFrac = 0.2;
+
+float2 sugar_center1 = float2(0.25, 0.25) * grid_width;
+float2 sugar_center2 = float2(0.75, 0.75) * grid_width;
+int global_max_env_sugar_level = 100;
+float sugar_variance = 0.7 * grid_width;
 
 environment {
   max: float2(grid_width)
@@ -33,10 +40,14 @@ environment {
 
 // For visualization
 int getColor(Agent cell) {
+  float frac = min(1.0, float(cell.env_sugar_level) / float(global_max_env_sugar_level));
+  int c = int(255 * (1 - frac));
+  int rgb = 0xff00ff | (c << 8);
+  if (cell.state == AGENT_STATE_UNOCCUPIED) {
+    return rgb;
+  }
   // TODO Show more state
-  return cell.state == AGENT_STATE_OCCUPIED   ? 0x000000
-       : cell.state == AGENT_STATE_UNOCCUPIED ? 0xcccccc
-                                              : 0xff0000;
+  return cell.state == AGENT_STATE_OCCUPIED ? 0x000000 : 0xff0000;
 }
 
 void metabolise_and_growback(Agent in -> out) {
@@ -54,9 +65,11 @@ void metabolise_and_growback(Agent in -> out) {
       out.state = AGENT_STATE_MOVEMENT_UNRESOLVED;
     }
   } else if (in.state == AGENT_STATE_UNOCCUPIED) {
-    if (in.env_sugar_level < SUGAR_MAX_CAPACITY) {
-      out.env_sugar_level = in.env_sugar_level + SUGAR_GROWBACK_RATE;
+    int new_env_sugar_level = in.env_sugar_level + SUGAR_GROWBACK_RATE;
+    if (new_env_sugar_level > in.max_env_sugar_level) {
+      new_env_sugar_level = in.max_env_sugar_level;
     }
+    out.env_sugar_level = new_env_sugar_level;
   }
 }
 
@@ -122,22 +135,32 @@ void movement_transaction(Agent in -> out) {
   }
 }
 
-// Movement request + response + transaction ???
+int get_max_env_sugar_level(int x, int y) {
+  int gmax = global_max_env_sugar_level;
+  float2 pos = float2(x, y);
+  int max = 0;
+  float d1 = dist(pos, sugar_center1);
+  max += gmax * exp(-d1*d1/(2*sugar_variance));
+  float d2 = dist(pos, sugar_center2);
+  max += gmax * exp(-d2*d2/(2*sugar_variance));
+  max += randomInt(-gmax/10, gmax/10);
+  if (max < 0) max = 0;
+  return max;
+}
 
 void main() {
   for (int x : 0..grid_width) {
     for (int y : 0..grid_width) {
-      // TODO The starting data in FlameGPU looks odd to me. The env_sugar_level clearly
-      // goes beyong SUGAR_MAX_CAPACITY, while sugar_level stays below it. I think that
-      // SUGAR_MAX_CAPACITY is supposed to be applied to sugar_level, not env_sugar_level.
       bool occupied = random(1.0) < occupiedFrac;
+      int max_env_sugar_level = get_max_env_sugar_level(x, y);
       add(Agent {
         pos: float2(x + 0.5, y + 0.5),
         target_pos: float2(0),
         state: occupied ? AGENT_STATE_OCCUPIED : AGENT_STATE_UNOCCUPIED,
-        sugar_level: occupied ? randomInt(1, SUGAR_MAX_CAPACITY) : 0,
+        sugar_level: occupied ? randomInt(min_start_sugar_level, max_start_sugar_level) : 0,
         metabolism: occupied ? 1 : 0,
-        env_sugar_level: randomInt(1, SUGAR_MAX_CAPACITY),
+        env_sugar_level: randomInt(0, max_env_sugar_level),
+        max_env_sugar_level: max_env_sugar_level,
       });
     }
   }
