@@ -28,8 +28,6 @@ agent Pheromone {
 // TODO add this to the language
 float PI = 3.14159265358979323846;
 float SQRT2 = 1.41421356237;
-float max(float a, float b){ if(a>b) return a; return b; }
-float min(float a, float b){ if(a<b) return a; return b; }
 
 // simulation model parameters
 param float evaporationConstant = 0.999;//0.999;

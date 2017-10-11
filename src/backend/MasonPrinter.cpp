@@ -132,6 +132,7 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
             || name == "asin" || name == "acos" || name == "atan"
             || name == "exp" || name == "log" || name == "sqrt"
             || name == "cbrt" || name == "round" || name == "pow"
+            || name == "min" || name == "max"
     ) {
       // Basic math functions
       *this << "java.lang.Math." << name << "(";

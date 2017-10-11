@@ -36,6 +36,8 @@ void registerBuiltinFunctions(FunctionList &funcs) {
   funcs.add("cbrt", { Type::FLOAT }, Type::FLOAT);
   funcs.add("round", { Type::FLOAT }, Type::FLOAT);
   funcs.add("pow", { Type::FLOAT, Type::FLOAT }, Type::FLOAT);
+  funcs.add("min", { Type::FLOAT, Type::FLOAT }, Type::FLOAT);
+  funcs.add("max", { Type::FLOAT, Type::FLOAT }, Type::FLOAT);
 
   // Agent specific functions
   funcs.add("add", { Type::AGENT }, Type::VOID);

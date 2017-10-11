@@ -63,6 +63,17 @@ typedef double abl_float;
 #endif
 
 /*
+ * Misc
+ */
+
+static inline abl_float min(abl_float x, abl_float y) {
+	return fmin(x, y);
+}
+static inline abl_float max(abl_float x, abl_float y) {
+	return fmax(x, y);
+}
+
+/*
  * float2
  */
 
