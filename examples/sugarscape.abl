@@ -5,6 +5,7 @@
 agent Agent {
   position float2 pos;
   float2 target_pos;
+  int agent_id;
   int state;
   int sugar_level;
   int metabolism;
@@ -27,12 +28,12 @@ float radius = 1.5;
 
 param int num_timesteps = 100;
 param int grid_width = 50;
-param float occupiedFrac = 0.2;
+param float occupiedFrac = 0.1;
 
 float2 sugar_center1 = float2(0.25, 0.25) * grid_width;
 float2 sugar_center2 = float2(0.75, 0.75) * grid_width;
-int global_max_env_sugar_level = 100;
-float sugar_variance = 0.7 * grid_width;
+int global_max_env_sugar_level = 50;
+float sugar_variance = 0.025 * grid_width * grid_width;
 
 environment {
   max: float2(grid_width)
@@ -51,26 +52,30 @@ int getColor(Agent cell) {
 }
 
 void metabolise_and_growback(Agent in -> out) {
+  int new_env_sugar_level = in.env_sugar_level;
   if (in.state == AGENT_STATE_OCCUPIED) {
     // Store sugar and metabolise
-    out.sugar_level = in.sugar_level + in.env_sugar_level - in.metabolism;
-    out.env_sugar_level = 0;
+    int new_sugar_level = in.sugar_level + in.env_sugar_level - in.metabolism;
+    new_env_sugar_level = 0;
 
-    if (out.sugar_level == 0) {
+    if (new_sugar_level <= 0) {
       // Agent dies
       out.state = AGENT_STATE_UNOCCUPIED;
+      out.agent_id = -1;
+      out.sugar_level = 0;
       out.metabolism = 0;
     } else {
       // Agent may want to move
       out.state = AGENT_STATE_MOVEMENT_UNRESOLVED;
+      out.sugar_level = new_sugar_level;
     }
-  } else if (in.state == AGENT_STATE_UNOCCUPIED) {
-    int new_env_sugar_level = in.env_sugar_level + SUGAR_GROWBACK_RATE;
-    if (new_env_sugar_level > in.max_env_sugar_level) {
-      new_env_sugar_level = in.max_env_sugar_level;
-    }
-    out.env_sugar_level = new_env_sugar_level;
   }
+
+  new_env_sugar_level += SUGAR_GROWBACK_RATE;
+  if (new_env_sugar_level > in.max_env_sugar_level) {
+    new_env_sugar_level = in.max_env_sugar_level;
+  }
+  out.env_sugar_level = new_env_sugar_level;
 }
 
 void movement_request(Agent in -> out) {
@@ -85,7 +90,7 @@ void movement_request(Agent in -> out) {
       }
     }
 
-    if (best_sugar_level >= 0) {
+    if (best_sugar_level > in.env_sugar_level) {
       out.state = AGENT_STATE_MOVEMENT_REQUESTED;
       out.target_pos = best_pos;
     } else {
@@ -97,6 +102,7 @@ void movement_request(Agent in -> out) {
 void movement_response(Agent in -> out) {
   if (in.state == AGENT_STATE_UNOCCUPIED) {
     int best_priority = -1;
+    int best_agent_id = -1;
     int best_sugar_level = -1;
     int best_metabolism = -1;
 
@@ -106,14 +112,16 @@ void movement_response(Agent in -> out) {
         int message_priority = 0;
         if (message_priority > best_priority) {
           best_priority = message_priority;
+          best_agent_id = nx.agent_id;
           best_sugar_level = nx.sugar_level;
           best_metabolism = nx.metabolism;
         }
       }
     }
 
-    if (best_priority >= 0) {
+    if (best_agent_id >= 0) {
       out.state = AGENT_STATE_OCCUPIED;
+      out.agent_id = best_agent_id;
       out.sugar_level = best_sugar_level;
       out.metabolism = best_metabolism;
     }
@@ -122,14 +130,17 @@ void movement_response(Agent in -> out) {
 
 void movement_transaction(Agent in -> out) {
   if (in.state == AGENT_STATE_MOVEMENT_REQUESTED) {
+    bool moved = false;
     for (Agent nx : near(in, radius)) {
-      if (nx.state == AGENT_STATE_OCCUPIED && nx.pos == in.target_pos) {
+      if (nx.state == AGENT_STATE_OCCUPIED && nx.agent_id == in.agent_id) {
+        moved = true;
         out.state = AGENT_STATE_UNOCCUPIED;
+        out.agent_id = -1;
         out.sugar_level = 0;
         out.metabolism = 0;
       }
     }
-    if (out.state == AGENT_STATE_MOVEMENT_REQUESTED) {
+    if (!moved) {
       out.state = AGENT_STATE_OCCUPIED;
     }
   }
@@ -143,12 +154,11 @@ int get_max_env_sugar_level(int x, int y) {
   max += gmax * exp(-d1*d1/(2*sugar_variance));
   float d2 = dist(pos, sugar_center2);
   max += gmax * exp(-d2*d2/(2*sugar_variance));
-  max += randomInt(-gmax/10, gmax/10);
-  if (max < 0) max = 0;
   return max;
 }
 
 void main() {
+  int id = 0;
   for (int x : 0..grid_width) {
     for (int y : 0..grid_width) {
       bool occupied = random(1.0) < occupiedFrac;
@@ -156,12 +166,14 @@ void main() {
       add(Agent {
         pos: float2(x + 0.5, y + 0.5),
         target_pos: float2(0),
+        agent_id: id,
         state: occupied ? AGENT_STATE_OCCUPIED : AGENT_STATE_UNOCCUPIED,
         sugar_level: occupied ? randomInt(min_start_sugar_level, max_start_sugar_level) : 0,
         metabolism: occupied ? 1 : 0,
         env_sugar_level: randomInt(0, max_env_sugar_level),
         max_env_sugar_level: max_env_sugar_level,
       });
+      id += 1;
     }
   }
 
