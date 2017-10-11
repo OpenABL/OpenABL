@@ -1,7 +1,5 @@
 // Based on FlameGPU implementation
 
-// TODO INITIAL PORT -- NOT TESTED!
-
 agent Agent {
   position float2 pos;
   float2 target_pos;
@@ -47,7 +45,6 @@ int getColor(Agent cell) {
   if (cell.state == AGENT_STATE_UNOCCUPIED) {
     return rgb;
   }
-  // TODO Show more state
   return cell.state == AGENT_STATE_OCCUPIED ? 0x000000 : 0xff0000;
 }
 
