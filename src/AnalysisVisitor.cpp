@@ -1158,7 +1158,7 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
   expr.calledFunc = sig->decl;
 
   // FlameGPU needs to know
-  if (expr.name == "random") {
+  if (expr.name == "random" || expr.name == "randomInt") {
     currentFunc->usesRng = true;
   }
 

@@ -117,7 +117,7 @@ void FlameGPUPrinter::print(const AST::CallExpression &expr) {
     printTypeCtor(*this, expr);
   } else {
     const FunctionSignature &sig = expr.calledSig;
-    if (!sig.decl && expr.name == "random") {
+    if (!sig.decl && (expr.name == "random" || expr.name == "randomInt")) {
       *this << expr.name << "(rand48, ";
       printArgs(expr);
       *this << ")";
