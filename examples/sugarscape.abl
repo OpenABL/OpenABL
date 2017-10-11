@@ -145,7 +145,7 @@ step movement_transaction(Agent in -> out) {
   }
 }
 
-int get_max_env_sugar_level(int x, int y) {
+int calc_max_env_sugar_level(int x, int y) {
   int gmax = global_max_env_sugar_level;
   float2 pos = float2(x, y);
   int max = 0;
@@ -161,7 +161,7 @@ void main() {
   for (int x : 0..grid_width) {
     for (int y : 0..grid_width) {
       bool occupied = random(1.0) < occupiedFrac;
-      int max_env_sugar_level = get_max_env_sugar_level(x, y);
+      int max_env_sugar_level = calc_max_env_sugar_level(x, y);
       add(Agent {
         pos: float2(x + 0.5, y + 0.5),
         target_pos: float2(0),
