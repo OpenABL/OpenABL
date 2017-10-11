@@ -25,8 +25,10 @@ int max_start_sugar_level = 10;
 float radius = 1.5;
 
 param int num_timesteps = 100;
-param int grid_width = 50;
 param float occupiedFrac = 0.1;
+
+param int num_agents = 100*100;
+int grid_width = int(sqrt(num_agents));
 
 float2 sugar_center1 = float2(0.25, 0.25) * grid_width;
 float2 sugar_center2 = float2(0.75, 0.75) * grid_width;
