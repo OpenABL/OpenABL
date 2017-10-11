@@ -8,11 +8,11 @@ param int num_timesteps = 100;
 param int num_agents = 1000;
 
 // Density of agents
-param float rho = 0.01;
+param float rho = 0.05;
 // Repulsive force parameter
 param float k_rep = 0.05;
 // Attractive force parameter
-param float k_att = 0.05;
+param float k_att = 0.01;
 // Radius of agent (radius of repulsion)
 param float r = 5;
 
@@ -28,12 +28,14 @@ void move_point(Point in -> out) {
   float2 new_pos = in.pos;
   for (Point nx : near(in, 2*r)) {
     float pos_dist = dist(in.pos, nx.pos);
+    if (pos_dist == 0) continue;
+
     float sep_dist = pos_dist - r;
-    float2 force = float2(0.0);
-    if (sep_dist < r) {
-      float k = sep_dist > 0.0 ? k_att : -k_rep;
-      // r or pos_dist here?
-      force = k * sep_dist * (in.pos - nx.pos) / r;
+    float2 force = float2(0);
+    if (sep_dist > 0.0) {
+      force = k_att * (2*r - pos_dist) * (nx.pos - in.pos) / pos_dist;
+    } else {
+      force = k_rep * (in.pos - nx.pos);
     }
     new_pos += force;
   }
