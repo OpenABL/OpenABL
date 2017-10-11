@@ -41,6 +41,19 @@ void FlameGPUPrinter::printType(Type t) {
   }
 }
 
+void FlameGPUPrinter::print(const AST::VarExpression &expr) {
+  const AST::Var &var = *expr.var;
+  const ScopeEntry &e = script.scope.get(var.id);
+  if (e.val.isVec()) {
+    // We can't create vec constants on FlameGPU, so inline their values instead
+    const AST::Expression *expr = e.val.toExpression();
+    *this << *expr;
+    delete expr;
+  } else {
+    GenericPrinter::print(expr);
+  }
+}
+
 bool FlameGPUPrinter::isSpecialBinaryOp(
     AST::BinaryOp op, const AST::Expression &left, const AST::Expression &right) {
   Type l = left.type, r = right.type;
@@ -159,6 +172,11 @@ void FlameGPUPrinter::print(const AST::MemberAccessExpression &expr) {
 }
 
 void FlameGPUPrinter::print(const AST::ConstDeclaration &stmt) {
+  if (stmt.type->resolved.isVec()) {
+    // Don't generate constants for vec2/vec3, as we can't initialized them
+    return;
+  }
+
   *this << "static const __device__ " << *stmt.type << " " << *stmt.var
         << (stmt.isArray ? "[]" : "")
         << " = " << *stmt.expr << ";";

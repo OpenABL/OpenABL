@@ -13,6 +13,7 @@ struct FlameGPUPrinter : public GenericPrinter {
     : GenericPrinter(script, true), script(script), model(model), useFloat(useFloat) {}
 
   void print(const AST::Literal &);
+  void print(const AST::VarExpression &);
   void print(const AST::AssignStatement &);
   void print(const AST::CallExpression &);
   void print(const AST::MemberInitEntry &);
