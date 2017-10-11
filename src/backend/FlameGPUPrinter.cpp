@@ -100,21 +100,19 @@ void FlameGPUPrinter::print(const AST::AssignStatement &stmt) {
   GenericPrinter::print(stmt);
 }
 
-static void printTypeCtor(FlameGPUPrinter &p, const AST::CallExpression &expr) {
-  Type t = expr.type;
-  if (t.isVec()) {
-    p << "glm::vec" << t.getVecLen() << "(";
-    p.printArgs(expr);
-    p << ")";
-  } else {
-    p << "(";
-    p.printType(t);
-    p << ") " << expr.getArg(0);
-  }
-}
 void FlameGPUPrinter::print(const AST::CallExpression &expr) {
   if (expr.isCtor()) {
-    printTypeCtor(*this, expr);
+    Type t = expr.type;
+    if (t.isVec()) {
+      *this << (useFloat ? "glm::vec" : "glm::dvec")
+            << t.getVecLen() << "(";
+      printArgs(expr);
+      *this << ")";
+    } else {
+      *this << "(";
+      printType(t);
+      *this << ") " << expr.getArg(0);
+    }
   } else {
     const FunctionSignature &sig = expr.calledSig;
     if (!sig.decl && (expr.name == "random" || expr.name == "randomInt")) {
