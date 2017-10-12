@@ -38,7 +38,13 @@ def openabl_run(model, backend, params, config):
         args.append('-C')
         args.append(key + '=' + str(value))
 
-    return subprocess.check_output(args, stderr=subprocess.STDOUT)
+    try:
+        return subprocess.check_output(args, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as err:
+        print('Invocation of command\n' + ' '.join(args) + '\n'
+                + 'exited with exit code ' + str(err.returncode)
+                + ' and the following output:\n' + err.output)
+        sys.exit(1)
 
 def openabl_get_exec_time(model, backend, params, config):
     output = openabl_run(model, backend, params, config)
