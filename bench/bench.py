@@ -6,7 +6,7 @@ import sys
 main_dir = os.path.dirname(os.path.realpath(__file__)) + '/..'
 asset_dir = main_dir + '/asset'
 example_dir = main_dir + '/examples'
-openabl_bin = main_dir + '/OpenABL'
+try_openabl_bins = [main_dir + '/OpenABL', main_dir + '/build/OpenABL']
 
 result_dir = os.environ.get('RESULT_DIR')
 if result_dir is not None:
@@ -16,8 +16,14 @@ if result_dir is not None:
 else:
     print('WARNING: No RESULT_DIR specified')
 
-if not os.path.isfile(openabl_bin):
-    print('OpenABL binary not found at ' + openabl_bin)
+openabl_bin = None
+for try_openabl_bin in try_openabl_bins:
+    if os.path.isfile(try_openabl_bin):
+        openabl_bin = try_openabl_bin
+        break
+
+if openabl_bin is None:
+    print('OpenABL binary not found. Tried: ' + ', '.join(try_openabl_bins))
     sys.exit(1)
 
 def openabl_run(model, backend, params, config):
