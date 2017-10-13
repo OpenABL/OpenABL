@@ -1,0 +1,223 @@
+/*
+  Predator-Prey is a simulation with three different agent types:
+   - the predator, who follows the closest prey to eat and survive
+   - the prey, who tries to escape from the predators and eats grass
+   - the grass, which is eaten by preys
+
+   NOTE 1: This version implements a hack for the add/remove, which only works on sequential backend (Mason). 
+   NOTE 2: Implementation similar to FLAME-GPU version: https://github.com/FLAMEGPU/Tutorial/blob/master/examples/PreyPredator/src/model/XMLModelFile.xml
+   https://github.com/FLAMEGPU/Tutorial/blob/master/examples/PreyPredator/src/model/functions.c
+*/
+
+agent Predator {
+  position float2 pos;
+  float2 dir;
+  float2 steer;
+  int life;
+  bool active;
+}
+agent Prey {
+  position float2 pos;
+  float2 dir;
+  float2 steer;
+  int life;
+  bool active;
+}
+agent Grass {
+  position float2 pos;
+  int dead_cycles;
+  bool avail;
+}
+
+
+int getColor(Predator p) {
+  if(p.active) return  0xff0000;
+  else return 0xcc0000;
+}
+int getColor(Prey p) {
+  if(p.active) return 0x0000ff;
+  else return 0x0000cc;
+}
+int getColor(Grass g) {
+  if(g.avail) return 0x00ff00;
+  else return 0x00cc00;
+}
+
+
+// TODO Add this to the language, duh
+float PI = 3.14159265358979323846;
+
+// tunable model parameters
+param float REPRODUCE_PREY_PROB = 0.05;
+param float REPRODUCE_PREDATOR_PROB = 0.03;
+param int GAIN_FROM_FOOD_PREDATOR = 75;
+param int GAIN_FROM_FOOD_PREY = 50;
+param int GRASS_REGROW_CYCLES = 100;
+
+//Hard coded model parameters
+float PRED_PREY_INTERACTION_RADIUS = 0.100; //The radius in which predators chase prey and prey run away from predators		
+float PREY_GROUP_COHESION_RADIUS = 0.200; //The radius in which prey agents form cohesive groups
+float SAME_SPECIES_AVOIDANCE_RADIUS = 0.035; //The radius in which agents of the same species will avoid each other (close proximity collision avoidance behaviour)
+float GRASS_EAT_DISTANCE = 0.020; //The distance in which grass is eaten by prey
+float PRED_KILL_DISTANCE = 0.020; //The distance in which prey are eaten by predators
+float DELTA_TIME = 0.001; //Time step integral
+float PRED_SPEED_ADVANTAGE = 2.000; //Speed multiplier to give predators an advan
+
+
+param float prey_radius = 5.0;
+param float predator_radius = 5.0;
+param float prey_velocity = 0.1;
+param float agent_density = 0.1;
+param float predator_fraction = 0.1;
+param int num_agents = 1000;
+
+float env_size = sqrt(num_agents/agent_density);
+environment { max: float2(env_size) }
+
+float2 random_direction() {
+  float phi = random(2*PI);
+  return float2(sin(phi), cos(phi));
+}
+
+void add_prey(){}
+void remove_prey(){}
+void add_predator(){}
+void remove_predator(){}
+
+float2 bound_position(float2 pos){ return clamp(float2(env_size,env_size)); }
+
+
+/* Prey step functions */
+void prey_avoid_pred(Prey in -> out) {
+//  float2 prey_position = in.pos; float2 prey_velocity = in.dir; float2 average_center = float2(0.0f, 0.0f);
+  float2 avoid_velocity = float2(0.0);
+  for (Prey prey : near(in, PRED_PREY_INTERACTION_RADIUS)) {
+    float separation = dist(in.pos, prey.pos);
+    //Prey have a avoidance velocity which increases as the distance between them decreases
+//    if (separation < (PRED_PREY_INTERACTION_RADIUS))
+//	if (separation > 0.0f)
+    avoid_velocity += PRED_PREY_INTERACTION_RADIUS / separation*(in.pos - prey.pos);
+  }
+  //Set the steering force to the avoidance force
+  out.steer = avoid_velocity;
+}
+
+void prey_flock(Prey in -> out) {
+//  float2 agent_position = float2(xmemory->x, xmemory->y);
+  float2 group_center = float2(0.0);
+  float2 group_velocity = float2(0.0);
+  float2 avoid_velocity = float2(0.0);
+  int group_centre_count = 0;
+  for (Prey prey : near(in, PREY_GROUP_COHESION_RADIUS)) {
+    if(prey != in){
+      float separation = dist(in.pos, prey.pos); //length(agent_position - message_position);
+      //Update Perceived global centre for grouping velocity
+      group_center += message_position;
+      group_centre_count += 1;
+      if (separation < (SAME_SPECIES_AVOIDANCE_RADIUS)) {
+        if (separation > 0.0)
+          avoid_velocity += SAME_SPECIES_AVOIDANCE_RADIUS/separation*(in.pos - prey.pos);
+      }
+    }
+  }
+  //Average nearby agents positions to find the centre of the group and create a velocity to move towards it 
+  if (group_centre_count){
+    group_center /= group_centre_count;
+    group_velocity = (group_center - agent_position);
+  }
+  //Add the grouping and avoidance velocities to the steer velocity (which already contains the predator avoidance velocity)
+  out.steer += group_velocity + avoid_velocity;
+}
+
+void prey_move(Prey in -> out) {}
+
+void prey_is_eaten(Prey in -> out) {}
+
+void prey_eat_or_starve(Prey in -> out) {}
+
+void prey_reproduction(Prey in -> out) {}
+
+/* Predator step functions */
+void pred_follow_prey(Predator in -> out) {}
+void pred_avoid(Predator in -> out) {}
+void pred_move(Predator in -> out) {}
+void pred_eat_or_starve(Predator in -> out) {}
+void pred_reproduction(Predator in -> out) {}
+
+/* Grass step functions */
+void grass_eaten(Grass in->out){}
+void grass_grow(Grass in->out){}
+
+
+// TODO Use a real model here
+void update_prey(Prey in -> out) {
+  // Get average position of predators
+  float2 predPos = float2(0);
+  int predNum = 0;
+  for (Predator pred : near(in, prey_radius)) {
+    predPos += pred.pos;
+    predNum += 1;
+  }
+
+  out.pos = wraparound(in.pos + prey_velocity * in.dir, float2(env_size));
+  if (predNum != 0) {
+    // Move in direction away from predators
+    out.dir = normalize(in.pos - predPos / predNum);
+  } else {
+    //out.dir = in.dir;
+    out.dir = random_direction();
+  }
+}
+void update_predator(Predator in -> out) {
+  // Get average position of prey
+  float2 preyPos = float2(0);
+  int preyNum = 0;
+  for (Prey prey : near(in, predator_radius)) {
+    preyPos += prey.pos;
+    preyNum += 1;
+  }
+  out.pos = wraparound(in.pos + predator_velocity * in.dir, float2(env_size));
+  if (preyNum != 0) {
+    // Move in direction towards prey
+    out.dir = normalize(preyPos / preyNum - in.pos);
+  } else {
+    //out.dir = in.dir;
+    out.dir = random_direction();
+  }
+}
+
+
+void main() {
+  int num_predators = int(predator_fraction * num_agents);
+  int num_prey = num_agents - num_predators;
+
+  for (int i : 0..num_prey) {
+    add(Prey {
+      pos: random(float2(env_size)),
+      dir: float2(0),
+      active: true
+    });
+  }
+
+  for (int i : 0..num_predators) {
+    add(Predator {
+      pos: random(float2(env_size)),
+      dir: float2(0),
+      active: true
+    });
+  }
+
+  for(int i : 0..en_size){
+    for(int j : 0..en_size){
+      add(Grass { pos: float2(i,j), dead_cycles: 0, avail: true });
+    }
+  }
+
+
+  simulate(100) {
+    update_prey,
+    update_predator
+  }
+
+  save("agents.out");
+}
