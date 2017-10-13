@@ -1,0 +1,34 @@
+agent Agent {
+  position float2 pos;
+}
+
+param int num_agents = 1000;
+
+float addProbability = 0.01;
+float removeProbability = 0.01;
+
+float env_size = 10;
+
+environment {
+  max: float2(env_size),
+  granularity: 0.1
+}
+
+step step_fn(Agent in -> out) {
+  out.pos = clamp(in.pos + random(float2(-0.01), float2(0.01)), float2(env_size));
+
+  if (random(1) < addProbability) {
+    add(Agent { pos: in.pos });
+  }
+
+  if (random(1) < removeProbability) {
+    removeCurrent();
+  }
+}
+
+void main() {
+  for (int i : 0..num_agents) {
+    add(Agent { pos: random(float2(env_size)) });
+  }
+  simulate(100) { step_fn }
+}

@@ -570,6 +570,9 @@ struct AgentDeclaration : public Declaration {
   std::string name;
   AgentMemberListPtr members;
 
+  bool usesRuntimeRemoval = false;
+  bool usesRuntimeAddition = false;
+
   AgentDeclaration(std::string name, AgentMemberList *members, Location loc)
     : Declaration{loc}, name{name}, members{members} {}
 
@@ -636,6 +639,8 @@ struct Script : public Node {
   SimulateStatement *simStmt = nullptr;
   FunctionDeclaration *mainFunc = nullptr;
   EnvironmentDeclaration *envDecl = nullptr;
+  bool usesRuntimeRemoval = false;
+  bool usesRuntimeAddition = false;
 
   Script(DeclarationList *decls, Location loc)
     : Node{loc}, decls{decls} {}

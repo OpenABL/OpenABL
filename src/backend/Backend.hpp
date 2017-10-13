@@ -5,8 +5,8 @@
 
 namespace OpenABL {
 
-struct BackendError : public std::logic_error {
-  BackendError(const std::string &msg) : std::logic_error(msg) {}
+struct BackendError : public std::runtime_error {
+  BackendError(const std::string &msg) : std::runtime_error(msg) {}
 };
 
 struct BackendContext {

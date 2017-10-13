@@ -122,6 +122,10 @@ static std::string createBuildRunner(bool useFloat) {
 }
 
 void FlameBackend::generate(AST::Script &script, const BackendContext &ctx) {
+  if (script.usesRuntimeRemoval || script.usesRuntimeAddition) {
+    throw BackendError("Flame does not support dynamic add/remove");
+  }
+
   bool useFloat = ctx.config.getBool("use_float", false);
 
   FlameModel model = FlameModel::generateFromScript(script);

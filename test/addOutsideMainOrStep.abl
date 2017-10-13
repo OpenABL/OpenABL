@@ -1,0 +1,5 @@
+agent Agent {}
+void foo() {
+  add(Agent {});
+}
+void main() {}

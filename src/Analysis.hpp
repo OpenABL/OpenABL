@@ -57,6 +57,9 @@ struct VarId {
   bool operator==(const VarId &other) const {
     return id == other.id;
   }
+  bool operator!=(const VarId &other) const {
+    return id != other.id;
+  }
   bool operator<(const VarId &other) const {
     return id < other.id;
   }

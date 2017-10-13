@@ -144,44 +144,70 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
       Type type = arg.type;
       AST::AgentDeclaration *agent = type.getAgentDecl();
       AST::AgentMember *posMember = agent->getPositionMember();
+      const std::string &simVar = getSimVarName();
+      bool isRuntimeAdd = !inMain;
 
       *this << "final " << type << " " << aLabel << " = " << arg << ";" << nl;
       if (posMember) {
-        *this << "env.setObjectLocation(" << aLabel << ", "
+        *this << simVar << ".env.setObjectLocation(" << aLabel << ", "
               << aLabel << "." << posMember->name << ");" << nl;
       }
 
       size_t numStepFns = script.simStmt->stepFuncDecls.size();
       for (size_t i = 0; i < numStepFns; i++) {
         const AST::FunctionDeclaration *stepFn = script.simStmt->stepFuncDecls[i];
-        if (&stepFn->stepAgent() != agent) {
+        const AST::AgentDeclaration &stepAgent = stepFn->stepAgent();
+        if (&stepAgent != agent) {
           continue;
         }
 
-        *this << "schedule.scheduleRepeating(schedule.EPOCH, " << (2*i)
-              << ", new Steppable() {" << indent << nl
-              << "public void step(SimState state) {" << indent << nl
-              << aLabel << "._" << stepFn->name << "(state);"
-              << outdent << nl << "}"
-              << outdent << nl << "});";
-        // Copy double-buffer after step
-        *this << nl << "schedule.scheduleRepeating(schedule.EPOCH, " << (2*i + 1)
-              << ", new Steppable() {" << indent << nl
-              << "public void step(SimState state) {" << indent << nl
-              << aLabel << "._dbuf_copy();"
-              << outdent << nl << "}"
-              << outdent << nl << "})";
+        if (stepAgent.usesRuntimeRemoval) {
+          // If runtime removal is used, we scheduleOnce and check the _isDead flag
+          *this << "final Schedule _schedule = " << simVar << ".schedule;" << nl
+                << "double _time = "
+                << (isRuntimeAdd ? "_schedule.getTime() + 1" : "_schedule.EPOCH") << ";" << nl
+                << "_schedule.scheduleOnce(_time, " << (2*i)
+                << ", new Steppable() {" << indent << nl
+                << "public void step(SimState state) {" << indent << nl
+                << aLabel << "._" << stepFn->name << "(state);" << nl
+                << "if (!" << aLabel << "._isDead) {" << indent << nl
+                << "_schedule.scheduleOnceIn(1.0, this, " << (2*i) << ");"
+                << outdent << nl << "}"
+                << outdent << nl << "}"
+                << outdent << nl << "});" << nl
+                << "_schedule.scheduleOnce(_time, " << (2*i + 1)
+                << ", new Steppable() {" << indent << nl
+                << "public void step(SimState state) {" << indent << nl
+                << aLabel << "._dbuf_copy();" << nl
+                << "if (!" << aLabel << "._isDead) {" << indent << nl
+                << "_schedule.scheduleOnceIn(1.0, this, " << (2*i + 1) << ");"
+                << outdent << nl << "}"
+                << outdent << nl << "}"
+                << outdent << nl << "})";
+        } else {
+          *this << "schedule.scheduleRepeating(schedule.EPOCH, " << (2*i)
+                << ", new Steppable() {" << indent << nl
+                << "public void step(SimState state) {" << indent << nl
+                << aLabel << "._" << stepFn->name << "(state);"
+                << outdent << nl << "}"
+                << outdent << nl << "});" << nl
+                << "schedule.scheduleRepeating(schedule.EPOCH, " << (2*i + 1)
+                << ", new Steppable() {" << indent << nl
+                << "public void step(SimState state) {" << indent << nl
+                << aLabel << "._dbuf_copy();"
+                << outdent << nl << "}"
+                << outdent << nl << "})";
+        }
         if (i != numStepFns - 1) {
           *this << ";" << nl;
         }
       }
     } else if (name == "save") {
       *this << "Util.save(env.getAllObjects(), " << expr.getArg(0) << ")";
+    } else if (name == "removeCurrent") {
+      *this << "_isDead = true";
     } else {
-      // TODO Handle other builtins
-      *this << name << "(";
-      printArgs(expr);
-      *this << ")";
+      assert(0);
     }
   } else {
     *this << getSimVarName() << "." << expr.name << "(";
@@ -332,6 +358,9 @@ void MasonPrinter::print(const AST::FunctionDeclaration &decl) {
           << "Sim _sim = (Sim) state;"
           << *decl.stmts;
     if (posMember) {
+      if (agent.usesRuntimeRemoval) {
+        *this << nl << "if (_isDead) { _sim.env.remove(this); return; }";
+      }
       *this << nl << "_sim.env.setObjectLocation(this, this._dbuf_" << posMember->name << ");";
     }
     *this << outdent << nl << "}";
@@ -356,7 +385,11 @@ void MasonPrinter::print(const AST::AgentDeclaration &decl) {
   *this << "import sim.engine.*;" << nl
         << "import sim.util.*;" << nl << nl
         << "public class " << decl.name << " {" << indent
-        << *decl.members << nl << nl;
+        << *decl.members << nl;
+  if (decl.usesRuntimeRemoval) {
+    *this << "public boolean _isDead = false;";
+  }
+  *this << nl;
 
   // Print constructor
   *this << "public " << decl.name << "(";

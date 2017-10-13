@@ -43,6 +43,7 @@ void registerBuiltinFunctions(FunctionList &funcs) {
   funcs.add("add", { Type::AGENT }, Type::VOID);
   funcs.add("near", { Type::AGENT, Type::FLOAT }, { Type::ARRAY, Type::AGENT });
   funcs.add("save", { Type::STRING }, Type::VOID);
+  funcs.add("removeCurrent", {}, Type::VOID);
 }
 
 std::map<std::string, std::unique_ptr<Backend>> getBackends() {

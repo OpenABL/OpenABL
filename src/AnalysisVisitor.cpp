@@ -1111,6 +1111,23 @@ static bool isTypeCtorValid(Type t, const std::vector<Type> &argTypes) {
   }
 }
 
+static bool isInPos(
+    const AST::Expression &expr, const std::string &posName,
+    const AST::FunctionDeclaration &decl) {
+  if (const auto *memberExpr = dynamic_cast<const AST::MemberAccessExpression *>(&expr)) {
+    if (memberExpr->member != posName) {
+      return false;
+    }
+
+    if (const auto *varExpr = dynamic_cast<const AST::VarExpression *>(&*memberExpr->expr)) {
+      if (varExpr->var->id == (*decl.params)[0]->var->id) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 void AnalysisVisitor::leave(AST::CallExpression &expr) {
   std::vector<Type> argTypes = getArgTypes(expr);
   for (Type t : argTypes) {
@@ -1161,6 +1178,58 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
   if (sig->decl && sig->decl->isStep) {
     err << "Cannot directly call step function " << expr.name << "()" << expr.loc;
     return;
+  }
+
+  if (expr.name == "removeCurrent") {
+    if (!currentFunc->isStep) {
+      err << "removeCurrent() can only be used inside a step function" << expr.loc;
+      return;
+    }
+
+    currentFunc->stepAgent().usesRuntimeRemoval = true;
+    script.usesRuntimeRemoval = true;
+  }
+
+  if (expr.name == "add") {
+    if (!currentFunc->isStep && !currentFunc->isMain()) {
+      err << "add() can only be used in main() or a step function" << expr.loc;
+      return;
+    }
+
+    if (currentFunc->isStep) {
+      const AST::AgentCreationExpression *creationExpr
+        = dynamic_cast<const AST::AgentCreationExpression *>(&expr.getArg(0));
+      if (!creationExpr) {
+        err << "Argument of add() must be an agent creation expression" << expr.loc;
+        return;
+      }
+
+      auto it = agents.find(creationExpr->name);
+      if (it == agents.end()) {
+        // Invalid agent creation expression -- will have already errored earlier
+        return;
+      }
+
+      const auto *posMember = it->second->getPositionMember();
+      if (posMember) {
+        auto it2 = creationExpr->memberMap.find(posMember->name);
+        assert(it2 != creationExpr->memberMap.end());
+
+        const AST::Expression &posExpr = *it2->second;
+        if (!isInPos(posExpr, posMember->name, *currentFunc)) {
+          err << "Position of runtime-added agent must be original position of agent" << expr.loc;
+          return;
+        }
+      }
+
+      if (script.usesRuntimeAddition) {
+        err << "Only one agent per step function may be added at runtime" << expr.loc;
+        return;
+      }
+
+      currentFunc->stepAgent().usesRuntimeAddition = true;
+      script.usesRuntimeAddition = true;
+    }
   }
 
   expr.kind = sig->decl

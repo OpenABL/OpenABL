@@ -38,6 +38,9 @@ void DMasonBackend::generate(
       }
     }
   }
+  if (script.usesRuntimeRemoval || script.usesRuntimeAddition) {
+    throw BackendError("DMason does not support dynamic add/remove yet");
+  }
 
   bool useFloat = ctx.config.getBool("use_float", false);
   if (useFloat) {

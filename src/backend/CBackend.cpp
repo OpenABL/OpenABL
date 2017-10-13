@@ -13,6 +13,10 @@ static std::string generateBuildScript(bool useFloat) {
 }
 
 void CBackend::generate(AST::Script &script, const BackendContext &ctx) {
+  if (script.usesRuntimeRemoval || script.usesRuntimeAddition) {
+    throw BackendError("The C backend does not support dynamic add/remove yet");
+  }
+
   bool useFloat = ctx.config.getBool("use_float", false);
 
   CPrinter printer(script, useFloat);
