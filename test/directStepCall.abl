@@ -1,0 +1,5 @@
+agent Agent {}
+step step_fn(Agent in->out) {}
+void main() {
+  step_fn(Agent {});
+}

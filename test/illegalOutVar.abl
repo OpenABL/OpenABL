@@ -1,0 +1,2 @@
+void foo(bool in->out) {}
+void main() {}

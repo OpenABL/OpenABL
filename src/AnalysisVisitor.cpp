@@ -171,6 +171,11 @@ void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
     Type paramType = resolveAstType(*param->type);;
     SKIP_INVALID(paramType);
     paramTypes.push_back(paramType);
+
+    if (!decl.isStep && param->outVar) {
+      err << "Out variable (-> " << param->outVar->name
+          << ") can only be used in step functions" << param->outVar->loc;
+    }
   }
 
   const Function *fn = funcs.getByName(decl.name);
@@ -1150,6 +1155,11 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
     }
 
     err << expr.loc;
+    return;
+  }
+
+  if (sig->decl && sig->decl->isStep) {
+    err << "Cannot directly call step function " << expr.name << "()" << expr.loc;
     return;
   }
 
