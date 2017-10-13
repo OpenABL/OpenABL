@@ -21,7 +21,7 @@ environment {
   max: float2(max_pos)
 }
 
-void update_boid(Boid in->out) {
+step update_boid(Boid in->out) {
   float2 global_velocity = float2(0, 0);
   float2 global_center = float2(0, 0);
   float2 avoid_velocity = float2(0, 0);

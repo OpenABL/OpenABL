@@ -4,12 +4,12 @@ agent Agent {
 
 environment { max: float3(1.0) }
 
-void step(Agent in -> out) {
+step step_fn(Agent in -> out) {
   int dynamic_radius = 5;
   for (Agent nx : near(in, dynamic_radius)) {
   }
 }
 
 void main() {
-  simulate(100) { step }
+  simulate(100) { step_fn }
 }

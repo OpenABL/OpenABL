@@ -95,7 +95,7 @@ float ellipse_radius(float major_radius, float minor_radius, float theta) {
   return r;
 }
 
-void cycle(Keratinocyte in -> out) {
+step cycle(Keratinocyte in -> out) {
   int contacts = in.num_xy_bonds + in.num_z_bonds;
 
   // Touching a wall counts as two contacts
@@ -124,7 +124,7 @@ void cycle(Keratinocyte in -> out) {
 
 // XXX bunch of stuff here
 
-void resolve_forces(Keratinocyte in -> out) {
+step resolve_forces(Keratinocyte in -> out) {
   float3 new_force = in.force;
   int num_xy_bonds = 0;
   int num_z_bonds = 0;

@@ -4,7 +4,7 @@ agent Agent {
 
 float pi = 3.14;
 
-void step_fn(Agent in -> out) {
+step step_fn(Agent in -> out) {
   in.pos = float2(0);
 }
 

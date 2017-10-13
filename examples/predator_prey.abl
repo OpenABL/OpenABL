@@ -42,7 +42,7 @@ float2 random_direction() {
 }
 
 // TODO Use a real model here
-void update_prey(Prey in -> out) {
+step update_prey(Prey in -> out) {
   // Get average position of predators
   float2 predPos = float2(0);
   int predNum = 0;
@@ -60,7 +60,7 @@ void update_prey(Prey in -> out) {
     out.dir = random_direction();
   }
 }
-void update_predator(Predator in -> out) {
+step update_predator(Predator in -> out) {
   // Get average position of prey
   float2 preyPos = float2(0);
   int preyNum = 0;

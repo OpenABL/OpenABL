@@ -1,8 +1,8 @@
 agent Foo {}
-void step(Foo in -> out) {}
+step step_fn(Foo in -> out) {}
 
 void main() {
   if (true) {
-    simulate(100) { step }
+    simulate(100) { step_fn }
   }
 }

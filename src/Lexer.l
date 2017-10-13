@@ -57,6 +57,7 @@ loc.step();
 "position" { return Parser::make_POSITION(loc); }
 "return"   { return Parser::make_RETURN(loc); }
 "simulate" { return Parser::make_SIMULATE(loc); }
+"step"     { return Parser::make_STEP(loc); }
 "while"    { return Parser::make_WHILE(loc); }
 
 true  { return Parser::make_BOOL(true, loc); }

@@ -142,6 +142,23 @@ static void printArgs(ErrorStream &err, const std::vector<Type> &argTypes) {
   err << ")";
 }
 
+bool isValidStepFunctionSignature(const AST::FunctionDeclaration &fn) {
+    if (fn.params->size() != 1) {
+      return false;
+    }
+
+    const AST::Param &param = *(*fn.params)[0];
+    if (!param.outVar) {
+      return false;
+    }
+
+    if (!param.type->resolved.isAgent()) {
+      return false;
+    }
+
+    return true;
+}
+
 
 void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
   pushVarScope();
@@ -196,8 +213,12 @@ void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
     script.mainFunc = &decl;
   }
 };
-void AnalysisVisitor::leave(AST::FunctionDeclaration &) {
+void AnalysisVisitor::leave(AST::FunctionDeclaration &decl) {
   popVarScope();
+
+  if (decl.isStep && !isValidStepFunctionSignature(decl)) {
+    err << "Step function " << decl.name << " does not have a valid signature" << decl.loc;
+  }
 };
 void AnalysisVisitor::enter(AST::BlockStatement &) {
   pushVarScope();
@@ -618,23 +639,6 @@ void AnalysisVisitor::leave(AST::WhileStatement &stmt) {
   }
 }
 
-bool isStepFunction(const AST::FunctionDeclaration &fn) {
-    if (fn.params->size() != 1) {
-      return false;
-    }
-
-    const AST::Param &param = *(*fn.params)[0];
-    if (!param.outVar) {
-      return false;
-    }
-
-    if (!param.type->resolved.isAgent()) {
-      return false;
-    }
-
-    return true;
-}
-
 void AnalysisVisitor::leave(AST::SimulateStatement &stmt) {
   if (script.simStmt) {
     err << "Script can only contain a single simulate statement" << stmt.loc;
@@ -655,12 +659,11 @@ void AnalysisVisitor::leave(AST::SimulateStatement &stmt) {
     }
 
     AST::FunctionDeclaration &fn = *it->second;
-    if (!isStepFunction(fn)) {
+    if (!fn.isStep) {
       err << "Function \"" << name << "\" is not a step function" << stmt.loc;
       return;
     }
 
-    fn.isStep = true;
     stmt.stepFuncDecls.push_back(&fn);
   }
 

@@ -28,7 +28,7 @@ environment {
   max: float2(size)
 }
 
-void step_move(Cell in -> out) {
+step step_move(Cell in -> out) {
   // Number of live neighbors *INCLUDING* current cell
   int living_neighbors = 0;
 

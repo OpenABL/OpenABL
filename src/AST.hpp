@@ -492,10 +492,10 @@ struct FunctionDeclaration : public Declaration {
   std::string name;
   ParamListPtr params;
   StatementListPtr stmts;
+  bool isStep;
 
   FunctionSignature sig;
   // The following members are for step functions only
-  bool isStep = false;
   // The type of the agent that is interacted with (type of agent
   // in for-near loop)
   AgentDeclaration *accessedAgent = nullptr;
@@ -505,9 +505,9 @@ struct FunctionDeclaration : public Declaration {
   bool usesRng = false;
 
   FunctionDeclaration(Type *returnType, std::string name,
-                      ParamList *params, StatementList *stmts, Location loc)
+                      ParamList *params, StatementList *stmts, bool isStep, Location loc)
     : Declaration{loc}, returnType{returnType},
-      name{name}, params{params}, stmts{stmts} {}
+      name{name}, params{params}, stmts{stmts}, isStep{isStep} {}
 
   bool isMain() const { return name == "main"; }
 

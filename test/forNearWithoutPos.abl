@@ -2,12 +2,12 @@ agent Agent {
   float2 notPos;
 }
 
-void step(Agent in -> out) {
+step step_fn(Agent in -> out) {
   for (Agent other : near(in, 1.0)) {
     // ...
   }
 }
 
 void main() {
-  simulate(100) { step }
+  simulate(100) { step_fn }
 }

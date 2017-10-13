@@ -131,7 +131,7 @@ int getColor(Ant p) {
  ant_act_1: each ants looks for the nearby home and food pheromone. Pheromoens are only read.
  (1st part of deposit)
  */
-void ant_deposit(Ant in->out) {  
+step ant_deposit(Ant in->out) {  
   float home_max = 0;
   float food_max = 0;
   for (Pheromone px : near(in, pheromone_radius)) {
@@ -153,7 +153,7 @@ void ant_deposit(Ant in->out) {
  pheromone_deposit: deposit of (home|food) pheromones. Each pheromone is written/updated.
  (2n part of deposit)
 */
-void pheromone_deposit(Pheromone in->out) {
+step pheromone_deposit(Pheromone in->out) {
   // pheromone evaporation
   float food = in.food;  
   float home = in.home;
@@ -174,7 +174,7 @@ void pheromone_deposit(Pheromone in->out) {
 }
 
 /* act: the ant moves according to the nearby pheromones, or does a random move */
-void ant_act(Ant in->out) {       
+step ant_act(Ant in->out) {       
   float2 new_pos = in.pos;  
     
   float food_max = 0;    

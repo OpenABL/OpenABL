@@ -36,7 +36,7 @@ float3 boundPosition(float3 pos) {
   );
 }
 
-void update_boid(Boid in->out) {
+step update_boid(Boid in->out) {
   float3 global_velocity = float3(0, 0, 0);
   float3 global_center = float3(0, 0, 0);
   float3 collision_center = float3(0, 0, 0);

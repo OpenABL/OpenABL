@@ -50,7 +50,7 @@ int getColor(Agent cell) {
   return cell.state == AGENT_STATE_OCCUPIED ? 0x000000 : 0xff0000;
 }
 
-void metabolise_and_growback(Agent in -> out) {
+step metabolise_and_growback(Agent in -> out) {
   int new_env_sugar_level = in.env_sugar_level;
   if (in.state == AGENT_STATE_OCCUPIED) {
     // Store sugar and metabolise
@@ -77,7 +77,7 @@ void metabolise_and_growback(Agent in -> out) {
   out.env_sugar_level = new_env_sugar_level;
 }
 
-void movement_request(Agent in -> out) {
+step movement_request(Agent in -> out) {
   if (in.state == AGENT_STATE_MOVEMENT_UNRESOLVED) {
     int best_sugar_level = -1;
     float2 best_pos = float2(0);
@@ -98,7 +98,7 @@ void movement_request(Agent in -> out) {
   }
 }
 
-void movement_response(Agent in -> out) {
+step movement_response(Agent in -> out) {
   if (in.state == AGENT_STATE_UNOCCUPIED) {
     int best_priority = -1;
     int best_agent_id = -1;
@@ -127,7 +127,7 @@ void movement_response(Agent in -> out) {
   }
 }
 
-void movement_transaction(Agent in -> out) {
+step movement_transaction(Agent in -> out) {
   if (in.state == AGENT_STATE_MOVEMENT_REQUESTED) {
     bool moved = false;
     for (Agent nx : near(in, radius)) {

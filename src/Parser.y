@@ -43,6 +43,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   POSITION
   RETURN
   SIMULATE
+  STEP
   WHILE
 
   ADD
@@ -150,7 +151,7 @@ declaration_list: %empty { $$ = new DeclarationList(); }
 declaration: agent_decl { $$ = $1; }
            | func_decl { $$ = $1; }
            | const_decl { $$ = $1; }
-		   | env_decl { $$ = $1; }
+           | env_decl { $$ = $1; }
            ;
 
 agent_decl: AGENT IDENTIFIER LBRACE agent_member_list RBRACE
@@ -165,7 +166,10 @@ opt_position: %empty { $$ = false; }
 agent_member: opt_position type IDENTIFIER SEMI { $$ = new AgentMember($1, $2, $3, @$); };
 
 func_decl: type IDENTIFIER LPAREN param_list RPAREN LBRACE statement_list RBRACE
-             { $$ = new FunctionDeclaration($1, $2, $4, $7, @$); };
+             { $$ = new FunctionDeclaration($1, $2, $4, $7, false, @$); }
+         | STEP IDENTIFIER LPAREN param_list RPAREN LBRACE statement_list RBRACE
+             { $$ = new FunctionDeclaration(
+			            new SimpleType("void", Location{}), $2, $4, $7, true, @$); };
 
 param_list: %empty { $$ = new ParamList(); }
           | non_empty_param_list { $$ = $1; };
@@ -179,27 +183,27 @@ param: type var { $$ = new Param($1, $2, nullptr, @$); }
      | type var ARROW var { $$ = new Param($1, $2, $4, @$); };
 
 is_array: %empty { $$ = false; }
-		| LBRACKET RBRACKET { $$ = true; };
+        | LBRACKET RBRACKET { $$ = true; };
 
 opt_comma: %empty | COMMA;
 
 expression_list: expression { $$ = new ExpressionList(); $$->emplace_back($1); }
-			   | expression_list COMMA expression { $1->emplace_back($3); $$ = $1; }
+               | expression_list COMMA expression { $1->emplace_back($3); $$ = $1; }
 
 array_initializer: LBRACE expression_list opt_comma RBRACE
-				     { $$ = new ArrayInitExpression($2, @$); };
+                     { $$ = new ArrayInitExpression($2, @$); };
 
 initializer: expression { $$ = $1; }
-		   | array_initializer { $$ = $1; };
+           | array_initializer { $$ = $1; };
 
 const_decl: type var is_array ASSIGN initializer SEMI
               { $$ = new ConstDeclaration($1, $2, $5, $3, false, @$); }
           | PARAM type var is_array ASSIGN initializer SEMI
               { $$ = new ConstDeclaration($2, $3, $6, $4, true, @$); }
-		  ;
+          ;
 
 env_decl: ENVIRONMENT LBRACE member_init_list RBRACE
-		    { $$ = new EnvironmentDeclaration($3, @$); };
+            { $$ = new EnvironmentDeclaration($3, @$); };
 
 literal: BOOL { $$ = new BoolLiteral($1, @$); }
        | INT { $$ = new IntLiteral($1, @$); }
@@ -213,7 +217,7 @@ statement_list: %empty { $$ = new StatementList(); }
               | statement_list statement { $1->emplace_back($2); $$ = $1; };
 
 ident_list: IDENTIFIER { $$ = new IdentList(); $$->push_back($1); }
-		  | ident_list COMMA IDENTIFIER { $1->push_back($3); $$ = $1; };
+          | ident_list COMMA IDENTIFIER { $1->push_back($3); $$ = $1; };
 
 statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
          | LBRACE statement_list RBRACE { $$ = new BlockStatement($2, @$); }
