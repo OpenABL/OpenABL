@@ -4,7 +4,9 @@ OpenABL is a work-in-progress domain-specific language for agent based simulatio
 
 ## Installation
 
-Requirements: `flex` and `bison`. (`sudo apt-get install flex bison`)
+Requirements: 
+`flex` and `bison`. (`sudo apt-get install flex bison`)
+`cmake`. (`sudo apt-get install cmake`)
 
 For an out-of-source build:
 
