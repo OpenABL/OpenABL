@@ -79,16 +79,13 @@ float2 random_direction() {
   return float2(sin(phi), cos(phi));
 }
 
-void add_prey(){}
-void remove_prey(){}
-void add_predator(){}
-void remove_predator(){}
 
-float2 bound_position(float2 pos){ return clamp(pos, float2(env_size,env_size)); }
+
+float2 boundPosition(float2 pos){ return clamp(pos, float2(env_size,env_size)); }
 
 
 /* Prey step functions */
-void prey_avoid_pred(Prey in -> out) {
+step prey_avoid_pred(Prey in -> out) {
   //  float2 prey_position = in.pos; float2 prey_velocity = in.dir; float2 average_center = float2(0.0f, 0.0f);
   float2 avoid_velocity = float2(0.0);
   for (Prey prey : near(in, PRED_PREY_INTERACTION_RADIUS)) {
@@ -102,14 +99,14 @@ void prey_avoid_pred(Prey in -> out) {
   out.steer = avoid_velocity;
 }
 
-void prey_flock(Prey in -> out) {
+step prey_flock(Prey in -> out) {
 //  float2 agent_position = float2(xmemory->x, xmemory->y);
   float2 group_center = float2(0.0);
   float2 group_velocity = float2(0.0);
   float2 avoid_velocity = float2(0.0);
   int group_centre_count = 0;
   for (Prey prey : near(in, PREY_GROUP_COHESION_RADIUS)) {
-    if(prey != in){
+    if(prey.pos != in.pos){
       float separation = dist(in.pos, prey.pos); //length(agent_position - message_position);
       //Update Perceived global centre for grouping velocity
       group_center += prey.pos; //message_position;
@@ -121,7 +118,7 @@ void prey_flock(Prey in -> out) {
     }
   }
   //Average nearby agents positions to find the centre of the group and create a velocity to move towards it 
-  if (group_centre_count != 0){
+  if (group_centre_count > 0){
     group_center /= group_centre_count;
     group_velocity = (group_center - in.pos); //agent_position);
   }
@@ -129,24 +126,145 @@ void prey_flock(Prey in -> out) {
   out.steer += group_velocity + avoid_velocity;
 }
 
-void prey_move(Prey in -> out) {}
+step prey_move(Prey in -> out) {  
+  float2 agent_position = in.pos;
+  float2 agent_velocity = in.dir;
+  float2 agent_steer = in.steer;	
+  //Adjust the velocity according to the steering velocity
+  agent_velocity += agent_steer;
+  //Limit the speed of the avoidance velocity
+  float current_speed = length(agent_velocity);
+  if (current_speed > 1.0)
+    agent_velocity = normalize(agent_velocity);
+  //Integrate the position by applying moving according to the velocity
+  agent_position += agent_velocity * DELTA_TIME;
+  //Bound the position within the environment 
+  agent_position = boundPosition(agent_position);
+  //Update the agents position and velocity
+  out.pos = agent_position;
+  out.dir = agent_velocity;
+  out.life = in.life-1;  //reduce life by one unit of energy
+}
 
-void prey_is_eaten(Prey in -> out) {}
+step prey_eaten(Prey in -> out) {
+  bool eaten = false;
+  int predator_id = -1;
+  float closest_pred = PRED_KILL_DISTANCE;
+  //Iterate the predator location messages until NULL is returned which indicates all messages have been read.
+  for(Predator pred : near(in,PRED_KILL_DISTANCE)){
+    //calculate distance between prey and predator
+    float distance = length(pred.pos - in.pos);
+    if (distance < closest_pred){
+      //predator_id = pred_location_message->id;
+      closest_pred = distance;
+      eaten = true;
+    }
+  }
+  //if one or more predators were within killing distance then notify the nearest predator that it has eaten this prey via a prey eaten message.
+  if (eaten)
+    removeCurrent(); // XXX FIXME? add_prey_eaten_message(prey_eaten_messages, predator_id);
+  //return eaten value to remove dead (eaten == 1) agents from the simulation
+  //return eaten;
+}
 
-void prey_eat_or_starve(Prey in -> out) {}
+step prey_eat_or_starve(Prey in -> out) {
+  /* XXX FIXME
+    int dead = 0;
+        // Excercise 3.3
+	//return dead value to remove dead agents from the simulation
+  return dead;
+  */
+}
 
-void prey_reproduction(Prey in -> out) {}
+step prey_reproduction(Prey in -> out) {
+  if(random(1.0) < REPRODUCE_PREY_PROB){
+    add(Prey {
+      pos: in.pos,
+      dir: random_direction(),
+      steer: float2(0),
+      life: in.life / 2,
+      active: true
+    });
+    //add the new agent to the simulation
+    // add_prey_agent(agent_prey_agents, id, x, y, 1.0f, fx, fy, 0.0f, 0.0f, agent_prey->life);
+  }
+}
 
 /* Predator step functions */
-void pred_follow_prey(Predator in -> out) {}
-void pred_avoid(Predator in -> out) {}
-void pred_move(Predator in -> out) {}
-void pred_eat_or_starve(Predator in -> out) {}
-void pred_reproduction(Predator in -> out) {}
+step pred_follow_prey(Predator in -> out) {
+  float2 agent_position = in.pos;
+  float2 agent_steer = float2(0,0);
+  float2 closest_prey_position = float2(0,0);
+  float closest_prey_distance = PRED_PREY_INTERACTION_RADIUS;
+  bool can_see_prey = false;
+  for(Prey prey : near(in,PRED_PREY_INTERACTION_RADIUS)){
+    float separation = length(in.pos - prey.pos);
+    //if distacne between predator and prey location is closest encountered so far then record the position and distance
+    if ((separation < closest_prey_distance)){
+      closest_prey_position = prey.pos;
+      closest_prey_distance = separation;
+      can_see_prey = true;
+    }
+  }
+  //if there was a prey visible then create a velocity vector which will move the predator towards it.
+  if (can_see_prey)
+    agent_steer = closest_prey_position - agent_position;
+  //set the steering vector
+  out.steer = agent_steer;
+}
+step pred_avoid(Predator in -> out) {
+  float2 avoid_velocity = float2(0,0);
+  //Iterate the predator location messages until NULL is returned which indicates all messages have been read.
+  for(Predator pred : near(in,SAME_SPECIES_AVOIDANCE_RADIUS)){
+    float separation = length(in.pos - pred.pos);
+    //Predators avoid each other with a force which increases as the distance between them decreases
+    if (separation < (SAME_SPECIES_AVOIDANCE_RADIUS) && pred.pos != in.pos){
+      if (separation > 0.0)  
+        avoid_velocity += SAME_SPECIES_AVOIDANCE_RADIUS / separation*(in.pos - pred.pos);
+    }
+  }
+  //Update the steering velocity which already has a velocity for chasing the nearest prey
+  out.steer = avoid_velocity;
+}
+step pred_move(Predator in -> out) {
+  float2 agent_position = in.pos;
+  float2 agent_velocity = in.dir;
+  float2 agent_steer = in.steer;
+  //Adjust the velocity according to the steering velocity
+  agent_velocity += agent_steer;
+  //Limit the speed of the velocity
+  float current_speed = length(agent_velocity);
+  if (current_speed > 1.0){ agent_velocity = normalize(agent_velocity); }
+  //Integrate the position by applying moving according to the velocity. Predators can move faster than prey by some factor.
+  agent_position += agent_velocity * DELTA_TIME * PRED_SPEED_ADVANTAGE;
+  //Bound the position within the environment 
+  agent_position = boundPosition(agent_position);
+  //Update the agents position and velocity
+  out.pos = agent_position;
+  out.dir = agent_velocity;
+  out.life = in.life - 1; //reduce life by one unit of energy
+}
+step pred_eat_or_starve(Predator in -> out) {
+  //bool dead = false;
+  int life = in.life;
+  for(Prey prey : near(in, PRED_KILL_DISTANCE)){ // XXX FIXME this is not 100% as in the orignal code, double check
+    out.life = life + GAIN_FROM_FOOD_PREDATOR;
+  }
+  out.life = life;
+  if(life < 0) removeCurrent();
+}
+step pred_reproduction(Predator in -> out) {
+  if (random(1.0) < REPRODUCE_PREDATOR_PROB) 
+    add(Predator { pos: in.pos, dir: random_direction(),  steer: float2(0), life: in.life / 2, active: true });
+}
 
 /* Grass step functions */
-void grass_eaten(Grass in->out){}
-void grass_grow(Grass in->out){}
+step grass_eaten(Grass in->out){ // FIXME uncomplete
+  out.dead_cycles = in.dead_cycles;
+}
+step grass_growth(Grass in->out){ // FIXME uncomplete
+  out.dead_cycles = in.dead_cycles;
+}
 
 
 // TODO Use a real model here
@@ -191,7 +309,6 @@ void update_predator(Predator in -> out) {
 void main() {
   int num_predators = int(predator_fraction * num_agents);
   int num_prey = num_agents - num_predators;
-
 
   for (int i : 0..num_prey) {
     add(Prey {
