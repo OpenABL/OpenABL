@@ -84,12 +84,12 @@ void remove_prey(){}
 void add_predator(){}
 void remove_predator(){}
 
-float2 bound_position(float2 pos){ return clamp(float2(env_size,env_size)); }
+float2 bound_position(float2 pos){ return clamp(pos, float2(env_size,env_size)); }
 
 
 /* Prey step functions */
 void prey_avoid_pred(Prey in -> out) {
-//  float2 prey_position = in.pos; float2 prey_velocity = in.dir; float2 average_center = float2(0.0f, 0.0f);
+  //  float2 prey_position = in.pos; float2 prey_velocity = in.dir; float2 average_center = float2(0.0f, 0.0f);
   float2 avoid_velocity = float2(0.0);
   for (Prey prey : near(in, PRED_PREY_INTERACTION_RADIUS)) {
     float separation = dist(in.pos, prey.pos);
@@ -112,7 +112,7 @@ void prey_flock(Prey in -> out) {
     if(prey != in){
       float separation = dist(in.pos, prey.pos); //length(agent_position - message_position);
       //Update Perceived global centre for grouping velocity
-      group_center += message_position;
+      group_center += prey.pos; //message_position;
       group_centre_count += 1;
       if (separation < (SAME_SPECIES_AVOIDANCE_RADIUS)) {
         if (separation > 0.0)
@@ -121,9 +121,9 @@ void prey_flock(Prey in -> out) {
     }
   }
   //Average nearby agents positions to find the centre of the group and create a velocity to move towards it 
-  if (group_centre_count){
+  if (group_centre_count != 0){
     group_center /= group_centre_count;
-    group_velocity = (group_center - agent_position);
+    group_velocity = (group_center - in.pos); //agent_position);
   }
   //Add the grouping and avoidance velocities to the steer velocity (which already contains the predator avoidance velocity)
   out.steer += group_velocity + avoid_velocity;
@@ -150,6 +150,7 @@ void grass_grow(Grass in->out){}
 
 
 // TODO Use a real model here
+/*
 void update_prey(Prey in -> out) {
   // Get average position of predators
   float2 predPos = float2(0);
@@ -185,16 +186,19 @@ void update_predator(Predator in -> out) {
     out.dir = random_direction();
   }
 }
-
+*/
 
 void main() {
   int num_predators = int(predator_fraction * num_agents);
   int num_prey = num_agents - num_predators;
 
+
   for (int i : 0..num_prey) {
     add(Prey {
       pos: random(float2(env_size)),
       dir: float2(0),
+      steer: float2(0),
+      life: 0,
       active: true
     });
   }
@@ -203,21 +207,30 @@ void main() {
     add(Predator {
       pos: random(float2(env_size)),
       dir: float2(0),
+      steer: float2(0),
+      life: 0,
       active: true
     });
   }
 
-  for(int i : 0..en_size){
-    for(int j : 0..en_size){
+  for(int i : 0..int(env_size)){
+    for(int j : 0..int(env_size)){
       add(Grass { pos: float2(i,j), dead_cycles: 0, avail: true });
     }
   }
 
 
-  simulate(100) {
-    update_prey,
-    update_predator
+//  simulate(100) { update_prey, update_predator }
+  simulate(100) { 
+    //prey_follow_prey, 
+    prey_avoid_pred,
+    prey_flock, pred_avoid, 
+    prey_move, pred_move, 
+    grass_eaten, prey_eaten, 
+    prey_eat_or_starve, pred_eat_or_starve, 
+    pred_reproduction, prey_reproduction, grass_growth 
   }
 
   save("agents.out");
 }
+
