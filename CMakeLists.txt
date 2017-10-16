@@ -23,6 +23,8 @@ set(OpenABL_SOURCES
     src/backend/FlameMainPrinter.cpp
     src/backend/MasonBackend.cpp
     src/backend/MasonPrinter.cpp
+    src/backend/Mason2Backend.cpp
+    src/backend/Mason2Printer.cpp
     src/backend/DMasonBackend.cpp
     src/backend/DMasonPrinter.cpp)
 

@@ -52,6 +52,7 @@ std::map<std::string, std::unique_ptr<Backend>> getBackends() {
   backends["flame"] = std::unique_ptr<Backend>(new FlameBackend);
   backends["flamegpu"] = std::unique_ptr<Backend>(new FlameGPUBackend);
   backends["mason"] = std::unique_ptr<Backend>(new MasonBackend);
+  backends["mason2"] = std::unique_ptr<Backend>(new Mason2Backend);
   backends["dmason"] = std::unique_ptr<Backend>(new DMasonBackend);
   return backends;
 }

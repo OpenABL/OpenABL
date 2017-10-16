@@ -35,6 +35,10 @@ struct MasonBackend : public Backend {
   void generate(AST::Script &script, const BackendContext &ctx);
 };
 
+struct Mason2Backend : public Backend {
+  void generate(AST::Script &script, const BackendContext &ctx);
+};
+
 struct DMasonBackend : public Backend {
   void generate(AST::Script &script, const BackendContext &ctx);
 };
