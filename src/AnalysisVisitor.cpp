@@ -1222,12 +1222,13 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
         }
       }
 
-      if (script.usesRuntimeAddition) {
+      AST::AgentDeclaration &stepAgent = currentFunc->stepAgent();
+      if (stepAgent.usesRuntimeAddition) {
         err << "Only one agent per step function may be added at runtime" << expr.loc;
         return;
       }
 
-      currentFunc->stepAgent().usesRuntimeAddition = true;
+      stepAgent.usesRuntimeAddition = true;
       script.usesRuntimeAddition = true;
     }
   }
