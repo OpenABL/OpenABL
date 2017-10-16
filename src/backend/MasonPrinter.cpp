@@ -153,6 +153,10 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
               << aLabel << "." << posMember->name << ");" << nl;
       }
 
+      *this << "final Schedule _schedule = " << simVar << ".schedule;" << nl
+            << "double _time = "
+            << (isRuntimeAdd ? "_schedule.getTime() + 1" : "_schedule.EPOCH") << ";" << nl;
+
       size_t numStepFns = script.simStmt->stepFuncDecls.size();
       for (size_t i = 0; i < numStepFns; i++) {
         const AST::FunctionDeclaration *stepFn = script.simStmt->stepFuncDecls[i];
@@ -163,10 +167,7 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
 
         if (stepAgent.usesRuntimeRemoval) {
           // If runtime removal is used, we scheduleOnce and check the _isDead flag
-          *this << "final Schedule _schedule = " << simVar << ".schedule;" << nl
-                << "double _time = "
-                << (isRuntimeAdd ? "_schedule.getTime() + 1" : "_schedule.EPOCH") << ";" << nl
-                << "_schedule.scheduleOnce(_time, " << (2*i)
+          *this << "_schedule.scheduleOnce(_time, " << (2*i)
                 << ", new Steppable() {" << indent << nl
                 << "public void step(SimState state) {" << indent << nl
                 << aLabel << "._" << stepFn->name << "(state);" << nl
@@ -185,13 +186,13 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
                 << outdent << nl << "}"
                 << outdent << nl << "})";
         } else {
-          *this << "schedule.scheduleRepeating(schedule.EPOCH, " << (2*i)
+          *this << "_schedule.scheduleRepeating(_time, " << (2*i)
                 << ", new Steppable() {" << indent << nl
                 << "public void step(SimState state) {" << indent << nl
                 << aLabel << "._" << stepFn->name << "(state);"
                 << outdent << nl << "}"
                 << outdent << nl << "});" << nl
-                << "schedule.scheduleRepeating(schedule.EPOCH, " << (2*i + 1)
+                << "_schedule.scheduleRepeating(_time, " << (2*i + 1)
                 << ", new Steppable() {" << indent << nl
                 << "public void step(SimState state) {" << indent << nl
                 << aLabel << "._dbuf_copy();"

@@ -254,8 +254,9 @@ step pred_eat_or_starve(Predator in -> out) {
   if(life < 0) removeCurrent();
 }
 step pred_reproduction(Predator in -> out) {
-  if (random(1.0) < REPRODUCE_PREDATOR_PROB) 
+  if (random(1.0) < REPRODUCE_PREDATOR_PROB) {
     add(Predator { pos: in.pos, dir: random_direction(),  steer: float2(0), life: in.life / 2, active: true });
+  }
 }
 
 /* Grass step functions */
