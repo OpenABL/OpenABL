@@ -2,9 +2,6 @@
 
 namespace OpenABL {
 
-// XXX: The following code is just copy & pasted from MasonPrinter to have an example of
-//      how to extend the code
-
 void DMasonPrinter::printLocalTestCode() {
 	*this << "import it.isislab.dmason.experimentals.tools.batch.data.EntryParam;" << nl
 	<< "import it.isislab.dmason.experimentals.tools.batch.data.GeneralParam;" << nl
@@ -97,7 +94,7 @@ void DMasonPrinter::printStubAgent(const AST::AgentDeclaration &decl) {
 }
 void DMasonPrinter::print(const AST::FunctionDeclaration &decl) {
   if (decl.isStep) {
-    const AST::Param &param = decl.stepParam();
+    /*const AST::Param &param = decl.stepParam();
     AST::AgentDeclaration &agent = decl.stepAgent();
     AST::AgentMember *posMember = agent.getPositionMember();
 
@@ -121,86 +118,98 @@ void DMasonPrinter::print(const AST::FunctionDeclaration &decl) {
     *this << outdent << nl << "}";
 
     currentInVar.reset();
+    currentOutVar.reset();*/
+
+    const AST::Param &param = decl.stepParam();
+    AST::AgentDeclaration &agent = decl.stepAgent();
+    AST::AgentMember *posMember = agent.getPositionMember();
+
+    currentInVar = param.var->id;
+    currentOutVar = param.outVar->id;
+
+    // Use a leading "_" to avoid clashes with existing methods like "step()"
+    *this << "public void _" << decl.name << "(SimState state) {" << indent << nl
+          << "Sim _sim = (Sim) state;" << nl
+          << "State " << *param.var << " = getInState();" << nl
+          << "State " << *param.outVar << " = getOutState();" << nl
+          << *param.var << "." << posMember->name << " = _sim.env.getObjectLocation(this);" << nl
+          << "prepareOutState();"
+          << *decl.stmts;
+    if (posMember) {
+      if (agent.usesRuntimeRemoval) {
+        assert(0); // TODO
+        *this << nl << "if (_isDead) {" << indent << nl
+              << "_sim.env.remove(this);"
+              << outdent << nl << "} else {" << indent
+              << nl << "_sim.env.setObjectLocation(this, getOutState()." << posMember->name << ");"
+              << nl << "_sim.schedule.scheduleOnceIn(1.0, this);"
+              << nl << "swapStates();"
+              << outdent << nl << "}";
+      } else {
+        *this << "try {" << indent
+              << nl << "this.setPos(" << *param.outVar << "." << posMember->name << ");"
+              << nl << "_sim.env.setDistributedObjectLocation("
+              << *param.outVar << "." << posMember->name << ", this, _sim);"
+              << nl << "swapStates();"
+              << outdent << nl << "} catch (DMasonException e) { e.printStackTrace(); }";
+      }
+    }
+    *this << outdent << nl << "}";
+    
+    currentInVar.reset();
     currentOutVar.reset();
   } else {
-    *this << "public " << *decl.returnType << " " << decl.name << "(";
-    printParams(decl);
-    *this << ") {" << indent << *decl.stmts << outdent << nl << "}";
+    Mason2Printer::print(decl);
   }
 }
-void DMasonPrinter::print(const AST::AgentDeclaration &decl) {
-  inAgent = true;
 
+void DMasonPrinter::printAgentImports() {
   *this << "import sim.engine.*;" << nl
-	<<"import it.isislab.dmason.exception.DMasonException;"<< nl
-	<<"import it.isislab.dmason.sim.engine.DistributedState;"<< nl
-        << "import sim.util.*;" << nl << nl
-        << "public class " << decl.name << " extends  Remote" << decl.name << " {" << indent
-        << *decl.members << nl << nl;
-  *this << "public " << decl.name << "(){}"<< nl << nl;
-  // Print constructor
-  *this << "public " << decl.name << "(DistributedState<Double2D> sm,";
-  printCommaSeparated(*decl.members, [&](const AST::AgentMemberPtr &member) {
-    *this << *member->type << " " << member->name;
-  });
-  *this << ") {" << indent << nl;
-  *this << "super(sm);"<< nl;
-  for (AST::AgentMemberPtr &member : *decl.members) {
-    *this << nl << "this." << member->name << " = " << member->name << ";";
-    *this << nl << "this._dbuf_" << member->name << " = " << member->name << ";";
-  }
-  *this << outdent << nl << "}" << nl;
-
-  // Print main step functions that dispatches to sub-steps
-  *this << "public void step(SimState state) {" << indent;
-  for (const AST::FunctionDeclaration *stepFn : script.simStmt->stepFuncDecls) {
-    if (&stepFn->stepAgent() == &decl) {
-      *this << nl << stepFn->name << "(state);";
-    }
-  }
-  *this << outdent << nl << "}";
-
-  for (AST::FunctionDeclaration *fn : script.funcs) {
-    if (fn->isStep && &fn->stepAgent() == &decl) {
-      *this << nl << nl << *fn;
-    }
-  }
-
-  *this << outdent << nl << "}";
+        << "import sim.util.*;" << nl
+	      << "import it.isislab.dmason.exception.DMasonException;" << nl
+	      << "import it.isislab.dmason.sim.engine.DistributedState;" << nl;
+}
+void DMasonPrinter::printAgentExtends(const AST::AgentDeclaration &decl) {
+  *this << " extends Remote" << decl.name;
+}
+void DMasonPrinter::printAgentExtraCtorArgs() {
+  *this << "DistributedState<Double2D> sm, ";
+}
+void DMasonPrinter::printAgentExtraCtorCode() {
+  *this << "super(sm);" << nl;
 }
 
 void DMasonPrinter::print(const AST::CallExpression &expr) {
   const std::string &name = expr.name;
   if (expr.isCtor()) {
-    MasonPrinter::print(expr);
+    Mason2Printer::print(expr);
   } else if (expr.isBuiltin()) {
     if (name == "add") {
       std::string aLabel = makeAnonLabel();
+      std::string pLabel = makeAnonLabel();
       const AST::Expression &arg = expr.getArg(0);
       Type type = arg.type;
       AST::AgentDeclaration *agent = type.getAgentDecl();
       AST::AgentMember *posMember = agent->getPositionMember();
-      *this << type << " " << aLabel << " = " << arg << ";" << nl;
-      //*this << type << " " << aLabel << " = new " << type << "(this,new Double2D(0,0));" << nl;
-      *this << "if (" << aLabel << ".pos.x >= env.own_x && "
-            << aLabel << ".pos.y < env.own_x + env.my_width && "
-            << aLabel << ".pos.y >= env.own_y && "
-            << aLabel << ".pos.y < env.own_y + env.my_height) {" << indent << nl;
-      *this << aLabel << ".setPos("<< aLabel <<".pos);" << nl;
-      *this << "env.setObjectLocation(" << aLabel << ", "
-            << aLabel << "." << posMember->name << ");" << nl;
-      // TODO There are some ordering issues here, which we ignore for now
-      // This does not fully respect the order between different agent types
-      *this << "schedule.scheduleOnce(" << aLabel << ");";
-      *this << outdent << nl << "}" << nl;
+      *this << type << " " << aLabel << " = " << arg << ";" << nl
+            << "Double2D " << pLabel << " = " << aLabel
+            << ".getInState()." << posMember->name << ";" << nl
+            << "if (" << pLabel << ".x >= env.own_x && "
+            << pLabel << ".y < env.own_x + env.my_width && "
+            << pLabel << ".y >= env.own_y && "
+            << pLabel << ".y < env.own_y + env.my_height) {" << indent << nl
+            << aLabel << ".setPos(" << pLabel << ");" << nl
+            << "env.setObjectLocation(" << aLabel << ", " << pLabel << ");" << nl
+            << "schedule.scheduleOnce(" << aLabel << ");"
+            << outdent << nl << "}" << nl;
     } else if (name == "save") {
       // TODO Handle save
       *this << "//save()";
     } else {
-      MasonPrinter::print(expr);
+      Mason2Printer::print(expr);
     }
   } else {
-    MasonPrinter::print(expr);
+    Mason2Printer::print(expr);
   }
 }
 void DMasonPrinter::print(const AST::AgentCreationExpression &expr) {
@@ -214,7 +223,7 @@ void DMasonPrinter::print(const AST::AgentCreationExpression &expr) {
   });
   *this <<")";
 }
-void DMasonPrinter::print(const AST::SimulateStatement &stmt) {
+void DMasonPrinter::print(const AST::SimulateStatement &) {
   // Nothing
 }
 

@@ -316,12 +316,14 @@ void Mason2Printer::print(const AST::FunctionDeclaration &decl) {
         *this << nl << "if (_isDead) {" << indent << nl
               << "_sim.env.remove(this);"
               << outdent << nl << "} else {" << indent
-              << nl << "_sim.env.setObjectLocation(this, getOutState()." << posMember->name << ");"
+              << nl << "_sim.env.setObjectLocation(this, "
+              << *param.outVar << "." << posMember->name << ");"
               << nl << "_sim.schedule.scheduleOnceIn(1.0, this);"
               << nl << "swapStates();"
               << outdent << nl << "}";
       } else {
-        *this << nl << "_sim.env.setObjectLocation(this, getOutState()." << posMember->name << ");"
+        *this << nl << "_sim.env.setObjectLocation(this, "
+              << *param.outVar << "." << posMember->name << ");"
               << nl << "swapStates();";
       }
     }
@@ -347,14 +349,26 @@ void Mason2Printer::print(const AST::AgentMember &member) {
   *this << *member.type << " " << member.name << ";";
 }
 
+void Mason2Printer::printAgentImports() {
+  *this << "import sim.engine.*;" << nl
+        << "import sim.util.*;" << nl;
+}
+void Mason2Printer::printAgentExtends(const AST::AgentDeclaration &) {
+  *this << " implements Steppable";
+}
+void Mason2Printer::printAgentExtraCtorArgs() { }
+void Mason2Printer::printAgentExtraCtorCode() { }
+
 void Mason2Printer::print(const AST::AgentDeclaration &decl) {
   const auto &stepFns = script.simStmt->stepFuncDecls;
 
   inAgent = true;
 
-  *this << "import sim.engine.*;" << nl
-        << "import sim.util.*;" << nl << nl
-        << "public class " << decl.name << " implements Steppable {" << indent << nl
+  printAgentImports();
+  *this << nl
+        << "public class " << decl.name;
+  printAgentExtends(decl);
+  *this << " {" << indent << nl
         << "public class State {" << indent
         << *decl.members << nl;
 
@@ -381,11 +395,13 @@ void Mason2Printer::print(const AST::AgentDeclaration &decl) {
 
   // Agent constructor
   *this << "public " << decl.name << "(";
+  printAgentExtraCtorArgs();
   printCommaSeparated(*decl.members, [&](const AST::AgentMemberPtr &member) {
     *this << *member->type << " " << member->name;
   });
-  *this << ") {" << indent << nl
-        << "state0 = new State(";
+  *this << ") {" << indent << nl;
+  printAgentExtraCtorCode();
+  *this << "state0 = new State(";
   printCommaSeparated(*decl.members, [&](const AST::AgentMemberPtr &member) {
     *this << member->name;
   });

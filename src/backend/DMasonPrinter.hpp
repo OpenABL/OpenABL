@@ -1,16 +1,15 @@
 #pragma once
-#include "MasonPrinter.hpp"
+
+#include "Mason2Printer.hpp"
 
 namespace OpenABL {
 
-struct DMasonPrinter : public MasonPrinter {
-  using MasonPrinter::print;
+struct DMasonPrinter : public Mason2Printer {
+  using Mason2Printer::print;
 
   DMasonPrinter(AST::Script &script)
-    : MasonPrinter(script) {}
+    : Mason2Printer(script) {}
 
-  // TODO Overridden methods are declared here
-  void print(const AST::AgentDeclaration &);
   void printStubAgent(const AST::AgentDeclaration &);
   void printLocalTestCode();
   void print(const AST::Script &);
@@ -18,6 +17,11 @@ struct DMasonPrinter : public MasonPrinter {
   void print(const AST::FunctionDeclaration &);
   void print(const AST::AgentCreationExpression &);
   void print(const AST::SimulateStatement &);
+
+  void printAgentImports();
+  void printAgentExtends(const AST::AgentDeclaration &);
+  void printAgentExtraCtorArgs();
+  void printAgentExtraCtorCode();
 };
 
 }
