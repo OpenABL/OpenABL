@@ -4,6 +4,7 @@ namespace OpenABL {
 
 void DMasonPrinter::printLocalTestCode() {
     *this
+    << "import it.isislab.dmason.experimentals.systemmanagement.utils.activemq.ActiveMQStarter;" << nl
     << "import it.isislab.dmason.experimentals.tools.batch.data.EntryParam;" << nl
     << "import it.isislab.dmason.experimentals.tools.batch.data.GeneralParam;" << nl
     << "import it.isislab.dmason.sim.engine.DistributedState;" << nl
@@ -23,6 +24,9 @@ void DMasonPrinter::printLocalTestCode() {
     << "private static String topicPrefix=\"SIM-NAME\"; //unique string to identify topics for this simulation " << nl
     << "private static int MODE = DistributedField2D.UNIFORM_PARTITIONING_MODE;" << nl
     << "public static void main(String[] args) {" << nl
+    << "    ActiveMQStarter starter = new ActiveMQStarter();" << nl
+    << "    starter.startActivemq();" << nl
+    << "    System.setProperty(\"org.apache.activemq.SERIALIZABLE_PACKAGES\", \"*\");" << nl
     << "    class worker extends Thread {" << nl
     << "        private DistributedState ds;" << nl
     << "        public worker(DistributedState ds) {" << nl
