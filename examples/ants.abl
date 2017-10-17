@@ -45,8 +45,8 @@ environment { max: float2(env_size) }
 int num_pheromones = env_size * env_size;
 
 float env_scale = env_size / 100;
-float2 home_pos = float2(75,75) * env_scale;
-float2 food_pos = float2(25,25) * env_scale;
+float2 home_pos = float2(75.5,75.5) * env_scale;
+float2 food_pos = float2(25.5,25.5) * env_scale;
 
 
 
@@ -61,12 +61,12 @@ bool is_obstacle(float2 pos){
   float a2 = 36 * env_scale * env_scale;  
   float b2 = 1024 * env_scale * env_scale;  
 
-  float2 C1 = float2(45,25) * env_scale;
+  float2 C1 = float2(45.5,25.5) * env_scale;
   float2 f1 = pos - C1 ;
   float2 s1 = f1 *  0.707;
   if( (s1.x+s1.y)*(s1.x+s1.y) / a2 + (s1.x-s1.y)*(s1.x-s1.y) / b2 <= 1 ) return true;
   
-  float2 C2 = float2(35,70) * env_scale;
+  float2 C2 = float2(35.5,70.5) * env_scale;
   float2 f2 = pos  - C2; 
   float2 s2 = f2 *  0.707;
   if( (s2.x+s2.y)*(s2.x+s2.y) / a2 + (s2.x-s2.y)*(s2.x-s2.y) / b2 <= 1 )  return true;
@@ -250,14 +250,14 @@ void main() {
   for (int i : 0..env_size ) {
     for (int j : 0..env_size ) {
       add(Pheromone {
-        pos: float2(i,j),
+        pos: float2(i + 0.5, j + 0.5),
         food: 0, home: 0
       });
     }
   }
 
   for (int i : 0..num_ants) {
-    float2 pos = home_pos; // + random(float2(-1), float2(1)) * 2; 
+    float2 pos = home_pos;
     add(Ant {
       pos: pos,
       last_pos: pos,
