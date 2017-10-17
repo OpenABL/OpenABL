@@ -147,14 +147,13 @@ void Mason2Printer::print(const AST::CallExpression &expr) {
               << aLabel << ".getInState()." << posMember->name << ");" << nl;
       }
 
+      std::string scheduleVar = simVar + ".schedule";
+      std::string time = isRuntimeAdd ? scheduleVar + ".getTime() + 1.0" : "Schedule.EPOCH";
+
       if (agent->usesRuntimeRemoval) {
-        // If runtime removal is used, we scheduleOnce and reschedule in the step function
-        *this << "final Schedule _schedule = " << simVar << ".schedule;" << nl
-              << "double _time = "
-              << (isRuntimeAdd ? "_schedule.getTime() + 1" : "Schedule.EPOCH") << ";" << nl
-              << "_schedule.scheduleOnce(_time, " << aLabel << ")";
+        *this << scheduleVar << ".scheduleOnce(" << time << ", " << aLabel << ")";
       } else {
-        *this << "schedule.scheduleRepeating(Schedule.EPOCH, " << aLabel << ")";
+        *this << scheduleVar << ".scheduleRepeating(" << time << ", " << aLabel << ")";
       }
     } else if (name == "save") {
       *this << "Util.save(env.getAllObjects(), " << expr.getArg(0) << ")";
