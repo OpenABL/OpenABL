@@ -152,6 +152,16 @@ void DMasonPrinter::printAgentExtraCtorArgs() {
 void DMasonPrinter::printAgentExtraCtorCode() {
   *this << "super(sm);" << nl;
 }
+void DMasonPrinter::printStepDefaultCode(const AST::FunctionDeclaration &decl) {
+  const AST::AgentDeclaration &stepAgent = decl.stepAgent();
+  const AST::AgentMember *posMember = stepAgent.getPositionMember();
+
+  *this << "try {" << indent
+        << nl << "this.setPos(getInState()." << posMember->name << ");"
+        << nl << "((Sim) state).env.setDistributedObjectLocation("
+        << "getInState()." << posMember->name << ", this, state);"
+        << outdent << nl << "} catch (DMasonException e) { e.printStackTrace(); }" << nl;
+}
 
 void DMasonPrinter::print(const AST::CallExpression &expr) {
   const std::string &name = expr.name;

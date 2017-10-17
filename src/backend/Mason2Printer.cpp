@@ -357,6 +357,12 @@ void Mason2Printer::printAgentExtends(const AST::AgentDeclaration &) {
 }
 void Mason2Printer::printAgentExtraCtorArgs() { }
 void Mason2Printer::printAgentExtraCtorCode() { }
+void Mason2Printer::printStepDefaultCode(const AST::FunctionDeclaration &decl) {
+  if (decl.usesRuntimeRemoval) {
+    // Make sure we always reschedule the agent, even if no step function is run
+    *this << "((Sim) state).schedule.scheduleOnceIn(1.0, this);" << nl;
+  }
+}
 
 void Mason2Printer::print(const AST::AgentDeclaration &decl) {
   const auto &stepFns = script.simStmt->stepFuncDecls;
@@ -445,9 +451,8 @@ void Mason2Printer::print(const AST::AgentDeclaration &decl) {
       const auto *stepFn = stepFns[i];
       if (&stepFn->stepAgent() == &decl) {
         *this << "_" << stepFn->name << "(state);" << nl;
-      } else if (decl.usesRuntimeRemoval) {
-        // Make sure we always reschedule the agent, even if no step function is run
-        *this << "((Sim) state).schedule.scheduleOnceIn(1.0, this);" << nl;
+      } else {
+        printStepDefaultCode(*stepFn);
       }
       *this << "break;" << outdent;
     }

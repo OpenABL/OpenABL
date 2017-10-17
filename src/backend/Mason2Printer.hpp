@@ -37,6 +37,7 @@ struct Mason2Printer : public GenericPrinter {
   virtual void printAgentExtends(const AST::AgentDeclaration &);
   virtual void printAgentExtraCtorArgs();
   virtual void printAgentExtraCtorCode();
+  virtual void printStepDefaultCode(const AST::FunctionDeclaration &);
 
   void printUI();
 
