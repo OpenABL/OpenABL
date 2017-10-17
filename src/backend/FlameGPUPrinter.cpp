@@ -127,12 +127,17 @@ void FlameGPUPrinter::print(const AST::CallExpression &expr) {
       *this << ") " << expr.getArg(0);
     }
   } else {
-    const FunctionSignature &sig = expr.calledSig;
-    if (!sig.decl && (expr.name == "random" || expr.name == "randomInt")) {
-      *this << expr.name << "(rand48, ";
-      printArgs(expr);
-      *this << ")";
-      return;
+    if (expr.isBuiltin()) {
+      // Handle some special builtins
+      if (expr.name == "random" || expr.name == "randomInt") {
+        *this << expr.name << "(rand48, ";
+        printArgs(expr);
+        *this << ")";
+        return;
+      } else if (expr.name == "removeCurrent") {
+        *this << "_isDead = true";
+        return;
+      }
     }
 
     if (expr.name == "dist") {
@@ -327,6 +332,9 @@ void FlameGPUPrinter::print(const AST::Script &script) {
         *this << ", RNG_rand48 *rand48";
       }
       *this << ") {" << indent;
+      if (func.func->usesRuntimeRemoval) {
+        *this << nl << "bool _isDead = false;";
+      }
       extractAgentMembers(*this, *func.agent, paramName);
 
       // Remember the agent variables we're currently working on
@@ -340,7 +348,12 @@ void FlameGPUPrinter::print(const AST::Script &script) {
       currentInVar = nullptr;
       currentOutVar = nullptr;
 
-      *this << nl << "return 0;" << outdent << nl << "}\n\n";
+      if (func.func->usesRuntimeRemoval) {
+        *this << nl << "return _isDead;";
+      } else {
+        *this << nl << "return 0;";
+      }
+      *this << outdent << nl << "}\n\n";
       currentFunc = nullptr;
     }
 

@@ -118,7 +118,7 @@ step prey_flock(Prey in -> out) {
     group_velocity = group_center - in.pos; 
   }
   //Add the grouping and avoidance velocities to the steer velocity (which already contains the predator avoidance velocity)
-  out.steer += group_velocity + avoid_velocity;
+  out.steer = in.steer + group_velocity + avoid_velocity;
 }
 
 step prey_move(Prey in -> out) {  

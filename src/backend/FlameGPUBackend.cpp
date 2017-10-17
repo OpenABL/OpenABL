@@ -212,7 +212,7 @@ static std::string createBuildRunner(bool useFloat) {
 }
 
 void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
-  if (script.usesRuntimeRemoval || script.usesRuntimeAddition) {
+  if (script.usesRuntimeAddition) {
     throw BackendError("FlameGPU does not support dynamic add/remove yet");
   }
 
