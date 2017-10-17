@@ -32,22 +32,22 @@ float SQRT2 = 1.41421356237;
 // simulation model parameters
 param float evaporationConstant = 0.999;//0.999;
 param float initialReward = 1.0;
-param int num_ants = 1000;
 param float cutDown = .9; //0.63; //0.9;                  // in [0,1]
 param float momentumProbability = 0.8;      // in [0,1]
 param float randomActionProbability = 0.1;  // in [0,1]
+float pheromone_radius = 1.42; // to get all the neighbors
 
-float ants_density = 0.1;      // simulation scaling with constant density
-float pheromone_radius = 1.42; // 2.83; //1.42; // but to get 9 points as in the orignal code we need to extend it 
-
-int env_size = int( sqrt(num_ants/ants_density) );
-environment { max: float2(env_size) }
+param float ants_density = 0.1; // simulation scaling with constant density
+param int num_agents = 11000;
+int num_ants = int(num_agents / (1 + 1/ants_density));
+int env_size = int(sqrt(num_ants/ants_density));
 int num_pheromones = env_size * env_size;
 
-float env_scale = env_size / 100;
-float2 home_pos = float2(75.5,75.5) * env_scale;
-float2 food_pos = float2(25.5,25.5) * env_scale;
+environment { max: float2(env_size) }
 
+float env_scale = env_size / 100.;
+float2 home_pos = float2(int(75*env_scale)+0.5, int(75*env_scale)+0.5);
+float2 food_pos = float2(int(25*env_scale)+0.5, int(25*env_scale)+0.5);
 
 
 bool random_boolean(float p){
@@ -73,8 +73,8 @@ bool is_obstacle(float2 pos){
   return false; // no collision otherwise
 }
 
-bool is_home(float2 ant_pos) { return dist(ant_pos, home_pos) <= 1.0 * env_scale; }
-bool is_food(float2 ant_pos) { return dist(ant_pos, food_pos) <= 1.0 * env_scale; }
+bool is_home(float2 ant_pos) { return dist(ant_pos, home_pos) <= 1.1 * env_scale; }
+bool is_food(float2 ant_pos) { return dist(ant_pos, food_pos) <= 1.1 * env_scale; }
 
 float2 random_displacement() {
   int dx = randomInt(-1, 1);
