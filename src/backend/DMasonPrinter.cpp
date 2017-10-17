@@ -195,7 +195,7 @@ void DMasonPrinter::print(const AST::CallExpression &expr) {
             << "Double2D " << pLabel << " = " << aLabel
             << ".getInState()." << posMember->name << ";" << nl
             << "if (" << pLabel << ".x >= env.own_x && "
-            << pLabel << ".y < env.own_x + env.my_width && "
+            << pLabel << ".x < env.own_x + env.my_width && "
             << pLabel << ".y >= env.own_y && "
             << pLabel << ".y < env.own_y + env.my_height) {" << indent << nl
             << aLabel << ".setPos(" << pLabel << ");" << nl
