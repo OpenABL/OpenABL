@@ -94,32 +94,6 @@ void DMasonPrinter::printStubAgent(const AST::AgentDeclaration &decl) {
 }
 void DMasonPrinter::print(const AST::FunctionDeclaration &decl) {
   if (decl.isStep) {
-    /*const AST::Param &param = decl.stepParam();
-    AST::AgentDeclaration &agent = decl.stepAgent();
-    AST::AgentMember *posMember = agent.getPositionMember();
-
-    currentInVar = param.var->id;
-    currentOutVar = param.outVar->id;
-
-    *this << "public void " << decl.name << "(SimState state) {" << indent << nl
-          << "Sim _sim = (Sim) state;" << nl;; 
-    if(posMember){
-	*this << "this.pos=_sim.env.getObjectLocation(this);"<< nl;
-    }
-    *this
-          << *decl.stmts;
-    if (posMember) {
-      *this << nl << " try {" << indent << nl
-            << " this."<<posMember->name<<"=this._dbuf_"<<posMember->name<<";" << nl
-            << " this.setPos(this." << posMember->name << ");" << nl
-	    << "_sim.env.setDistributedObjectLocation(this." << posMember->name << ", this, _sim);" << outdent << nl
-	    << "} catch (DMasonException e) {e.printStackTrace();}" << nl;
- 	}
-    *this << outdent << nl << "}";
-
-    currentInVar.reset();
-    currentOutVar.reset();*/
-
     const AST::Param &param = decl.stepParam();
     AST::AgentDeclaration &agent = decl.stepAgent();
     AST::AgentMember *posMember = agent.getPositionMember();
@@ -146,7 +120,7 @@ void DMasonPrinter::print(const AST::FunctionDeclaration &decl) {
               << nl << "swapStates();"
               << outdent << nl << "}";
       } else {
-        *this << "try {" << indent
+        *this << nl << "try {" << indent
               << nl << "this.setPos(" << *param.outVar << "." << posMember->name << ");"
               << nl << "_sim.env.setDistributedObjectLocation("
               << *param.outVar << "." << posMember->name << ", this, _sim);"
