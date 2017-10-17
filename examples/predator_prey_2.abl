@@ -38,7 +38,7 @@ int getColor(Prey p) {
 }
 int getColor(Grass g) {
   if(g.avail) return 0x00ff00; // green
-  else return 0x00cc00;
+  else return 0xffff00; //yellow
 }
 
 
@@ -58,7 +58,7 @@ float PREY_GROUP_COHESION_RADIUS    = 0.200; //The radius in which prey agents f
 float SAME_SPECIES_AVOIDANCE_RADIUS = 0.035; //The radius in which agents of the same species will avoid each other (close proximity collision avoidance behaviour)
 float GRASS_EAT_DISTANCE            = 0.020; //The distance in which grass is eaten by prey
 float PRED_KILL_DISTANCE            = 0.020; //The distance in which prey are eaten by predators
-float DELTA_TIME                    = 0.001; //Time step integral 
+float DELTA_TIME                    = 0.001; //Time step integral 0.001
 float PRED_SPEED_ADVANTAGE          = 2.000; //Speed multiplier to give predators an advantage
 
 
