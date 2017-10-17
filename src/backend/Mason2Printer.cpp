@@ -355,6 +355,7 @@ void Mason2Printer::printAgentImports() {
 void Mason2Printer::printAgentExtends(const AST::AgentDeclaration &) {
   *this << " implements Steppable";
 }
+void Mason2Printer::printAgentExtraCode(const AST::AgentDeclaration &) { }
 void Mason2Printer::printAgentExtraCtorArgs() { }
 void Mason2Printer::printAgentExtraCtorCode() { }
 void Mason2Printer::printStepDefaultCode(const AST::FunctionDeclaration &decl) {
@@ -397,6 +398,8 @@ void Mason2Printer::print(const AST::AgentDeclaration &decl) {
   if (decl.usesRuntimeRemoval) {
     *this << "public boolean _isDead = false;" << nl;
   }
+
+  printAgentExtraCode(decl);
 
   // Agent constructor
   *this << "public " << decl.name << "(";

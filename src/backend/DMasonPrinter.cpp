@@ -146,6 +146,10 @@ void DMasonPrinter::printAgentImports() {
 void DMasonPrinter::printAgentExtends(const AST::AgentDeclaration &decl) {
   *this << " extends Remote" << decl.name;
 }
+void DMasonPrinter::printAgentExtraCode(const AST::AgentDeclaration &decl) {
+  // DMason needs default constructor
+  *this << "public " << decl.name << "() { }" << nl;
+}
 void DMasonPrinter::printAgentExtraCtorArgs() {
   *this << "DistributedState<Double2D> sm, ";
 }
