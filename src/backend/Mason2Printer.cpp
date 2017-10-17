@@ -147,40 +147,14 @@ void Mason2Printer::print(const AST::CallExpression &expr) {
               << aLabel << ".getInState()." << posMember->name << ");" << nl;
       }
 
-      *this << "final Schedule _schedule = " << simVar << ".schedule;" << nl
-            << "double _time = "
-            << (isRuntimeAdd ? "_schedule.getTime() + 1" : "_schedule.EPOCH") << ";" << nl;
-
-      size_t numStepFns = script.simStmt->stepFuncDecls.size();
-      for (size_t i = 0; i < numStepFns; i++) {
-        const AST::FunctionDeclaration *stepFn = script.simStmt->stepFuncDecls[i];
-        const AST::AgentDeclaration &stepAgent = stepFn->stepAgent();
-        if (&stepAgent != agent) {
-          continue;
-        }
-
-        if (stepAgent.usesRuntimeRemoval) {
-          // If runtime removal is used, we scheduleOnce and check the _isDead flag
-          *this << "_schedule.scheduleOnce(_time, " << i
-                << ", new Steppable() {" << indent << nl
-                << "public void step(SimState state) {" << indent << nl
-                << aLabel << "._" << stepFn->name << "(state);" << nl
-                << "if (!" << aLabel << "._isDead) {" << indent << nl
-                << "_schedule.scheduleOnceIn(1.0, this, " << i << ");"
-                << outdent << nl << "}"
-                << outdent << nl << "}"
-                << outdent << nl << "})" << nl;
-        } else {
-          *this << "_schedule.scheduleRepeating(_time, " << i
-                << ", new Steppable() {" << indent << nl
-                << "public void step(SimState state) {" << indent << nl
-                << aLabel << "._" << stepFn->name << "(state);"
-                << outdent << nl << "}"
-                << outdent << nl << "})";
-        }
-        if (i != numStepFns - 1) {
-          *this << ";" << nl;
-        }
+      if (agent->usesRuntimeRemoval) {
+        // If runtime removal is used, we scheduleOnce and reschedule in the step function
+        *this << "final Schedule _schedule = " << simVar << ".schedule;" << nl
+              << "double _time = "
+              << (isRuntimeAdd ? "_schedule.getTime() + 1" : "Schedule.EPOCH") << ";" << nl
+              << "_schedule.scheduleOnce(_time, " << aLabel << ")";
+      } else {
+        *this << "schedule.scheduleRepeating(Schedule.EPOCH, " << aLabel << ")";
       }
     } else if (name == "save") {
       *this << "Util.save(env.getAllObjects(), " << expr.getArg(0) << ")";
@@ -339,10 +313,17 @@ void Mason2Printer::print(const AST::FunctionDeclaration &decl) {
           << *decl.stmts;
     if (posMember) {
       if (agent.usesRuntimeRemoval) {
-        *this << nl << "if (_isDead) { _sim.env.remove(this); return; }";
+        *this << nl << "if (_isDead) {" << indent << nl
+              << "_sim.env.remove(this);"
+              << outdent << nl << "} else {" << indent
+              << nl << "_sim.env.setObjectLocation(this, getOutState()." << posMember->name << ");"
+              << nl << "_sim.schedule.scheduleOnceIn(1.0, this);"
+              << nl << "swapStates();"
+              << outdent << nl << "}";
+      } else {
+        *this << nl << "_sim.env.setObjectLocation(this, getOutState()." << posMember->name << ");"
+              << nl << "swapStates();";
       }
-      *this << nl << "_sim.env.setObjectLocation(this, getOutState()." << posMember->name << ");";
-      *this << nl << "swapStates();";
     }
     *this << outdent << nl << "}";
     
@@ -367,11 +348,13 @@ void Mason2Printer::print(const AST::AgentMember &member) {
 }
 
 void Mason2Printer::print(const AST::AgentDeclaration &decl) {
+  const auto &stepFns = script.simStmt->stepFuncDecls;
+
   inAgent = true;
 
   *this << "import sim.engine.*;" << nl
         << "import sim.util.*;" << nl << nl
-        << "public class " << decl.name << " {" << indent << nl
+        << "public class " << decl.name << " implements Steppable {" << indent << nl
         << "public class State {" << indent
         << *decl.members << nl;
 
@@ -388,7 +371,10 @@ void Mason2Printer::print(const AST::AgentDeclaration &decl) {
         << outdent << nl << "}" << nl
         << "State state0;" << nl
         << "State state1;" << nl
-        << "int currentState;" << nl;
+        << "int currentState = 0;" << nl;
+  if (stepFns.size() != 1) {
+    *this << "int currentStep = 0;" << nl;
+  }
   if (decl.usesRuntimeRemoval) {
     *this << "public boolean _isDead = false;" << nl;
   }
@@ -408,8 +394,7 @@ void Mason2Printer::print(const AST::AgentDeclaration &decl) {
   printCommaSeparated(*decl.members, [&](const AST::AgentMemberPtr &member) {
     *this << member->name;
   });
-  *this << ");" << nl
-        << "currentState = 0;"
+  *this << ");"
         << outdent << nl << "}" << nl;
 
   // Add some helper functions
@@ -431,7 +416,33 @@ void Mason2Printer::print(const AST::AgentDeclaration &decl) {
   *this << outdent << nl << "}" << nl
         << "void swapStates() {" << indent << nl
         << "currentState ^= 1;"
-        << outdent << nl << "}";
+        << outdent << nl << "}" << nl
+        << "public void step(SimState state) {" << indent << nl;
+  if (stepFns.size() == 1) {
+    // If there is only one step function, just call it directly
+    const AST::FunctionDeclaration *stepFn = script.simStmt->stepFuncDecls[0];
+    *this << "_" << stepFn->name << "(state);";
+  } else {
+    // Otherwise cycle through step functions with a counter
+    *this << "switch (currentStep) {" << indent;
+    for (size_t i = 0; i < stepFns.size(); i++) {
+      *this << nl << "case " << i << ":" << indent << nl;
+      const auto *stepFn = stepFns[i];
+      if (&stepFn->stepAgent() == &decl) {
+        *this << "_" << stepFn->name << "(state);" << nl;
+      } else if (decl.usesRuntimeRemoval) {
+        // Make sure we always reschedule the agent, even if no step function is run
+        *this << "((Sim) state).schedule.scheduleOnceIn(1.0, this);" << nl;
+      }
+      *this << "break;" << outdent;
+    }
+    *this << outdent << nl << "}" << nl
+          << "currentStep++;" << nl
+          << "if (currentStep == " << stepFns.size() << ") {" << indent << nl
+          << "currentStep = 0;"
+          << outdent << nl << "}";
+  }
+  *this << outdent << nl << "}";
 
   for (AST::FunctionDeclaration *fn : script.funcs) {
     if (fn->isStep && &fn->stepAgent() == &decl) {
@@ -443,10 +454,12 @@ void Mason2Printer::print(const AST::AgentDeclaration &decl) {
 }
 
 void Mason2Printer::print(const AST::SimulateStatement &stmt) {
-  *this << "do {" << indent << nl
+  std::string tLabel = makeAnonLabel();
+  *this << "int " << tLabel << " = " << *stmt.timestepsExpr
+        << " * " << stmt.stepFuncDecls.size() << ";" << nl
+        << "do {" << indent << nl
         << "if (!_sim.schedule.step(_sim)) break;" << outdent << nl
-        << "} while (_sim.schedule.getSteps() < "
-        << *stmt.timestepsExpr << ");";
+        << "} while (_sim.schedule.getSteps() < " << tLabel << ");";
 }
 
 void Mason2Printer::print(const AST::Script &script) {
@@ -512,6 +525,7 @@ void Mason2Printer::print(const AST::Script &script) {
 
 void Mason2Printer::printUI() {
   int dim = script.envDecl->envDimension;
+  size_t numSteps = script.simStmt->stepFuncDecls.size();
   *this <<
   "import sim.portrayal.continuous.*;\n"
   "import sim.portrayal.simple.*;\n"
@@ -524,8 +538,14 @@ void Mason2Printer::printUI() {
   "import javax.swing.*;\n"
   "import java.awt.*;\n"
   "\n"
-  "public class SimWithUI extends GUIState\n"
-  "{\n"
+  "public class SimWithUI extends GUIState {\n"
+  "    class MyDisplay extends Display" << dim << "D {\n"
+  "        MyDisplay(double width, double height, GUIState sim) {\n"
+  "            super(width, height, sim);\n"
+  "            updateRule = Display2D.UPDATE_RULE_STEPS;\n"
+  "            stepInterval = " << numSteps << ";\n"
+  "        }\n"
+  "    }\n"
   "    private static final int SIZE = 500;\n"
   "    public Display" << dim << "D display;\n"
   "    public JFrame displayFrame;\n"
@@ -593,7 +613,7 @@ void Mason2Printer::printUI() {
   "    public void init(Controller c) {\n"
   "        super.init(c);\n"
   "\n"
-  "        display = new Display" << dim << "D(SIZE, SIZE, this);\n"
+  "        display = new MyDisplay(SIZE, SIZE, this);\n"
   "        //display.setClipping(false);\n"
   "\n"
   "        displayFrame = display.createFrame();\n"
