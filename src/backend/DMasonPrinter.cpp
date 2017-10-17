@@ -3,61 +3,62 @@
 namespace OpenABL {
 
 void DMasonPrinter::printLocalTestCode() {
-	*this << "import it.isislab.dmason.experimentals.tools.batch.data.EntryParam;" << nl
-	<< "import it.isislab.dmason.experimentals.tools.batch.data.GeneralParam;" << nl
-	<< "import it.isislab.dmason.sim.engine.DistributedState;" << nl
-	<< "import it.isislab.dmason.sim.field.DistributedField2D;" << nl
-	<< "import it.isislab.dmason.util.connection.ConnectionType;" << nl
-	<< "import java.util.ArrayList;"   << nl
-	<< "public class LocalTestSim {" << indent << nl
-	<< "private static int numSteps = 3000; //only graphicsOn=false" << nl
-	<< "private static int rows = 2; //number of rows" << nl
-	<< "private static int columns = 2; //number of columns" << nl
-	<< "private static int AOI=10; //max distance" << nl
-	<< "private static int NUM_AGENTS=20000; //number of agents" << nl
-	<< "private static int WIDTH=200; //field width" << nl
-	<< "private static int HEIGHT=200; //field height" << nl
-	<< "private static String ip=\"127.0.0.1\"; //ip of activemq" << nl
-	<< "private static String port=\"61616\"; //port of activemq" << nl
-	<< "private static String topicPrefix=\"SIM-NAME\"; //unique string to identify topics for this simulation " << nl
-	<< "private static int MODE = DistributedField2D.UNIFORM_PARTITIONING_MODE;" << nl
-	<< "public static void main(String[] args) {" << indent << nl
-	<< "	class worker extends Thread {" << indent << nl
-	<< "		private DistributedState ds;" << nl
-	<< "		public worker(DistributedState ds) {" << nl
-	<< "			this.ds=ds;" << nl
-	<< "			ds.start();" << nl
-	<< "		}" << nl
-	<< "		public void run() {" << nl
-	<< "			int i=0;" << nl
-	<< "			while(i!=numSteps)" << nl
-	<< "			{" << nl
-	<< "				System.out.println(i);" << nl
-	<< "				ds.schedule.step(ds);" << nl
-	<< "				i++;" << nl
-	<< "			}" << nl
-	<< "			System.exit(0);" << nl
-	<< "		}" << outdent << nl
-	<< "	}" << nl
-	<< "	ArrayList<worker> myWorker = new ArrayList<worker>();" << nl
-	<< "	for (int i = 0; i < rows; i++) {" << nl
-	<< "		for (int j = 0; j < columns; j++) {" << nl
-	<< "			GeneralParam genParam = new GeneralParam(WIDTH, HEIGHT, AOI, rows,columns,NUM_AGENTS, MODE,ConnectionType.pureActiveMQ); " << nl
-	<< "			genParam.setI(i);" << nl
-	<< "			genParam.setJ(j);" << nl
-	<< "			genParam.setIp(ip);" << nl
-	<< "			genParam.setPort(port);" << nl
-	<< "			ArrayList<EntryParam<String, Object>> simParams=new ArrayList<EntryParam<String, Object>>();" << nl
-	<< "			Sim sim = new Sim(genParam,simParams,topicPrefix); " << nl
-	<< "			worker a = new worker(sim);" << nl
-	<< "			myWorker.add(a);" << nl
-	<< "		}" << nl
-	<< "	}" << nl
-	<< "		for (worker w : myWorker) {" << nl
-	<< "			w.start();" << nl
-	<< "		}" << nl
-	<< "	}" << nl
-	<< "}" << outdent << nl;
+    *this
+    << "import it.isislab.dmason.experimentals.tools.batch.data.EntryParam;" << nl
+    << "import it.isislab.dmason.experimentals.tools.batch.data.GeneralParam;" << nl
+    << "import it.isislab.dmason.sim.engine.DistributedState;" << nl
+    << "import it.isislab.dmason.sim.field.DistributedField2D;" << nl
+    << "import it.isislab.dmason.util.connection.ConnectionType;" << nl
+    << "import java.util.ArrayList;"   << nl
+    << "public class LocalTestSim {" << indent << nl
+    << "private static int numSteps = 3000; //only graphicsOn=false" << nl
+    << "private static int rows = 2; //number of rows" << nl
+    << "private static int columns = 2; //number of columns" << nl
+    << "private static int AOI=10; //max distance" << nl
+    << "private static int NUM_AGENTS=20000; //number of agents" << nl
+    << "private static int WIDTH=200; //field width" << nl
+    << "private static int HEIGHT=200; //field height" << nl
+    << "private static String ip=\"127.0.0.1\"; //ip of activemq" << nl
+    << "private static String port=\"61616\"; //port of activemq" << nl
+    << "private static String topicPrefix=\"SIM-NAME\"; //unique string to identify topics for this simulation " << nl
+    << "private static int MODE = DistributedField2D.UNIFORM_PARTITIONING_MODE;" << nl
+    << "public static void main(String[] args) {" << nl
+    << "    class worker extends Thread {" << nl
+    << "        private DistributedState ds;" << nl
+    << "        public worker(DistributedState ds) {" << nl
+    << "            this.ds=ds;" << nl
+    << "            ds.start();" << nl
+    << "        }" << nl
+    << "        public void run() {" << nl
+    << "            int i=0;" << nl
+    << "            while(i!=numSteps)" << nl
+    << "            {" << nl
+    << "                System.out.println(i);" << nl
+    << "                ds.schedule.step(ds);" << nl
+    << "                i++;" << nl
+    << "            }" << nl
+    << "            System.exit(0);" << nl
+    << "        }" << nl
+    << "    }" << nl
+    << "    ArrayList<worker> myWorker = new ArrayList<worker>();" << nl
+    << "    for (int i = 0; i < rows; i++) {" << nl
+    << "        for (int j = 0; j < columns; j++) {" << nl
+    << "            GeneralParam genParam = new GeneralParam(WIDTH, HEIGHT, AOI, rows,columns,NUM_AGENTS, MODE,ConnectionType.pureActiveMQ); " << nl
+    << "            genParam.setI(i);" << nl
+    << "            genParam.setJ(j);" << nl
+    << "            genParam.setIp(ip);" << nl
+    << "            genParam.setPort(port);" << nl
+    << "            ArrayList<EntryParam<String, Object>> simParams=new ArrayList<EntryParam<String, Object>>();" << nl
+    << "            Sim sim = new Sim(genParam,simParams,topicPrefix); " << nl
+    << "            worker a = new worker(sim);" << nl
+    << "            myWorker.add(a);" << nl
+    << "        }" << nl
+    << "    }" << nl
+    << "        for (worker w : myWorker) {" << nl
+    << "            w.start();" << nl
+    << "        }" << nl
+    << "    }" << nl
+    << "}" << nl;
 }
 void DMasonPrinter::printStubAgent(const AST::AgentDeclaration &decl) {
 	*this << "import java.io.Serializable;" << nl
