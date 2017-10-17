@@ -79,10 +79,18 @@ static XmlElems createXmlAgents(
         fnElems.push_back({ "outputs", outputs });
       }
 
-      bool usesRng = func.func && func.func->usesRng;
+      if (func.addedAgent) {
+        fnElems.push_back({ "xagentOutputs", {
+          { "gpu:xagentOutput", {
+            { "xagentName", {{ func.addedAgent->name }} },
+            { "state", {{ func.addedAgent->name + "_default" }} },
+          }}
+        }});
+      }
 
       // FlameGPU is also very pedantic about order. These elements must
       // occur after inputs and outputs...
+      bool usesRng = func.func && func.func->usesRng;
       fnElems.push_back({ "gpu:reallocate", {{ "false" }} });
       fnElems.push_back({ "gpu:RNG", {{ usesRng ? "true" : "false" }} });
 
@@ -212,10 +220,6 @@ static std::string createBuildRunner(bool useFloat) {
 }
 
 void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
-  if (script.usesRuntimeAddition) {
-    throw BackendError("FlameGPU does not support dynamic add/remove yet");
-  }
-
   bool useFloat = ctx.config.getBool("use_float", false);
 
   // TODO How to determine this value ???

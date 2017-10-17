@@ -22,6 +22,7 @@ struct FlameModel {
     std::string nextState;
     const AST::AgentDeclaration *agent = nullptr;
     const AST::FunctionDeclaration *func = nullptr;
+    const AST::AgentDeclaration *addedAgent = nullptr;
   };
 
   const Message *getMessageByName(const std::string &name) const {

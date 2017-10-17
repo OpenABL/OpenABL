@@ -254,6 +254,12 @@ struct AgentCreationExpression : public Expression {
 
   void accept(Visitor &);
   void print(Printer &) const;
+
+  const AST::Expression &getExprFor(const std::string &memberName) const {
+    auto it = memberMap.find(memberName);
+    assert(it != memberMap.end());
+    return *it->second;
+  }
 };
 
 struct ArrayInitExpression : public Expression {
@@ -498,12 +504,13 @@ struct FunctionDeclaration : public Declaration {
   // The following members are for step functions only
   // The type of the agent that is interacted with (type of agent
   // in for-near loop)
-  AgentDeclaration *accessedAgent = nullptr;
+  const AgentDeclaration *accessedAgent = nullptr;
   // Which members of the agent that we interact with are accessed
   std::set<std::string> accessedMembers;
-  // Whether dynamic removal and addition are used in this step function
+  // Whether runtime removal is used in this step function
   bool usesRuntimeRemoval = false;
-  bool usesRuntimeAddition = false;
+  // The agent type added at runtime, if any
+  const AgentDeclaration *runtimeAddedAgent = nullptr;
   // FlameGPU needs to know whether an RNG is used
   bool usesRng = false;
 
@@ -574,7 +581,6 @@ struct AgentDeclaration : public Declaration {
   AgentMemberListPtr members;
 
   bool usesRuntimeRemoval = false;
-  bool usesRuntimeAddition = false;
 
   AgentDeclaration(std::string name, AgentMemberList *members, Location loc)
     : Declaration{loc}, name{name}, members{members} {}

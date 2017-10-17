@@ -289,9 +289,7 @@ void MasonPrinter::print(const AST::AgentCreationExpression &expr) {
 
   *this << "new " << expr.name << "(";
   printCommaSeparated(*agent->members, [&](const AST::AgentMemberPtr &member) {
-    auto it = expr.memberMap.find(member->name);
-    assert(it != expr.memberMap.end());
-    *this << *it->second;
+    *this << expr.getExprFor(member->name);
   });
   *this <<")";
 }

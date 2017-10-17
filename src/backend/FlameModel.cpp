@@ -26,7 +26,7 @@ FlameModel FlameModel::generateFromScript(AST::Script &script) {
     // If no members of other agents are accessed, we don't use the message
     FlameModel::Message msg;
     if (func->accessedAgent) {
-      AST::AgentDeclaration &accessedAgent = *func->accessedAgent;
+      const AST::AgentDeclaration &accessedAgent = *func->accessedAgent;
       msg.name = func->name + "_message";
       for (const AST::AgentMemberPtr &member : *accessedAgent.members) {
         // The position member is always included, as it is necessary for the distance
@@ -54,6 +54,7 @@ FlameModel FlameModel::generateFromScript(AST::Script &script) {
     fnStep.name = func->name;
     fnStep.inMsgName = msg.name;
     fnStep.agent = &stepAgent;
+    fnStep.addedAgent = func->runtimeAddedAgent;
     fnStep.func = func;
     unsigned &stepState = numStates[&stepAgent];
     fnStep.currentState = getStateName(stepState++);

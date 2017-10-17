@@ -1211,7 +1211,8 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
         return;
       }
 
-      const auto *posMember = it->second->getPositionMember();
+      const AST::AgentDeclaration *addedAgentDecl = it->second;
+      const auto *posMember = addedAgentDecl->getPositionMember();
       if (posMember) {
         auto it2 = creationExpr->memberMap.find(posMember->name);
         assert(it2 != creationExpr->memberMap.end());
@@ -1223,13 +1224,12 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
         }
       }
 
-      if (currentFunc->usesRuntimeAddition) {
+      if (currentFunc->runtimeAddedAgent) {
         err << "Only one agent per step function may be added at runtime" << expr.loc;
         return;
       }
 
-      currentFunc->usesRuntimeAddition = true;
-      currentFunc->stepAgent().usesRuntimeAddition = true;
+      currentFunc->runtimeAddedAgent = addedAgentDecl;
       script.usesRuntimeAddition = true;
     }
   }

@@ -137,6 +137,36 @@ void FlameGPUPrinter::print(const AST::CallExpression &expr) {
       } else if (expr.name == "removeCurrent") {
         *this << "_isDead = true";
         return;
+      } else if (expr.name == "add") {
+        const auto *agentExpr = dynamic_cast<const AST::AgentCreationExpression *>(&expr.getArg(0));
+        const AST::AgentDeclaration *addedAgent = agentExpr->type.getAgentDecl();
+
+        // Create variables for vector members, to avoid double-evaluation
+        for (const AST::AgentMemberPtr &member : *addedAgent->members) {
+          if (member->type->resolved.isVec()) {
+            const AST::Expression &initExpr = agentExpr->getExprFor(member->name);
+            *this << *member->type << " _" << member->name << " = " << initExpr << ";" << nl;
+          }
+        }
+
+        *this << "add_" << addedAgent->name << "_agent(agent_"
+              << addedAgent->name << "_agents, ";
+        printCommaSeparated(*addedAgent->members, [&](const AST::AgentMemberPtr &member) {
+          const AST::Expression &initExpr = agentExpr->getExprFor(member->name);
+          if (initExpr.type.isVec2()) {
+            *this << "_" << member->name << ".x, _" << member->name << ".y";
+            if (member->isPosition) {
+              *this << ", 0.0";
+            }
+          } else if (initExpr.type.isVec3()) {
+            *this << "_" << member->name << ".x, _" << member->name
+                  << ".y, _" << member->name << ".z";
+          } else {
+            *this << initExpr;
+          }
+        });
+        *this << ")";
+        return;
       }
     }
 
@@ -327,6 +357,11 @@ void FlameGPUPrinter::print(const AST::Script &script) {
         *this << ", xmachine_message_" << msgName << "_list* "
               << msgName << "_messages, xmachine_message_" << msgName
               << "_PBM* partition_matrix";
+      }
+      if (func.func->runtimeAddedAgent) {
+        const AST::AgentDeclaration *addedAgent = func.func->runtimeAddedAgent;
+        *this << ", xmachine_memory_" << addedAgent->name << "_list *agent_"
+              << addedAgent->name << "_agents";
       }
       if (func.func->usesRng) {
         *this << ", RNG_rand48 *rand48";
