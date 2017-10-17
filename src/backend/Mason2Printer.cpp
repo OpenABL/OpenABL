@@ -349,7 +349,8 @@ void Mason2Printer::print(const AST::AgentMember &member) {
 }
 
 void Mason2Printer::printAgentImports() {
-  *this << "import sim.engine.*;" << nl
+  *this << "import java.io.Serializable;" << nl
+        << "import sim.engine.*;" << nl
         << "import sim.util.*;" << nl;
 }
 void Mason2Printer::printAgentExtends(const AST::AgentDeclaration &) {
@@ -375,7 +376,7 @@ void Mason2Printer::print(const AST::AgentDeclaration &decl) {
         << "public class " << decl.name;
   printAgentExtends(decl);
   *this << " {" << indent << nl
-        << "public class State {" << indent
+        << "public class State implements Serializable {" << indent
         << *decl.members << nl;
 
   // State constructor

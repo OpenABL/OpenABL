@@ -138,7 +138,8 @@ void DMasonPrinter::print(const AST::FunctionDeclaration &decl) {
 }
 
 void DMasonPrinter::printAgentImports() {
-  *this << "import sim.engine.*;" << nl
+  *this << "import java.io.Serializable;" << nl
+        << "import sim.engine.*;" << nl
         << "import sim.util.*;" << nl
 	      << "import it.isislab.dmason.exception.DMasonException;" << nl
 	      << "import it.isislab.dmason.sim.engine.DistributedState;" << nl;
