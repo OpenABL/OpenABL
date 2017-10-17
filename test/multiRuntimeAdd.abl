@@ -3,4 +3,7 @@ step step_fn(Agent in->out) {
   add(Agent {});
   add(Agent {});
 }
+step step_fn2(Agent in->out) {
+  add(Agent {});
+}
 void main() {}

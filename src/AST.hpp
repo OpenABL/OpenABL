@@ -501,6 +501,9 @@ struct FunctionDeclaration : public Declaration {
   AgentDeclaration *accessedAgent = nullptr;
   // Which members of the agent that we interact with are accessed
   std::set<std::string> accessedMembers;
+  // Whether dynamic removal and addition are used in this step function
+  bool usesRuntimeRemoval = false;
+  bool usesRuntimeAddition = false;
   // FlameGPU needs to know whether an RNG is used
   bool usesRng = false;
 
