@@ -168,59 +168,13 @@ void DMasonPrinter::print(const AST::AgentDeclaration &decl) {
 
   *this << outdent << nl << "}";
 }
-static void printVecCtorArgs(MasonPrinter &p, const AST::CallExpression &expr) {
-  Type t = expr.type;
-  int vecLen = t.getVecLen();
-  size_t numArgs = expr.args->size();
-  if (numArgs == 1) {
-    // TODO Multiple evaluation
-    const AST::Expression &arg = expr.getArg(0);
-    p << arg << ", " << arg;
-    if (vecLen == 3) {
-      p << ", " << arg;
-    }
-  } else {
-    p.printArgs(expr);
-  }
-}
-static void printTypeCtor(DMasonPrinter &p, const AST::CallExpression &expr) {
-  Type t = expr.type;
-  if (t.isVec()) {
-    int vecLen = t.getVecLen();
-    p << "new Double" << vecLen << "D(";
-    printVecCtorArgs(p, expr);
-    p << ")";
-  } else {
-    p << "(" << t << ") " << expr.getArg(0);
-  }
-}
 
 void DMasonPrinter::print(const AST::CallExpression &expr) {
   const std::string &name = expr.name;
   if (expr.isCtor()) {
-    printTypeCtor(*this, expr);
+    MasonPrinter::print(expr);
   } else if (expr.isBuiltin()) {
-    if (name == "dist") {
-      *this << expr.getArg(0) << ".distance(" << expr.getArg(1) << ")";
-    } else if (name == "length") {
-      *this << expr.getArg(0) << ".length()";
-    } else if (name == "normalize") {
-      *this << expr.getArg(0) << ".normalize()";
-    } else if (name == "random" || name == "randomInt") {
-      *this << "Util." << name << "(" << getSimVarName() << ".random, ";
-      printArgs(expr);
-      *this << ")";
-    } else if (name == "sin" || name == "cos" || name == "tan"
-            || name == "sinh" || name == "cosh" || name == "tanh"
-            || name == "asin" || name == "acos" || name == "atan"
-            || name == "exp" || name == "log" || name == "sqrt"
-            || name == "cbrt" || name == "round" || name == "pow"
-    ) {
-      // Basic math functions
-      *this << "java.lang.Math." << name << "(";
-      printArgs(expr);
-      *this << ")";
-    } else if (name == "add") {
+    if (name == "add") {
       std::string aLabel = makeAnonLabel();
       const AST::Expression &arg = expr.getArg(0);
       Type type = arg.type;
@@ -243,16 +197,10 @@ void DMasonPrinter::print(const AST::CallExpression &expr) {
       // TODO Handle save
       *this << "//save()";
     } else {
-      // TODO Handle other builtins
-      const FunctionSignature &sig = expr.calledSig;
-      *this << sig.name << "(";
-      printArgs(expr);
-      *this << ")";
+      MasonPrinter::print(expr);
     }
   } else {
-    *this << getSimVarName() << "." << expr.name << "(";
-    printArgs(expr);
-    *this << ")";
+    MasonPrinter::print(expr);
   }
 }
 void DMasonPrinter::print(const AST::AgentCreationExpression &expr) {
@@ -270,23 +218,6 @@ void DMasonPrinter::print(const AST::SimulateStatement &stmt) {
   // Nothing
 }
 
-/*
-static void printVecCtorArgs(MasonPrinter &p, const AST::CallExpression &expr) {
-  Type t = expr.type;
-  int vecLen = t.getVecLen();
-  size_t numArgs = expr.args->size();
-  if (numArgs == 1) {
-    // TODO Multiple evaluation
-    const AST::Expression &arg = *expr.getArg(0).expr;
-    p << arg << ", " << arg;
-    if (vecLen == 3) {
-      p << ", " << arg;
-    }
-  } else {
-    p.printArgs(expr);
-  }
-}
-*/
 void DMasonPrinter::print(const AST::Script &script) {
   inAgent = false; // Printing main simulation code
 
