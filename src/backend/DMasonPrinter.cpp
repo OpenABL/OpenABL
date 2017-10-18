@@ -188,9 +188,8 @@ void DMasonPrinter::printAgentExtraCtorArgs() {
 void DMasonPrinter::printAgentExtraCtorCode() {
   *this << "super(sm);" << nl;
 }
-void DMasonPrinter::printStepDefaultCode(const AST::FunctionDeclaration &decl) {
-  const AST::AgentDeclaration &stepAgent = decl.stepAgent();
-  const AST::AgentMember *posMember = stepAgent.getPositionMember();
+void DMasonPrinter::printStepDefaultCode(const AST::AgentDeclaration &decl) {
+  const AST::AgentMember *posMember = decl.getPositionMember();
 
   *this << "try {" << indent
         << nl << "this.setPos(getInState()." << posMember->name << ");"

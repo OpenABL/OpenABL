@@ -23,7 +23,7 @@ struct DMasonPrinter : public Mason2Printer {
   void printAgentExtraCode(const AST::AgentDeclaration &);
   void printAgentExtraCtorArgs();
   void printAgentExtraCtorCode();
-  void printStepDefaultCode(const AST::FunctionDeclaration &);
+  void printStepDefaultCode(const AST::AgentDeclaration &);
   void printUIExtraImports();
   void printUICtors();
 };
