@@ -3,7 +3,13 @@
 namespace OpenABL {
 
 void DMasonPrinter::printLocalTestCode() {
-    *this
+  Value &envSize = script.envDecl->envSize;
+  assert(envSize.isVec2());
+  int width = (int) ceil(envSize.getVec2().x);
+  int height = (int) ceil(envSize.getVec2().y);
+  int maxDist = width > 10 ? 10 : width - 1; // TODO
+
+  *this
     << "import it.isislab.dmason.experimentals.systemmanagement.utils.activemq.ActiveMQStarter;" << nl
     << "import it.isislab.dmason.experimentals.tools.batch.data.EntryParam;" << nl
     << "import it.isislab.dmason.experimentals.tools.batch.data.GeneralParam;" << nl
@@ -16,10 +22,10 @@ void DMasonPrinter::printLocalTestCode() {
     << "private static int numSteps = 3000; //only graphicsOn=false" << nl
     << "private static int rows = 2; //number of rows" << nl
     << "private static int columns = 2; //number of columns" << nl
-    << "private static int AOI=10; //max distance" << nl
+    << "private static int AOI = " << maxDist << "; // max distance" << nl
     << "private static int NUM_AGENTS=20000; //number of agents" << nl
-    << "private static int WIDTH=200; //field width" << nl
-    << "private static int HEIGHT=200; //field height" << nl
+    << "private static int WIDTH = " << width << "; // field width" << nl
+    << "private static int HEIGHT = " << height << "; // field height" << nl
     << "private static String ip=\"127.0.0.1\"; //ip of activemq" << nl
     << "private static String port=\"61616\"; //port of activemq" << nl
     << "private static String topicPrefix=\"SIM-NAME\"; //unique string to identify topics for this simulation " << nl
