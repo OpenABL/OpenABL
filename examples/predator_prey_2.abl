@@ -46,25 +46,25 @@ int getColor(Grass g) {
 float PI = 3.14159265358979323846;
 
 // tunable model parameters
-param float REPRODUCE_PREY_PROB     = 0.05;
-param float REPRODUCE_PREDATOR_PROB = 0.03;
-param int GAIN_FROM_FOOD_PREDATOR   = 50;
-param int GAIN_FROM_FOOD_PREY       = 75;
-param int GRASS_REGROW_CYCLES       = 100;
+param float REPRODUCE_PREY_PROB     = 0.005; // 0.05 XML
+param float REPRODUCE_PREDATOR_PROB = 0.001; // 0.03 XML
+param int GAIN_FROM_FOOD_PREDATOR   = 35;   // 75 XML
+param int GAIN_FROM_FOOD_PREY       = 60;   // 50 XML
+param int GRASS_REGROW_CYCLES       = 60;   // 100 XML
 
 // hard coded model parameters
-float PRED_PREY_INTERACTION_RADIUS  = 0.100; //The radius in which predators chase prey and prey run away from predators		
-float PREY_GROUP_COHESION_RADIUS    = 0.200; //The radius in which prey agents form cohesive groups
-float SAME_SPECIES_AVOIDANCE_RADIUS = 0.035; //The radius in which agents of the same species will avoid each other (close proximity collision avoidance behaviour)
-float GRASS_EAT_DISTANCE            = 0.020; //The distance in which grass is eaten by prey
-float PRED_KILL_DISTANCE            = 0.020; //The distance in which prey are eaten by predators
-float DELTA_TIME                    = 0.001; //Time step integral 0.001
-float PRED_SPEED_ADVANTAGE          = 2.000; //Speed multiplier to give predators an advantage
+float PRED_PREY_INTERACTION_RADIUS  = 0.100;  //The radius in which predators chase prey and prey run away from predators		
+float PREY_GROUP_COHESION_RADIUS    = 0.120;  //XML 0.200, The radius in which prey agents form cohesive groups
+float SAME_SPECIES_AVOIDANCE_RADIUS = 0.035;  //The radius in which agents of the same species will avoid each other (close proximity collision avoidance behaviour)
+float GRASS_EAT_DISTANCE            = 0.020;  //The distance in which grass is eaten by prey
+float PRED_KILL_DISTANCE            = 0.020;  //The distance in which prey are eaten by predators
+float DELTA_TIME                    = 0.00150;// XML 0.001, Time step integral 
+float PRED_SPEED_ADVANTAGE          = 2.000;  // XML 2.000, Speed multiplier to give predators an advantage
 
 
 // additional tunable paramters
-param float prey_fraction     = 0.250;
-param float predator_fraction = 0.125;
+param float prey_fraction     = 0.350; // XML 0.250
+param float predator_fraction = 0.025; // XML 0.125
 param float agent_density     = 1600;
 param int num_agents          = 3200;
 
@@ -107,7 +107,7 @@ step prey_flock(Prey in -> out) {
     group_centre_count += 1;
     if (separation < SAME_SPECIES_AVOIDANCE_RADIUS && prey.pos != in.pos) {
       if (separation > 0.0){
-        avoid_velocity += SAME_SPECIES_AVOIDANCE_RADIUS/separation * (in.pos - prey.pos);
+        avoid_velocity += SAME_SPECIES_AVOIDANCE_RADIUS / separation * (in.pos - prey.pos);
       }
     }
   }
@@ -169,7 +169,7 @@ step prey_reproduction(Prey in -> out) {
   if(random(1.0) < REPRODUCE_PREY_PROB){
     add(Prey { pos: in.pos, 
        //dir: random_direction(), steer: float2(0), 
-       dir: - in.dir, steer: - in.steer, // go to opposite direction
+       dir: - in.dir, steer: - in.steer, // go to opposite direction       
        life: in.life / 2 }); // life is split between father and child
     out.life = in.life / 2;
   }
@@ -301,7 +301,7 @@ void main() {
       pos: random(float2(env_size)),
       dir: random_direction(), //float2(0),
       steer: float2(0),
-      life: 20 + int(random(20)),
+      life: GAIN_FROM_FOOD_PREY + int(random(10)),
     });
   }
 
@@ -310,7 +310,7 @@ void main() {
       pos: random(float2(env_size)),
       dir: random_direction(), //float2(0),
       steer: float2(0),
-      life: 10 + int(random(20)),
+      life: GAIN_FROM_FOOD_PREDATOR + int(random(10)),
       
     });
   }
