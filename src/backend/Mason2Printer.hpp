@@ -51,9 +51,9 @@ protected:
   VarId currentInVar;
   VarId currentOutVar;
   // Whether we're in agent code
-  bool inAgent;
+  bool inAgent = false;
   // Whether we're in the main function
-  bool inMain;
+  bool inMain = false;
 };
 
 }

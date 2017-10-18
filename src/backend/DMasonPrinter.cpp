@@ -116,22 +116,17 @@ void DMasonPrinter::print(const AST::FunctionDeclaration &decl) {
           << *decl.stmts;
     if (posMember) {
       if (agent.usesRuntimeRemoval) {
-        assert(0); // TODO
         *this << nl << "if (_isDead) {" << indent << nl
-              << "_sim.env.remove(this);"
-              << outdent << nl << "} else {" << indent
-              << nl << "_sim.env.setObjectLocation(this, getOutState()." << posMember->name << ");"
-              << nl << "_sim.schedule.scheduleOnceIn(1.0, this);"
-              << nl << "swapStates();"
+              << "_sim.env.remove(this);" << nl
+              << "return;"
               << outdent << nl << "}";
-      } else {
-        *this << nl << "try {" << indent
-              << nl << "this.setPos(" << *param.outVar << "." << posMember->name << ");"
-              << nl << "_sim.env.setDistributedObjectLocation("
-              << *param.outVar << "." << posMember->name << ", this, _sim);"
-              << nl << "swapStates();"
-              << outdent << nl << "} catch (DMasonException e) { e.printStackTrace(); }";
       }
+      *this << nl << "try {" << indent
+            << nl << "this.setPos(" << *param.outVar << "." << posMember->name << ");"
+            << nl << "_sim.env.setDistributedObjectLocation("
+            << *param.outVar << "." << posMember->name << ", this, _sim);"
+            << nl << "swapStates();"
+            << outdent << nl << "} catch (DMasonException e) { e.printStackTrace(); }";
     }
     *this << outdent << nl << "}";
     
@@ -185,17 +180,23 @@ void DMasonPrinter::print(const AST::CallExpression &expr) {
       Type type = arg.type;
       AST::AgentDeclaration *agent = type.getAgentDecl();
       AST::AgentMember *posMember = agent->getPositionMember();
+      bool isRuntimeAdd = !inMain;
+
       *this << type << " " << aLabel << " = " << arg << ";" << nl
             << "Double2D " << pLabel << " = " << aLabel
-            << ".getInState()." << posMember->name << ";" << nl
-            << "if (" << pLabel << ".x >= env.own_x && "
-            << pLabel << ".x < env.own_x + env.my_width && "
-            << pLabel << ".y >= env.own_y && "
-            << pLabel << ".y < env.own_y + env.my_height) {" << indent << nl
-            << aLabel << ".setPos(" << pLabel << ");" << nl
-            << "env.setObjectLocation(" << aLabel << ", " << pLabel << ");" << nl
-            << "schedule.scheduleOnce(" << aLabel << ");"
-            << outdent << nl << "}" << nl;
+            << ".getInState()." << posMember->name << ";" << nl;
+      if (!isRuntimeAdd) {
+        *this << "if (" << pLabel << ".x >= env.own_x && "
+              << pLabel << ".x < env.own_x + env.my_width && "
+              << pLabel << ".y >= env.own_y && "
+              << pLabel << ".y < env.own_y + env.my_height) {" << indent << nl;
+      }
+      *this << aLabel << ".setPos(" << pLabel << ");" << nl
+            << getSimVarName() << ".env.setObjectLocation(" << aLabel << ", " << pLabel << ");" << nl
+            << getSimVarName() << ".schedule.scheduleOnce(" << aLabel << ");";
+      if (!isRuntimeAdd) {
+        *this << outdent << nl << "}" << nl;
+      }
     } else if (name == "save") {
       // TODO Handle save
       *this << "//save()";
@@ -209,7 +210,7 @@ void DMasonPrinter::print(const AST::CallExpression &expr) {
 void DMasonPrinter::print(const AST::AgentCreationExpression &expr) {
   AST::AgentDeclaration *agent = expr.type.getAgentDecl();
 
-  *this << "new " << expr.name << "(this,";
+  *this << "new " << expr.name << "(" << getSimVarName() << ", ";
   printCommaSeparated(*agent->members, [&](const AST::AgentMemberPtr &member) {
     auto it = expr.memberMap.find(member->name);
     assert(it != expr.memberMap.end());
@@ -291,9 +292,9 @@ void DMasonPrinter::print(const AST::Script &script) {
 
   // TODO This needs to be split in start + end
   AST::FunctionDeclaration *mainFunc = script.mainFunc;
-  if (mainFunc) {
-    *this << *mainFunc->stmts;
-  }
+  inMain = true;
+  *this << *mainFunc->stmts;
+  inMain = false;
 
   *this << outdent << nl << "}" << nl;
   // Print non-step, non-main functions
