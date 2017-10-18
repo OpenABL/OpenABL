@@ -10,7 +10,8 @@ void DMasonPrinter::printLocalTestCode() {
     << "import it.isislab.dmason.sim.engine.DistributedState;" << nl
     << "import it.isislab.dmason.sim.field.DistributedField2D;" << nl
     << "import it.isislab.dmason.util.connection.ConnectionType;" << nl
-    << "import java.util.ArrayList;"   << nl
+    << "import java.util.ArrayList;" << nl
+    << "import sim.display.Console;" << nl
     << "public class LocalTestSim {" << indent << nl
     << "private static int numSteps = 3000; //only graphicsOn=false" << nl
     << "private static int rows = 2; //number of rows" << nl
@@ -53,9 +54,14 @@ void DMasonPrinter::printLocalTestCode() {
     << "            genParam.setIp(ip);" << nl
     << "            genParam.setPort(port);" << nl
     << "            ArrayList<EntryParam<String, Object>> simParams=new ArrayList<EntryParam<String, Object>>();" << nl
-    << "            Sim sim = new Sim(genParam,simParams,topicPrefix); " << nl
-    << "            worker a = new worker(sim);" << nl
-    << "            myWorker.add(a);" << nl
+    << "            if (i == 0 && j == 0) {" << nl
+    << "                SimWithUI sim = new SimWithUI(genParam,simParams,topicPrefix);" << nl
+    << "                ((Console) sim.createController()).pressPause();" << nl
+    << "            } else {" << nl
+    << "                Sim sim = new Sim(genParam,simParams,topicPrefix); " << nl
+    << "                worker a = new worker(sim);" << nl
+    << "                myWorker.add(a);" << nl
+    << "            }" << nl
     << "        }" << nl
     << "    }" << nl
     << "        for (worker w : myWorker) {" << nl
@@ -97,6 +103,25 @@ void DMasonPrinter::printStubAgent(const AST::AgentDeclaration &decl) {
 	<< "}"<< nl << nl;
 
 }
+
+void DMasonPrinter::printUIExtraImports() {
+  *this <<
+  "import java.util.List;\n"
+  "import it.isislab.dmason.experimentals.tools.batch.data.EntryParam;\n"
+  "import it.isislab.dmason.experimentals.tools.batch.data.GeneralParam;\n";
+}
+void DMasonPrinter::printUICtors() {
+  *this <<
+  "    public SimWithUI(GeneralParam args, String prefix) {\n"
+  "        super(new Sim(args, prefix));\n"
+  "        name = String.valueOf(args.getI()) + \"\" + String.valueOf(args.getJ());\n"
+  "    }\n"
+  "    public SimWithUI(GeneralParam args, List<EntryParam<String, Object>> simParams, String prefix) {\n"
+  "        super(new Sim(args, simParams, prefix));\n"
+  "        name = String.valueOf(args.getI()) + \"\" + String.valueOf(args.getJ());\n"
+  "    }\n";
+}
+
 void DMasonPrinter::print(const AST::FunctionDeclaration &decl) {
   if (decl.isStep) {
     const AST::Param &param = decl.stepParam();
@@ -310,12 +335,15 @@ void DMasonPrinter::print(const AST::Script &script) {
         <<"public void addToField(RemotePositionedAgent<Double2D> rm, Double2D loc) {"<< indent << nl
         <<"env.setObjectLocation(rm, loc);" << nl
         <<"}"<< outdent << nl
-	<<"public SimState getState() {"<< indent << nl
+	      <<"public SimState getState() {"<< indent << nl
         <<"return this;"<< nl
         <<"}"<< outdent << nl
-	<< "public static void main(String[] args) {" << indent
+	      << "public static void main(String[] args) {" << indent
         << nl << "doLoop(Sim.class, args);"
         << nl << "System.exit(0);"
+        << outdent << nl << "}";
+  *this << nl << "public static int getColor(Object obj) {" << indent
+        << nl << "return 0;"
         << outdent << nl << "}";
 
   *this << outdent << nl << "}";

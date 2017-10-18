@@ -547,6 +547,23 @@ void Mason2Printer::print(const AST::Script &script) {
   *this << outdent << nl << "}";
 }
 
+void Mason2Printer::printUIExtraImports() { }
+void Mason2Printer::printUICtors() {
+  *this <<
+  "    public static void main(String[] args) {\n"
+  "        SimWithUI vid = new SimWithUI();\n"
+  "        Console c = new Console(vid);\n"
+  "        c.setVisible(true);\n"
+  "    }\n"
+  "\n"
+  "    public SimWithUI() {\n"
+  "        super(new Sim(System.currentTimeMillis()));\n"
+  "    }\n"
+  "    public SimWithUI(SimState state) {\n"
+  "        super(state);\n"
+  "    }\n";
+}
+
 void Mason2Printer::printUI() {
   int dim = script.envDecl->envDimension;
   size_t numSteps = script.simStmt->stepFuncDecls.size();
@@ -560,7 +577,9 @@ void Mason2Printer::printUI() {
   "import sim.display.*;\n"
   "import sim.display3d.*;\n"
   "import javax.swing.*;\n"
-  "import java.awt.*;\n"
+  "import java.awt.*;\n";
+  printUIExtraImports();
+  *this <<
   "\n"
   "public class SimWithUI extends GUIState {\n"
   "    class MyDisplay extends Display" << dim << "D {\n"
@@ -573,22 +592,14 @@ void Mason2Printer::printUI() {
   "    private static final int SIZE = 500;\n"
   "    public Display" << dim << "D display;\n"
   "    public JFrame displayFrame;\n"
+  "    public static String name = \"Visualization\";\n"
   "    ContinuousPortrayal" << dim << "D envPortrayal = new ContinuousPortrayal" << dim << "D();\n"
+  "\n";
+  printUICtors();
+  *this <<
   "\n"
-  "    public static void main(String[] args) {\n"
-  "        SimWithUI vid = new SimWithUI();\n"
-  "        Console c = new Console(vid);\n"
-  "        c.setVisible(true);\n"
-  "    }\n"
-  "\n"
-  "    public SimWithUI() {\n"
-  "        super(new Sim(System.currentTimeMillis()));\n"
-  "    }\n"
-  "    public SimWithUI(SimState state) {\n"
-  "        super(state);\n"
-  "    }\n"
   "    public static String getName() {\n"
-  "        return \"Visualization\";\n"
+  "        return name;\n"
   "    }\n"
   "\n"
   "    public void start() {\n"

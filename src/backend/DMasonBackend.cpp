@@ -25,6 +25,11 @@ static std::string generateLocalTestCode(AST::Script &script) {
   printer.printLocalTestCode();
   return printer.extractStr();
 }
+static std::string generateUICode(AST::Script &script) {
+  DMasonPrinter printer(script);
+  printer.printUI();
+  return printer.extractStr();
+}
 
 void DMasonBackend::generate(
     AST::Script &script, const BackendContext &ctx) {
@@ -45,6 +50,7 @@ void DMasonBackend::generate(
   }
 
   writeToFile(ctx.outputDir + "/Sim.java", generateMainCode(script));
+  writeToFile(ctx.outputDir + "/SimWithUI.java", generateUICode(script));
   writeToFile(ctx.outputDir + "/LocalTestSim.java", generateLocalTestCode(script));
   
   for (AST::AgentDeclaration *agent : script.agents) {
