@@ -1,6 +1,7 @@
 # OpenABL
 
-OpenABL is a work-in-progress domain-specific language for agent based simulations. It it designed to compile to multiple backends.
+OpenABL is a work-in-progress domain-specific language for agent based simulations. It it designed to compile to multiple backends targeting different computing architectures, including single CPUs,
+GPUs and clusters.
 
 ## Installation
 
@@ -20,10 +21,10 @@ make -j4
 
 Examples are located in the `examples` directory.
 
-To compile the `examples/circle.abl` example using the C backend:
+To compile the `examples/circle.abl` example using the Mason backend:
 
 ```sh
-./OpenABL -i ../examples/circle.abl -o ./output -b c
+./OpenABL -i ../examples/circle.abl -o ./output -b mason
 ```
 
 The result will be written into the `./output` directory. To run the generated code:
@@ -40,10 +41,19 @@ You can also automatically build and run the generated code (if this is supporte
 
 ```sh
 # Generate + Build
-./OpenABL -i ../examples/circle.abl -o ./output -b c -B
+./OpenABL -i ../examples/circle.abl -o ./output -b mason -B
 # Generate + Build + Run
-./OpenABL -i ../examples/circle.abl -o ./output -b c -R
+./OpenABL -i ../examples/circle.abl -o ./output -b mason -R
 ```
+
+If the backend supports it, it is also possible to run with visualization:
+
+```sh
+./OpenABL -i ../examples/circle.abl -b mason -C visualize=true -R
+```
+
+If `-R` is used, the output directory can be omitted. In this case a temporary directory will be
+used.
 
 ## Help
 
@@ -64,11 +74,11 @@ Options:
   -R, --run          Build and run the generated code
 
 Available backends:
- * c        (working)
- * flame    (working)
- * flamegpu (mostly working)
- * mason    (working)
- * dmason   (mostly working)
+ * c
+ * flame
+ * flamegpu
+ * mason
+ * dmason
 
 Available configuration options:
  * bool use_float (default: false, flame/gpu only)
@@ -81,7 +91,7 @@ Available configuration options:
    numbers, as some backends only support doubles. For the Flame and FlameGPU backends this option
    may be enabled to use single-precision floating point numbers instead.
  * `bool visualize = false`: Display a graphical visualization of the model. This option is
-   currently only supported by the Mason backend
+   currently only supported by the Mason backend.
 
 ## Environment configuration
 
@@ -93,6 +103,6 @@ different backends.
    be set to the xparser directory.
  * `flamegpu` backend: The `FLAMEGPU_DIR` environment variable must be set to the FLAMEGPU directory.
  * `mason` backend: Mason must be in the `CLASSPATH`.
- * `dmason` backend: TODO.
+ * `dmason` backend: DMason must be in the `CLASSPATH`.
 
 Please report if any necessary environment configuration is missing.
