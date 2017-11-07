@@ -150,9 +150,9 @@ false { return Parser::make_BOOL(false, loc); }
 
 "/*" { BEGIN(ST_COMMENT); }
 <ST_COMMENT>[^*\n]+
-<ST_COMMENT>"*"+[^/\n]
-<ST_COMMENT>\n+        { loc.lines(yyleng); }
-<ST_COMMENT>"*/"       { loc.step(); BEGIN(INITIAL); }
+<ST_COMMENT>"*"+[^*/\n]*
+<ST_COMMENT>\n+          { loc.lines(yyleng); }
+<ST_COMMENT>"*/"         { loc.step(); BEGIN(INITIAL); }
 
 [ \t\r]+ { loc.step(); }
 \n+ { loc.lines(yyleng); }
