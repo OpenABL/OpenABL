@@ -54,14 +54,14 @@ XML_MODEL:=$(SRC_)XMLModelFile.xml
 all: XSLTPREP build
 
 XML_Validate:
-	xmllint --noout $(XML_MODEL) --schema $(XSD_SCHEMA)XMMLGPU.xsd 
+	xmllint --noout $(XML_MODEL) --schema $(XSD_SCHEMA)XMMLGPU.xsd
 
 XSLTPREP: XML_Validate
 XSLTPREP:
-	xsltproc $(TEMPLATE)header.xslt  $(XML_MODEL)> $(SRC_CUDA)header.h 
+	xsltproc $(TEMPLATE)header.xslt  $(XML_MODEL)> $(SRC_CUDA)header.h
 	xsltproc $(TEMPLATE)FLAMEGPU_kernals.xslt $(XML_MODEL) > $(SRC_CUDA)FLAMEGPU_kernals.cu
-	xsltproc $(TEMPLATE)io.xslt $(XML_MODEL) > $(SRC_CUDA)io.cu 
-	xsltproc $(TEMPLATE)simulation.xslt $(XML_MODEL) > $(SRC_CUDA)simulation.cu 
+	xsltproc $(TEMPLATE)io.xslt $(XML_MODEL) > $(SRC_CUDA)io.cu
+	xsltproc $(TEMPLATE)simulation.xslt $(XML_MODEL) > $(SRC_CUDA)simulation.cu
 	xsltproc $(TEMPLATE)main.xslt $(XML_MODEL) > $(SRC_CUDA)main.cu
 
 ################################################################################
@@ -184,7 +184,7 @@ ALL_LDFLAGS += $(addprefix -Xlinker ,$(EXTRA_LDFLAGS))
 INCLUDES  := -I../../common/inc
 
 # Common includes for OPENGL
-LIBRARIES := 
+LIBRARIES :=
 
 ################################################################################
 
@@ -220,8 +220,8 @@ help:
 	@echo "************************************************************************"
 	@echo "*  Copyright 2016 University of Sheffield.  All rights reserved.       *"
 	@echo "************************************************************************"
-	@echo "make all -> validate &processes XSL model and generates all .cu files  *" 
-	@echo "                                                                       *"  
+	@echo "make all -> validate &processes XSL model and generates all .cu files  *"
+	@echo "                                                                       *"
 	@echo "           ------------------------------------------------            *"
 	@echo "make XSLTPREP -> Validate and preprocesses the xml model               *"
 	@echo "                                                                       *"
@@ -245,17 +245,17 @@ help:
 	@echo "To run executables for console mode, run below command:                *"
 	@echo "make run_console iter='arg'                                            *"
 	@echo "           Note that without the 'arg', it only runs for 1 iteration   *"
-	@echo "           ------------------------------------------------            *"                
+	@echo "           ------------------------------------------------            *"
 	@echo "Alternatively, run the bash script stored in bin/x64. The iteration    *"
 	@echo "default value in console mode is 1. You can simple change it by       *"
 	@echo "entering a new value while running the ./*.sh file.                    *"
 	@echo "                                                                       *"
 	@echo "           ------------------------------------------------            *"
 	@echo "Note: You can manualy change the location/name of the INPUT_DATA       *"
-	@echo "                                                                       *" 
+	@echo "                                                                       *"
 	@echo "************************************************************************"
- 
-build: main 
+
+build: main
 
 check.deps:
 ifeq ($(SAMPLE_ENABLED),0)
@@ -275,7 +275,7 @@ main.o: $(SRC_CUDA)main.cu
 
 
 main: BUILD_TYPE=$(Mode_TYPE)_Console
-main: io.o simulation.o  main.o 
+main: io.o simulation.o  main.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 
 .PHONY: clean

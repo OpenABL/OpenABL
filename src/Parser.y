@@ -1,11 +1,11 @@
 /* Copyright 2017 OpenABL Contributors
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,7 +80,7 @@ OpenABL::Parser::symbol_type yylex(OpenABL::ParserContext &ctx);
   SEMI
   LPAREN
   RPAREN
-  LBRACKET 
+  LBRACKET
   RBRACKET
   LBRACE
   RBRACE
@@ -309,7 +309,7 @@ expression: var { $$ = new VarExpression($1, @$); }
           | expression QM expression COLON expression
               { $$ = new TernaryExpression($1, $3, $5, @$); }
           | NEW type LBRACKET expression RBRACKET { $$ = new NewArrayExpression($2, $4, @$); }
-    
+
           | NOT expression           { $$ = new UnaryOpExpression(UnaryOp::LOGICAL_NOT, $2, @$); }
           | BITWISE_NOT expression   { $$ = new UnaryOpExpression(UnaryOp::BITWISE_NOT, $2, @$); }
           | ADD expression %prec NOT { $$ = new UnaryOpExpression(UnaryOp::PLUS, $2, @$); }

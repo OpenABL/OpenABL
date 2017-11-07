@@ -1,11 +1,11 @@
 /* Copyright 2017 OpenABL Contributors
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -174,7 +174,7 @@ void DMasonPrinter::print(const AST::FunctionDeclaration &decl) {
             << outdent << nl << "} catch (DMasonException e) { e.printStackTrace(); }";
     }
     *this << outdent << nl << "}";
-    
+
     currentInVar.reset();
     currentOutVar.reset();
   } else {
@@ -307,7 +307,7 @@ void DMasonPrinter::print(const AST::Script &script) {
         << "this.MODE=params.getMode();" << nl
         << "this.topicPrefix=prefix;" << nl
         << "gridWidth=params.getWidth();" << nl
-        << "gridHeight=params.getHeight();" << nl  
+        << "gridHeight=params.getHeight();" << nl
 	<< "for (EntryParam<String, Object> entryParam : simParams) {" << indent << nl
  	<< "try { " << nl
  		<< "this.getClass().getDeclaredField(entryParam.getParamName()).set(this, entryParam.getParamValue());"  << outdent << nl
