@@ -54,20 +54,24 @@ float3 clamp(float3 pos, float3 max) {
 // For wraparound the semantics are:
 // min is inclusive and max is exclusive
 
+float wraparound(float pos, float max) {
+  return pos < 0 ? max + pos : pos >= max ? pos - max : pos;
+}
+
 float2 wraparound(float2 pos, float2 max) {
   return float2(
-    pos.x < 0 ? max.x - pos.x : pos.x >= max.x ? pos.x - max.x : pos.x,
-    pos.y < 0 ? max.y - pos.y : pos.y >= max.y ? pos.y - max.y : pos.y,
+    pos.x < 0 ? max.x + pos.x : pos.x >= max.x ? pos.x - max.x : pos.x,
+    pos.y < 0 ? max.y + pos.y : pos.y >= max.y ? pos.y - max.y : pos.y,
   );
 }
 float3 wraparound(float3 pos, float3 max) {
   return float3(
-    pos.x < 0 ? max.x - pos.x : pos.x >= max.x ? pos.x - max.x : pos.x,
-    pos.y < 0 ? max.y - pos.y : pos.y >= max.y ? pos.y - max.y : pos.y,
-    pos.z < 0 ? max.z - pos.z : pos.z >= max.z ? pos.z - max.z : pos.z,
+    pos.x < 0 ? max.x + pos.x : pos.x >= max.x ? pos.x - max.x : pos.x,
+    pos.y < 0 ? max.y + pos.y : pos.y >= max.y ? pos.y - max.y : pos.y,
+    pos.z < 0 ? max.z + pos.z : pos.z >= max.z ? pos.z - max.z : pos.z,
   );
 }
 
 bool is_inside(float2 pos, float2 max) {
-  return pos.x >= 0 &&  pos.y >= 0 && pos.x <= max.x && pos.y <= max.y;
+  return pos.x >= 0 && pos.y >= 0 && pos.x <= max.x && pos.y <= max.y;
 }
