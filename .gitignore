@@ -6,3 +6,4 @@ Makefile
 *.out
 *.diff
 test-tmp/
+build/
