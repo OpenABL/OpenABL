@@ -121,8 +121,8 @@ static std::string createFunctionsFile(
   return printer.extractStr();
 }
 
-static std::string createMainFile(AST::Script &script, bool useFloat) {
-  FlameMainPrinter printer(script, useFloat, false);
+static std::string createMainFile(AST::Script &script, bool useFloat, bool parallel) {
+  FlameMainPrinter printer(script, useFloat, false, parallel);
   printer.print(script);
   return printer.extractStr();
 }
@@ -141,16 +141,21 @@ void FlameBackend::generate(AST::Script &script, const BackendContext &ctx) {
   }
 
   bool useFloat = ctx.config.getBool("use_float", false);
+  bool parallel = ctx.config.getBool("flame.parallel", false);
 
   FlameModel model = FlameModel::generateFromScript(script);
 
   writeToFile(ctx.outputDir + "/XMLModelFile.xml", createXmlModel(script, model, useFloat));
   writeToFile(ctx.outputDir + "/functions.c", createFunctionsFile(script, model, useFloat));
-  writeToFile(ctx.outputDir + "/runner.c", createMainFile(script, useFloat));
+  writeToFile(ctx.outputDir + "/runner.c", createMainFile(script, useFloat, parallel));
 
   copyFile(ctx.assetDir + "/c/libabl.h", ctx.outputDir + "/libabl.h");
   copyFile(ctx.assetDir + "/c/libabl.c", ctx.outputDir + "/libabl.c");
-  copyFile(ctx.assetDir + "/flame/build.sh", ctx.outputDir + "/build.sh");
+  if (parallel) {
+    copyFile(ctx.assetDir + "/flame/build-parallel.sh", ctx.outputDir + "/build.sh");
+  } else {
+    copyFile(ctx.assetDir + "/flame/build.sh", ctx.outputDir + "/build.sh");
+  }
   copyFile(ctx.assetDir + "/flame/run.sh", ctx.outputDir + "/run.sh");
   writeToFile(ctx.outputDir + "/build_runner.sh", createBuildRunner(useFloat));
   makeFileExecutable(ctx.outputDir + "/build.sh");

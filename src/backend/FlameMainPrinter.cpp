@@ -27,8 +27,13 @@ void FlameMainPrinter::print(const AST::SimulateStatement &stmt) {
   } else {
     *this << "save(&agents, agents_info, \"iterations/0.xml\", SAVE_FLAME_XML);"
           << "char _cmd_buf[100];" << nl
-          << "snprintf(_cmd_buf, sizeof(_cmd_buf), \"./main %d iterations/0.xml\", "
-          << *stmt.timestepsExpr << ");" << nl
+          << "snprintf(_cmd_buf, sizeof(_cmd_buf), ";
+    if (parallel) {
+      *this << "\"mpirun -np 4 ./main %d iterations/0.xml -r\"";
+    } else {
+      *this << "\"./main %d iterations/0.xml\"";
+    }
+    *this << ", " << *stmt.timestepsExpr << ");" << nl
           << "int _cmd_ret = system(_cmd_buf);" << nl
           << "if (_cmd_ret != 0) { return _cmd_ret; }" << nl;
   }

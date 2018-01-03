@@ -220,7 +220,7 @@ static std::string createFunctionsFile(
 }
 
 static std::string createMainFile(AST::Script &script, bool useFloat) {
-  FlameMainPrinter printer(script, useFloat, true);
+  FlameMainPrinter printer(script, useFloat, true, false);
   printer.print(script);
   return printer.extractStr();
 }
