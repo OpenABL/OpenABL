@@ -12,7 +12,7 @@ set(OpenABL_SOURCES
     src/Type.cpp
     src/main.cpp
     src/backend/GenericPrinter.cpp
-	src/backend/GenericCPrinter.cpp
+    src/backend/GenericCPrinter.cpp
     src/backend/CBackend.cpp
     src/backend/CPrinter.cpp
     src/backend/FlameModel.cpp
@@ -51,5 +51,4 @@ include_directories(src/ ${CMAKE_CURRENT_BINARY_DIR})
 add_executable(OpenABL
     ${OpenABL_SOURCES}
     ${BISON_Parser_OUTPUTS}
-    ${FLEX_Lexer_OUTPUTS}
-    ${OpenABL_SOURCES})
+    ${FLEX_Lexer_OUTPUTS})
