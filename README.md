@@ -5,20 +5,46 @@ GPUs and clusters.
 
 ## Installation
 
-Build requirements: `flex`, `bison`, `cmake` and a C++11 compatible C++
+The build requires `flex`, `bison`, `cmake` and a C++11 compatible C++
 compiler. The build requirements can be installed using:
 
 ```sh
 sudo apt-get install flex bison cmake g++
 ```
 
-For an out-of-source build:
+An out-of-source build can be performed using:
 
 ```sh
 mkdir ./build
 cd ./build
 cmake ..
 make -j4
+```
+
+## Installation of backend libraries
+
+OpenABL supports a number of backend libraries, which need to be installed
+separately. For convenience a script to download and build the different
+backend libraries is provided.
+
+Some of the backends have additional build or runtime dependencies. To install
+all of them run:
+
+```sh
+sudo apt-get install git autoconf libtool default-jdk
+```
+
+The backends can then be downloaded and built using the following command (run
+from the root directory, not the build directory):
+
+```sh
+# To build all
+make -C deps
+
+# To build only a specific one
+make -C deps mason
+make -C deps flame
+make -C deps flamegpu
 ```
 
 ## Running

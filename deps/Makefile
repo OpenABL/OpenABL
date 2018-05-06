@@ -13,7 +13,10 @@ flame/libmboard-install: flame/libmboard/Makefile
 
 flame/libmboard/Makefile: flame/libmboard/configure
 	cd flame/libmboard; \
-		./configure --prefix=`pwd`/../libmboard-install
+		./configure \
+		--prefix=`pwd`/../libmboard-install \
+		--disable-tests \
+		--disable-parallel
 
 flame/libmboard/configure: | flame/libmboard
 	cd flame/libmboard; \
@@ -43,7 +46,7 @@ flamegpu/FLAMEGPU:
 #
 
 mason: mason.zip
-	unzip mason.zip
+	unzip -D mason.zip
 
 mason.zip:
 	wget https://cs.gmu.edu/~eclab/projects/mason/mason.zip
