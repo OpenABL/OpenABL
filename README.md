@@ -31,7 +31,8 @@ Some of the backends have additional build or runtime dependencies. To install
 all of them run:
 
 ```sh
-sudo apt-get install git autoconf libtool libxml2-utils xsltproc default-jdk
+sudo apt-get install git autoconf libtool libxml2-utils xsltproc \
+                     default-jdk maven
 ```
 
 The backends can then be downloaded and built using the following command (run
@@ -45,6 +46,7 @@ make -C deps
 make -C deps mason
 make -C deps flame
 make -C deps flamegpu
+make -C deps dmason
 ```
 
 ## Running

@@ -1,5 +1,5 @@
 .PHONY: all
-all: mason flame flamegpu
+all: mason flame flamegpu dmason
 
 #
 # Flame
@@ -50,3 +50,22 @@ mason: mason.zip
 
 mason.zip:
 	wget https://cs.gmu.edu/~eclab/projects/mason/mason.zip
+
+#
+# DMason
+#
+
+dmason: dmason/dmason/target/DMASON-3.2.jar
+
+dmason/dmason/target: | dmason/dmason
+	cd dmason/dmason; \
+		mvn -Dmaven.test.skip=true -Dmaven.javadoc.skip=true package
+
+dmason/dmason: dmason/dmason.zip
+	cd dmason; \
+		unzip -D dmason.zip; \
+		mv dmason-master dmason
+
+dmason/dmason.zip:
+	mkdir -p dmason
+	wget https://github.com/isislab-unisa/dmason/archive/master.zip -O dmason/dmason.zip
