@@ -270,4 +270,13 @@ void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
   createDirectory(ctx.outputDir + "/iterations");
 }
 
+
+void FlameGPUBackend::initEnv(const BackendContext &ctx) {
+  std::string flameGpuDir = ctx.depsDir + "/flamegpu";
+  if (directoryExists(flameGpuDir)) {
+    std::string realFlameGpuDir = flameGpuDir + "/FLAMEGPU";
+    setenv("FLAMEGPU_DIR", realFlameGpuDir.c_str(), true);
+  }
+}
+
 }

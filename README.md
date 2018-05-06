@@ -31,7 +31,7 @@ Some of the backends have additional build or runtime dependencies. To install
 all of them run:
 
 ```sh
-sudo apt-get install git autoconf libtool default-jdk
+sudo apt-get install git autoconf libtool libxml2-utils xsltproc default-jdk
 ```
 
 The backends can then be downloaded and built using the following command (run
