@@ -14,6 +14,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <cmath>
 #include "Backend.hpp"
 #include "FileUtil.hpp"
 #include "XmlUtil.hpp"
