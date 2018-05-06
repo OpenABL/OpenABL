@@ -81,4 +81,18 @@ void DMasonBackend::generate(
   makeFileExecutable(ctx.outputDir + "/build.sh");
 }
 
+void DMasonBackend::initEnv(const BackendContext &ctx) {
+  std::string dmasonDir = ctx.depsDir + "/dmason";
+  if (directoryExists(dmasonDir)) {
+    std::string classpath = dmasonDir + "/dmason/target/DMASON-3.2.jar:";
+    const char *oldClasspath = getenv("CLASSPATH");
+    if (oldClasspath) {
+      classpath += oldClasspath;
+    } else {
+      classpath += ".";
+    }
+    setenv("CLASSPATH", classpath.c_str(), true);
+  }
+}
+
 }

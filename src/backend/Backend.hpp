@@ -61,6 +61,7 @@ struct Mason2Backend : public Backend {
 
 struct DMasonBackend : public Backend {
   void generate(AST::Script &script, const BackendContext &ctx);
+  void initEnv(const BackendContext &ctx);
 };
 
 }
