@@ -165,4 +165,15 @@ void FlameBackend::generate(AST::Script &script, const BackendContext &ctx) {
   createDirectory(ctx.outputDir + "/iterations");
 }
 
+void FlameBackend::initEnv(const BackendContext &ctx) {
+  std::string flameDir = ctx.depsDir + "/flame";
+  if (directoryExists(flameDir)) {
+    std::string xparserDir = flameDir + "/xparser";
+    setenv("FLAME_XPARSER_DIR", xparserDir.c_str(), true);
+
+    std::string libmboardDir = flameDir + "/libmboard-install";
+    setenv("LIBMBOARD_DIR", libmboardDir.c_str(), true);
+  }
+}
+
 }

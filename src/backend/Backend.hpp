@@ -41,6 +41,7 @@ struct CBackend : public Backend {
 
 struct FlameBackend : public Backend {
   void generate(AST::Script &script, const BackendContext &ctx);
+  void initEnv(const BackendContext &ctx);
 };
 
 struct FlameGPUBackend : public Backend {

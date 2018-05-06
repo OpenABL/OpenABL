@@ -129,9 +129,11 @@ To use the automatic build and run scripts, some environment configuration is re
 different backends.
 
  * `c` backend: No dependencies.
- * `flame` backend: `libmboard` must be in PATH. The `FLAME_XPARSER_DIR` environment variable must
-   be set to the xparser directory.
- * `flamegpu` backend: The `FLAMEGPU_DIR` environment variable must be set to the FLAMEGPU directory.
+ * `flame` backend: The `FLAME_XPARSER_DIR` environment variable must be set to
+   the xparser directory. The `LIBMBOARD_DIR` environment variable must be set
+   to the libmboard directory.
+ * `flamegpu` backend: The `FLAMEGPU_DIR` environment variable must be set to
+   the FLAMEGPU directory.
  * `mason` backend: Mason must be in the `CLASSPATH`.
  * `dmason` backend: DMason must be in the `CLASSPATH`.
 
