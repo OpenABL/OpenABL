@@ -189,13 +189,14 @@ int main(int argc, char **argv) {
   }
 
   Backend &backend = *it->second;
+  BackendContext backendCtx = {
+    options.outputDir,
+    options.assetDir,
+    options.depsDir,
+    Config { options.config }
+  };
+
   try {
-    BackendContext backendCtx = {
-      options.outputDir,
-      options.assetDir,
-      options.depsDir,
-      Config { options.config }
-    };
     backend.generate(mainScript, backendCtx);
   } catch (const std::runtime_error &e) {
     std::cerr << e.what() << std::endl;
@@ -204,6 +205,8 @@ int main(int argc, char **argv) {
 
   if (options.build || options.run) {
     changeWorkingDirectory(options.outputDir);
+    backend.initEnv(backendCtx);
+
     if (!fileExists("./build.sh")) {
       std::cerr << "Build file for this backend not found" << std::endl;
       return 1;

@@ -32,6 +32,7 @@ struct BackendContext {
 
 struct Backend {
   virtual void generate(AST::Script &script, const BackendContext &ctx) = 0;
+  virtual void initEnv(const BackendContext &ctx) {}
 };
 
 struct CBackend : public Backend {
@@ -48,10 +49,12 @@ struct FlameGPUBackend : public Backend {
 
 struct MasonBackend : public Backend {
   void generate(AST::Script &script, const BackendContext &ctx);
+  void initEnv(const BackendContext &ctx);
 };
 
 struct Mason2Backend : public Backend {
   void generate(AST::Script &script, const BackendContext &ctx);
+  void initEnv(const BackendContext &ctx);
 };
 
 struct DMasonBackend : public Backend {

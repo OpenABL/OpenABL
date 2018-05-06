@@ -36,23 +36,10 @@ static std::string generateUICode(AST::Script &script) {
   return printer.extractStr();
 }
 
-static std::string getClassPathPrefix(const BackendContext &ctx) {
-  std::string masonDir = ctx.depsDir + "/mason";
-  if (directoryExists(masonDir)) {
-    return "CLASSPATH=" + masonDir + ":$CLASSPATH ";
-  } else {
-    return "";
-  }
-}
-
-static std::string generateBuildScript(const BackendContext &ctx) {
-  return getClassPathPrefix(ctx) + "javac *.java";
-}
-
 static std::string generateRunScript(const BackendContext &ctx) {
   bool visualize = ctx.config.getBool("visualize", false);
-  const char *simClass = visualize ? "SimWithUI" : "Sim";
-  return getClassPathPrefix(ctx) + "java " + simClass;
+  std::string simClass = visualize ? "SimWithUI" : "Sim";
+  return "java " + simClass;
 }
 
 void Mason2Backend::generate(
@@ -71,10 +58,24 @@ void Mason2Backend::generate(
 
   copyFile(ctx.assetDir + "/mason/Util.java", ctx.outputDir + "/Util.java");
   copyFile(ctx.assetDir + "/mason/build.sh", ctx.outputDir + "/build.sh");
-  writeToFile(ctx.outputDir + "/build.sh", generateBuildScript(ctx));
+  copyFile(ctx.assetDir + "/mason/build.sh", ctx.outputDir + "/build.sh");
   writeToFile(ctx.outputDir + "/run.sh", generateRunScript(ctx));
   makeFileExecutable(ctx.outputDir + "/build.sh");
   makeFileExecutable(ctx.outputDir + "/run.sh");
+}
+
+void Mason2Backend::initEnv(const BackendContext &ctx) {
+  std::string masonDir = ctx.depsDir + "/mason";
+  if (directoryExists(masonDir)) {
+    std::string classpath = masonDir + ":";
+    const char *oldClasspath = getenv("CLASSPATH");
+    if (oldClasspath) {
+      classpath += oldClasspath;
+    } else {
+      classpath += ".";
+    }
+    setenv("CLASSPATH", classpath.c_str(), true);
+  }
 }
 
 }
