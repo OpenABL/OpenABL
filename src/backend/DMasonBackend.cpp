@@ -77,21 +77,20 @@ void DMasonBackend::generate(
   }
 
   copyFile(ctx.assetDir + "/mason/Util.java", ctx.outputDir + "/Util.java");
-  copyFile(ctx.assetDir + "/mason/build.sh", ctx.outputDir + "/build.sh");
+  copyFile(ctx.assetDir + "/dmason/build.sh", ctx.outputDir + "/build.sh");
+  copyFile(ctx.assetDir + "/dmason/run.sh", ctx.outputDir + "/run.sh");
   makeFileExecutable(ctx.outputDir + "/build.sh");
+  makeFileExecutable(ctx.outputDir + "/run.sh");
 }
 
 void DMasonBackend::initEnv(const BackendContext &ctx) {
-  std::string dmasonDir = ctx.depsDir + "/dmason";
-  if (directoryExists(dmasonDir)) {
-    std::string classpath = dmasonDir + "/dmason/target/DMASON-3.2.jar:";
-    const char *oldClasspath = getenv("CLASSPATH");
-    if (oldClasspath) {
-      classpath += oldClasspath;
-    } else {
-      classpath += ".";
-    }
-    setenv("CLASSPATH", classpath.c_str(), true);
+  std::string dmasonTargetDir = ctx.depsDir + "/dmason/dmason/target";
+  if (directoryExists(dmasonTargetDir)) {
+    std::string jarPath = dmasonTargetDir + "/DMASON-3.2.jar:";
+    setenv("DMASON_JAR", jarPath.c_str(), true);
+
+    std::string resourcesPath = dmasonTargetDir + "/resources";
+    setenv("DMASON_RESOURCES", resourcesPath.c_str(), true);
   }
 }
 

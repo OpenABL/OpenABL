@@ -127,16 +127,19 @@ Available configuration options:
 
 ## Environment configuration
 
-To use the automatic build and run scripts, some environment configuration is required for the
-different backends.
+To use the automatic build and run scripts, some environment configuration is
+required for the different backends.
 
  * `c` backend: No dependencies.
- * `flame` backend: The `FLAME_XPARSER_DIR` environment variable must be set to
-   the xparser directory. The `LIBMBOARD_DIR` environment variable must be set
-   to the libmboard directory.
- * `flamegpu` backend: The `FLAMEGPU_DIR` environment variable must be set to
-   the FLAMEGPU directory.
+ * `flame` backend:
+   * `FLAME_XPARSER_DIR` must be set to the xparser directory.
+   * `LIBMBOARD_DIR` must be set to the libmboard
+     directory.
+ * `flamegpu` backend:
+   * `FLAMEGPU_DIR` must be set to the FLAMEGPU directory.
  * `mason` backend: Mason must be in the `CLASSPATH`.
- * `dmason` backend: DMason must be in the `CLASSPATH`.
+ * `dmason` backend:
+   * `DMASON_JAR` must be set to the DMASON Jar file.
+   * `DMASON_RESOURCES` must be set to the DMASON `resources` directory.
 
 Please report if any necessary environment configuration is missing.
