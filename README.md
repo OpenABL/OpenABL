@@ -5,8 +5,12 @@ GPUs and clusters.
 
 ## Installation
 
-Requirements:
-`flex`, `bison` and `cmake`. (`sudo apt-get install flex bison cmake`)
+Build requirements: `flex`, `bison`, `cmake` and a C++11 compatible C++
+compiler. The build requirements can be installed using:
+
+```sh
+sudo apt-get install flex bison cmake g++
+```
 
 For an out-of-source build:
 
