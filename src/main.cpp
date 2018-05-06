@@ -78,6 +78,7 @@ void printHelp() {
                "  -b, --backend      Backend\n"
                "  -B, --build        Build the generated code\n"
                "  -C, --config       Specify a configuration value (name=value)\n"
+               "  -D, --deps         Deps directory (default: ./deps)\n"
                "  -h, --help         Display this help\n"
                "  -i, --input        Input file\n"
                "  -o, --output-dir   Output directory\n"
@@ -177,6 +178,9 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  // Make deps dir absolute, as it will be embedded in shell scripts
+  options.depsDir = getAbsolutePath(options.depsDir);
+
   auto backends = getBackends();
   auto it = backends.find(options.backend);
   if (it == backends.end()) {
@@ -187,7 +191,10 @@ int main(int argc, char **argv) {
   Backend &backend = *it->second;
   try {
     BackendContext backendCtx = {
-      options.outputDir, options.assetDir, Config { options.config }
+      options.outputDir,
+      options.assetDir,
+      options.depsDir,
+      Config { options.config }
     };
     backend.generate(mainScript, backendCtx);
   } catch (const std::runtime_error &e) {

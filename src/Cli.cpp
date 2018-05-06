@@ -60,6 +60,8 @@ Options parseOptions(int argc, char **argv) {
       options.outputDir = argv[++i];
     } else if (arg == "-A" || arg == "--asset-dir") {
       options.assetDir = argv[++i];
+    } else if (arg == "-D" || arg == "--deps-dir") {
+      options.depsDir = argv[++i];
     } else if (arg == "-P" || arg == "--param") {
       options.params.insert(parsePair(argv[++i], "parameter"));
     } else if (arg == "-C" || arg == "--config") {
@@ -75,6 +77,10 @@ Options parseOptions(int argc, char **argv) {
 
   if (options.assetDir.empty()) {
     options.assetDir = "./asset";
+  }
+
+  if (options.depsDir.empty()) {
+    options.depsDir = "./deps";
   }
 
   if (options.lintOnly) {

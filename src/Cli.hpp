@@ -31,6 +31,7 @@ struct Options {
   std::string backend;
   std::string outputDir;
   std::string assetDir;
+  std::string depsDir;
   std::map<std::string, std::string> params;
   std::map<std::string, std::string> config;
 };

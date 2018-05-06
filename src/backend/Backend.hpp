@@ -26,6 +26,7 @@ struct BackendError : public std::runtime_error {
 struct BackendContext {
   const std::string &outputDir;
   const std::string &assetDir;
+  const std::string &depsDir;
   const Config &config;
 };
 

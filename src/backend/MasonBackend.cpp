@@ -36,12 +36,23 @@ static std::string generateUICode(AST::Script &script) {
   return printer.extractStr();
 }
 
-static std::string generateRunScript(bool visualize) {
-  if (visualize) {
-    return "java SimWithUI";
+static std::string getClassPathPrefix(const BackendContext &ctx) {
+  std::string masonDir = ctx.depsDir + "/mason";
+  if (directoryExists(masonDir)) {
+    return "CLASSPATH=" + masonDir + ":$CLASSPATH ";
   } else {
-    return "java Sim";
+    return "";
   }
+}
+
+static std::string generateBuildScript(const BackendContext &ctx) {
+  return getClassPathPrefix(ctx) + "javac *.java";
+}
+
+static std::string generateRunScript(const BackendContext &ctx) {
+  bool visualize = ctx.config.getBool("visualize", false);
+  const char *simClass = visualize ? "SimWithUI" : "Sim";
+  return getClassPathPrefix(ctx) + "java " + simClass;
 }
 
 void MasonBackend::generate(
@@ -51,8 +62,6 @@ void MasonBackend::generate(
     throw BackendError("Floats are not supported by the Mason backend");
   }
 
-  bool visualize = ctx.config.getBool("visualize", false);
-
   writeToFile(ctx.outputDir + "/Sim.java", generateMainCode(script));
   writeToFile(ctx.outputDir + "/SimWithUI.java", generateUICode(script));
 
@@ -61,8 +70,8 @@ void MasonBackend::generate(
   }
 
   copyFile(ctx.assetDir + "/mason/Util.java", ctx.outputDir + "/Util.java");
-  copyFile(ctx.assetDir + "/mason/build.sh", ctx.outputDir + "/build.sh");
-  writeToFile(ctx.outputDir + "/run.sh", generateRunScript(visualize));
+  writeToFile(ctx.outputDir + "/build.sh", generateBuildScript(ctx));
+  writeToFile(ctx.outputDir + "/run.sh", generateRunScript(ctx));
   makeFileExecutable(ctx.outputDir + "/build.sh");
   makeFileExecutable(ctx.outputDir + "/run.sh");
 }

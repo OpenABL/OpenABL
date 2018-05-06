@@ -89,6 +89,17 @@ void makeFileExecutable(const std::string &name) {
 #endif
 }
 
+std::string getAbsolutePath(const std::string &name) {
+  char *ret = realpath(name.c_str(), nullptr);
+  if (!ret) {
+    return "";
+  }
+
+  std::string absPath(ret);
+  free(ret);
+  return absPath;
+}
+
 void changeWorkingDirectory(const std::string &name) {
   if (chdir(name.c_str())) {
     throw FileError("Failed to change CWD to \"" + name + "\"");
