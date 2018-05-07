@@ -1,2 +1,2 @@
-ln -s $DMASON_RESOURCES resources
+ln -sf $DMASON_RESOURCES resources
 java -cp "$DMASON_JAR:." LocalTestSim
