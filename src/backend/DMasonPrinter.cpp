@@ -36,7 +36,6 @@ void DMasonPrinter::printLocalTestCode(bool visualize) {
     << nl
     << "public class LocalTestSim {" << indent << nl
     << "private static boolean graphicsOn = " << (visualize ? "true" : "false") << ";" << nl
-    << "private static int numSteps = 3000; // only graphicsOn=false" << nl
     << "private static int rows = 2; // number of rows" << nl
     << "private static int columns = 2; // number of columns" << nl
     << "private static int AOI = " << maxDist << "; // max distance" << nl
@@ -52,19 +51,13 @@ void DMasonPrinter::printLocalTestCode(bool visualize) {
     << "    starter.startActivemq();" << nl
     << "    System.setProperty(\"org.apache.activemq.SERIALIZABLE_PACKAGES\", \"*\");" << nl
     << "    class worker extends Thread {" << nl
-    << "        private DistributedState ds;" << nl
-    << "        public worker(DistributedState ds) {" << nl
-    << "            this.ds=ds;" << nl
-    << "            ds.start();" << nl
+    << "        private Sim sim;" << nl
+    << "        public worker(Sim sim) {" << nl
+    << "            this.sim = sim;" << nl
+    << "            sim.start();" << nl
     << "        }" << nl
     << "        public void run() {" << nl
-    << "            int i=0;" << nl
-    << "            while(i!=numSteps)" << nl
-    << "            {" << nl
-    << "                System.out.println(i);" << nl
-    << "                ds.schedule.step(ds);" << nl
-    << "                i++;" << nl
-    << "            }" << nl
+    << "            sim.run();" << nl
     << "            System.exit(0);" << nl
     << "        }" << nl
     << "    }" << nl
@@ -265,8 +258,14 @@ void DMasonPrinter::print(const AST::AgentCreationExpression &expr) {
   });
   *this <<")";
 }
-void DMasonPrinter::print(const AST::SimulateStatement &) {
-  // Nothing
+
+void DMasonPrinter::print(const AST::SimulateStatement &stmt) {
+  *this << "int t = " << *stmt.timestepsExpr
+        << " * " << stmt.stepFuncDecls.size() << ";" << nl
+        << "for (int i = 0; i != t; i++) {" << indent << nl
+        << "System.out.println(i);" << nl
+        << "if (!this.schedule.step(this)) break;" << outdent << nl
+        << "}";
 }
 
 void DMasonPrinter::print(const AST::Script &script) {
@@ -331,19 +330,22 @@ void DMasonPrinter::print(const AST::Script &script) {
 
   *this << "public void start() {" << indent << nl
         << "super.start();" << nl
-	<<"try { "<< indent << nl
-	<<"env = DContinuousGrid2DFactory.createDContinuous2D(8.0,gridWidth, gridHeight,this,"<< nl
-	<<"	super.AOI,TYPE.pos_i,TYPE.pos_j,super.rows,super.columns,MODE,\"env\", topicPrefix,true);" << nl
-	<<"init_connection();"<< outdent << nl
-	<<"} catch (DMasonException e) { e.printStackTrace();}" << nl << nl;
+	<< "try { "<< indent << nl
+	<< "env = DContinuousGrid2DFactory.createDContinuous2D(8.0,gridWidth, gridHeight,this,"<< nl
+	<< "	super.AOI,TYPE.pos_i,TYPE.pos_j,super.rows,super.columns,MODE,\"env\", topicPrefix,true);" << nl
+	<< "init_connection();"<< outdent << nl
+	<< "} catch (DMasonException e) { e.printStackTrace();}" << nl << nl;
 
-  // TODO This needs to be split in start + end
   AST::FunctionDeclaration *mainFunc = script.mainFunc;
   inMain = true;
-  *this << *mainFunc->stmts;
+  *this << mainFunc->getStmtsBeforeSimulate();
   inMain = false;
 
-  *this << outdent << nl << "}" << nl;
+  *this << outdent << nl << "}" << nl << nl
+        << "public void run() {" << indent << nl
+        << *script.simStmt << outdent << nl
+        << "}" << nl;
+
   // Print non-step, non-main functions
   for (const AST::FunctionDeclaration *decl : script.funcs) {
     if (!decl->isStep && !decl->isMain()) {
