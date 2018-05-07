@@ -167,7 +167,7 @@ def run_bench(backend, model, num_agents_range):
 
 backend = args.backend
 if backend == 'flamegpu' and 'SMS' not in os.environ:
-    print('Using flamegpu backend without SMS environment variable')
+    print('When using flamegpu the SM architecture must be specified using the SMS environment variable (e.g. SMS=52)')
     sys.exit(1)
 
 if args.models:
