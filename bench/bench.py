@@ -67,7 +67,7 @@ def openabl_run(model, backend, params, config):
         sys.exit(1)
 
 def openabl_get_exec_time(model, backend, params, config):
-    output = openabl_run(model, backend, params, config)
+    output = openabl_run(model, backend, params, config).decode('utf-8')
     matches = re.search('Execution time: (.*)s', output)
     if matches is None:
         raise RuntimeError('Failed to extract execution time')
@@ -76,7 +76,8 @@ def openabl_get_exec_time(model, backend, params, config):
 def next_pow2(n):
     return 2**(n-1).bit_length()
 
-def run_bench(backend, model, (min_num_agents, max_num_agents)):
+def run_bench(backend, model, num_agents_range):
+    (min_num_agents, max_num_agents) = num_agents_range
     num_timesteps = 100
     num_agents_factor = 2
 
