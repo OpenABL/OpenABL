@@ -1,4 +1,4 @@
-.PHONY: all
+.PHONY: all clean-mason clean-flame clean-flamegpu clean-dmason
 all: mason flame flamegpu dmason
 
 #
@@ -32,6 +32,9 @@ flame/xparser/xparser: | flame/xparser
 flame/xparser:
 	git clone https://github.com/FLAME-HPC/xparser.git flame/xparser
 
+clean-flame:
+	rm -rf flame
+
 #
 # FlameGPU
 #
@@ -40,6 +43,9 @@ flamegpu: flamegpu/FLAMEGPU
 
 flamegpu/FLAMEGPU:
 	git clone https://github.com/FLAMEGPU/FLAMEGPU flamegpu/FLAMEGPU
+
+clean-flamegpu:
+	rm -rf flamegpu
 
 #
 # Mason
@@ -50,6 +56,10 @@ mason: mason.zip
 
 mason.zip:
 	wget https://cs.gmu.edu/~eclab/projects/mason/mason.zip
+
+clean-mason:
+	rm -rf mason
+	rm mason.zip
 
 #
 # DMason
@@ -69,3 +79,6 @@ dmason/dmason: dmason/dmason.zip
 dmason/dmason.zip:
 	mkdir -p dmason
 	wget https://github.com/isislab-unisa/dmason/archive/master.zip -O dmason/dmason.zip
+
+clean-dmason:
+	rm -rf dmason
