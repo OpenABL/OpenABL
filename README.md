@@ -86,6 +86,44 @@ build/OpenABL -i examples/circle.abl -b mason -C visualize=true -R
 If `-R` is used, the output directory can be omitted. In this case a temporary directory will be
 used.
 
+## Running benchmarks
+
+To run benchmarks for the different backends against our samples models, the
+`bench/bench.py` script can be used. The script requires Python 2.7 or
+Python >= 3.2. Usage summary:
+
+```
+usage: bench.py [-h] -b BACKEND [-m MODELS] [-n NUM_AGENTS] [-r RESULT_DIR]
+                [-R FACTOR]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -b BACKEND, --backend BACKEND
+                        Backend to benchmark
+  -m MODELS, --models MODELS
+                        Models (comma separated)
+  -n NUM_AGENTS, --num-agents NUM_AGENTS
+                        Number of agent range (min-max)
+  -r RESULT_DIR, --result-dir RESULT_DIR
+                        Directory for benchmark results
+  -R FACTOR, --reduce-max FACTOR
+                        Reduce default max agent number by FACTOR
+```
+
+Some example usages:
+
+```
+# Benchmark Mason against default models with default agent numbers
+python bench/bench.py -b mason
+
+# Do the same, but reduce maximum agent number by a factor of 16
+# This will make the benchmarks run much faster...
+python bench/bench.py -b mason --reduce-max 16
+
+# Run circle and boids2d models only with 250 to 64000 agents
+python bench/bench.py -b mason -m circle,boids2d --num-agents=250-64000
+```
+
 ## Help
 
 Output of `OpenABL --help`:
