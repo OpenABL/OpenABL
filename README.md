@@ -30,8 +30,7 @@ Some of the backends have additional build or runtime dependencies. Most of them
 can be installed by running:
 
 ```sh
-sudo apt-get install git autoconf libtool libxml2-utils xsltproc \
-                     default-jdk maven
+sudo apt-get install git autoconf libtool libxml2-utils xsltproc default-jdk
 ```
 
 FlameGPU additionally requires a CUDA installation.
