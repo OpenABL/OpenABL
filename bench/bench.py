@@ -16,6 +16,7 @@ import re
 import os
 import subprocess
 import sys
+import argparse
 
 main_dir = os.path.dirname(os.path.realpath(__file__)) + '/..'
 asset_dir = main_dir + '/asset'
@@ -35,16 +36,46 @@ default_agent_ranges = {
     'flamegpu': (250, 10240000),
 }
 
-# Reduce default max agents by factor of N for testing purposes
-max_agent_num_reduction = 1
+epilog = '''
+Default models:
+    * circle
+    * boids2d
+    * game_of_life
+    * sugarscape
+    * ants
+    * predator_prey
 
-result_dir = os.environ.get('RESULT_DIR')
+Default agent ranges:
+    * c:        250-32000
+    * mason:    250-128000
+    * mason2:   250-128000
+    * flame:    250-4000
+    * flamegpu: 250-10240000
+'''
+
+parser = argparse.ArgumentParser(
+    epilog=epilog,
+    formatter_class=argparse.RawDescriptionHelpFormatter)
+parser.add_argument('-b', '--backend', required=True,
+    help='Backend to benchmark')
+parser.add_argument('-m', '--models',
+    help='Models (comma separated)')
+parser.add_argument('-n', '--num-agents',
+    help='Number of agent range (min-max)')
+parser.add_argument('-r', '--result-dir',
+    help='Directory for benchmark results')
+parser.add_argument('-R', '--reduce-max',
+    metavar='FACTOR', default='1', type=int,
+    help='Reduce default max agent number by FACTOR')
+args = parser.parse_args()
+
+result_dir = args.result_dir
 if result_dir is not None:
     if not os.path.isdir(result_dir):
         print('Result directory ' + result_dir + ' does not exist')
         sys.exit(1)
 else:
-    print('WARNING: No RESULT_DIR specified')
+    print('WARNING: No result directory specified')
 
 openabl_bin = None
 for try_openabl_bin in try_openabl_bins:
@@ -134,54 +165,28 @@ def run_bench(backend, model, num_agents_range):
         with open(file_name, 'w') as f:
             f.write(result)
 
-if len(sys.argv) < 2:
-    print('''
-Usage:
-    [RESULT_DIR=data/]
-    python bench.py \\
-        backend \\
-        [model1,model2,...] \\
-        [min_agents-max_agents]
-
-    Default models:
-        * circle
-        * boids2d
-        * game_of_life
-        * sugarscape
-        * ants
-        * predator_prey
-
-    Default agent ranges:
-        * c:        250-32000
-        * mason:    250-128000
-        * mason2:   250-128000
-        * flame:    250-4000
-        * flamegpu: 250-10240000
-''')
-    sys.exit(1)
-
-backend = sys.argv[1]
+backend = args.backend
 if backend == 'flamegpu' and 'SMS' not in os.environ:
     print('Using flamegpu backend without SMS environment variable')
     sys.exit(1)
 
-if len(sys.argv) >= 3:
-    models = sys.argv[2].split(',')
+if args.models:
+    models = args.models.split(',')
 else:
     models = default_models
 
-if len(sys.argv) >= 4:
-    num_agents_spec = sys.argv[3].split('-')
+if args.num_agents:
+    num_agents_spec = args.num_agents.split('-')
     if len(num_agents_spec) != 2:
-        print('Invalid argent number specification (min-max)')
+        print('Invalid agent number specification (min-max)')
         sys.exit(1)
 
     num_agents_range = (int(num_agents_spec[0]), int(num_agents_spec[1]))
 else:
     num_agents_range = default_agent_ranges[backend]
-    num_agents_range = (
-        num_agents_range[0],
-        num_agents_range[1] / max_agent_num_reduction)
+    # Reduce maximum argument number
+    num_agents_range = (num_agents_range[0],
+                        num_agents_range[1] / args.reduce_max)
 
 for model in models:
     run_bench(backend, model, num_agents_range)

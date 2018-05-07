@@ -80,7 +80,7 @@ build/OpenABL -i examples/circle.abl -o ./output -b mason -R
 If the backend supports it, it is also possible to run with visualization:
 
 ```sh
-build/OpenABL -i ../examples/circle.abl -b mason -C visualize=true -R
+build/OpenABL -i examples/circle.abl -b mason -C visualize=true -R
 ```
 
 If `-R` is used, the output directory can be omitted. In this case a temporary directory will be
