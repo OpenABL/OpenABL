@@ -16,9 +16,8 @@ An out-of-source build can be performed using:
 
 ```sh
 mkdir ./build
-cd ./build
-cmake ..
-make -j4
+cmake -Bbuild -H.
+make -C build -j4
 ```
 
 ## Installation of backend libraries
@@ -27,16 +26,17 @@ OpenABL supports a number of backend libraries, which need to be installed
 separately. For convenience a script to download and build the different
 backend libraries is provided.
 
-Some of the backends have additional build or runtime dependencies. To install
-all of them run:
+Some of the backends have additional build or runtime dependencies. Most of them
+can be installed by running:
 
 ```sh
 sudo apt-get install git autoconf libtool libxml2-utils xsltproc \
                      default-jdk maven
 ```
 
-The backends can then be downloaded and built using the following command (run
-from the root directory, not the build directory):
+FlameGPU additionally requires a CUDA installation.
+
+The backends can then be downloaded and built using the following command:
 
 ```sh
 # To build all
@@ -56,7 +56,7 @@ Examples are located in the `examples` directory.
 To compile the `examples/circle.abl` example using the Mason backend:
 
 ```sh
-./OpenABL -i ../examples/circle.abl -o ./output -b mason
+build/OpenABL -i examples/circle.abl -o ./output -b mason
 ```
 
 The result will be written into the `./output` directory. To run the generated code:
@@ -73,15 +73,15 @@ You can also automatically build and run the generated code (if this is supporte
 
 ```sh
 # Generate + Build
-./OpenABL -i ../examples/circle.abl -o ./output -b mason -B
+build/OpenABL -i examples/circle.abl -o ./output -b mason -B
 # Generate + Build + Run
-./OpenABL -i ../examples/circle.abl -o ./output -b mason -R
+build/OpenABL -i examples/circle.abl -o ./output -b mason -R
 ```
 
 If the backend supports it, it is also possible to run with visualization:
 
 ```sh
-./OpenABL -i ../examples/circle.abl -b mason -C visualize=true -R
+build/OpenABL -i ../examples/circle.abl -b mason -C visualize=true -R
 ```
 
 If `-R` is used, the output directory can be omitted. In this case a temporary directory will be
@@ -89,7 +89,7 @@ used.
 
 ## Help
 
-Output of `./OpenABL --help`:
+Output of `OpenABL --help`:
 
 ```
 Usage: ./OpenABL -i input.abl -o ./output-dir -b backend
@@ -99,6 +99,7 @@ Options:
   -b, --backend      Backend
   -B, --build        Build the generated code
   -C, --config       Specify a configuration value (name=value)
+  -D, --deps         Deps directory (default: ./deps)
   -h, --help         Display this help
   -i, --input        Input file
   -o, --output-dir   Output directory
