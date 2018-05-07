@@ -39,7 +39,7 @@ static std::string generateUICode(AST::Script &script) {
 static std::string generateRunScript(const BackendContext &ctx) {
   bool visualize = ctx.config.getBool("visualize", false);
   std::string simClass = visualize ? "SimWithUI" : "Sim";
-  return "java " + simClass;
+  return "java -cp \"$MASON_JAR:.\" " + simClass;
 }
 
 void MasonBackend::generate(
@@ -66,14 +66,8 @@ void MasonBackend::generate(
 void MasonBackend::initEnv(const BackendContext &ctx) {
   std::string masonDir = ctx.depsDir + "/mason";
   if (directoryExists(masonDir)) {
-    std::string classpath = masonDir + ":";
-    const char *oldClasspath = getenv("CLASSPATH");
-    if (oldClasspath) {
-      classpath += oldClasspath;
-    } else {
-      classpath += ".";
-    }
-    setenv("CLASSPATH", classpath.c_str(), true);
+    std::string jarPath = masonDir + "/mason.jar";
+    setenv("MASON_JAR", jarPath.c_str(), true);
   }
 }
 

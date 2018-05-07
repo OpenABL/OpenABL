@@ -51,15 +51,15 @@ clean-flamegpu:
 # Mason
 #
 
-mason: mason.zip
-	unzip -D mason.zip
+mason: mason/mason.jar
 
-mason.zip:
-	wget https://cs.gmu.edu/~eclab/projects/mason/mason.zip
+mason/mason.jar:
+	mkdir -p mason
+	wget https://cs.gmu.edu/~eclab/projects/mason/mason.19.jar \
+		-O mason/mason.jar
 
 clean-mason:
 	rm -rf mason
-	rm mason.zip
 
 #
 # DMason

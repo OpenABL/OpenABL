@@ -127,19 +127,23 @@ Available configuration options:
 
 ## Environment configuration
 
-To use the automatic build and run scripts, some environment configuration is
-required for the different backends.
+To use the automatic build and run scripts, some environment variables have to
+be set for the different backends. If you are using the `deps` Makefile, then
+OpenABL will automatically set these environment variables when building and
+running. However, you need to set these environment variables either if you are
+using a non-standard configuration, or want to manually invoke the build and
+run scripts.
 
- * `c` backend: No dependencies.
+ * `c` backend:
+   * None.
  * `flame` backend:
    * `FLAME_XPARSER_DIR` must be set to the xparser directory.
    * `LIBMBOARD_DIR` must be set to the libmboard
      directory.
  * `flamegpu` backend:
    * `FLAMEGPU_DIR` must be set to the FLAMEGPU directory.
- * `mason` backend: Mason must be in the `CLASSPATH`.
+ * `mason` backend:
+   * `MASON_JAR` must be set to the MASON Jar file.
  * `dmason` backend:
    * `DMASON_JAR` must be set to the DMASON Jar file.
    * `DMASON_RESOURCES` must be set to the DMASON `resources` directory.
-
-Please report if any necessary environment configuration is missing.
