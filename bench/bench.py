@@ -22,6 +22,22 @@ asset_dir = main_dir + '/asset'
 example_dir = main_dir + '/examples'
 try_openabl_bins = [main_dir + '/OpenABL', main_dir + '/build/OpenABL']
 
+default_models = [
+    'circle', 'boids2d', 'game_of_life',
+    'sugarscape', 'ants', 'predator_prey'
+]
+
+default_agent_ranges = {
+    'c': (250, 32000),
+    'mason': (250, 128000),
+    'mason2': (250, 128000),
+    'flame': (250, 4000),
+    'flamegpu': (250, 10240000),
+}
+
+# Reduce default max agents by factor of N for testing purposes
+max_agent_num_reduction = 1
+
 result_dir = os.environ.get('RESULT_DIR')
 if result_dir is not None:
     if not os.path.isdir(result_dir):
@@ -39,6 +55,9 @@ for try_openabl_bin in try_openabl_bins:
 if openabl_bin is None:
     print('OpenABL binary not found. Tried: ' + ', '.join(try_openabl_bins))
     sys.exit(1)
+
+class OpenABLInvocationFailed(Exception):
+    pass
 
 def openabl_run(model, backend, params, config):
     model_file = example_dir + '/' + model + '.abl'
@@ -61,10 +80,10 @@ def openabl_run(model, backend, params, config):
     try:
         return subprocess.check_output(args, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as err:
-        print('Invocation of command\n' + ' '.join(args) + '\n'
+        raise OpenABLInvocationFailed(
+            'Invocation of command\n' + ' '.join(args) + '\n'
                 + 'exited with exit code ' + str(err.returncode)
-                + ' and the following output:\n' + err.output)
-        sys.exit(1)
+                + ' and the following output:\n' + err.output.decode('utf-8'))
 
 def openabl_get_exec_time(model, backend, params, config):
     output = openabl_run(model, backend, params, config).decode('utf-8')
@@ -97,7 +116,12 @@ def run_bench(backend, model, num_agents_range):
         if backend == 'flamegpu':
             config['flamegpu.buffer_size'] = next_pow2(num_agents)
 
-        exec_time = openabl_get_exec_time(model, backend, params, config)
+        try:
+            exec_time = openabl_get_exec_time(model, backend, params, config)
+        except OpenABLInvocationFailed as err:
+            print(str(err))
+            return
+
         csv_str = str(num_agents) + ',' + str(exec_time)
 
         result += csv_str + "\n"
@@ -144,18 +168,7 @@ if backend == 'flamegpu' and 'SMS' not in os.environ:
 if len(sys.argv) >= 3:
     models = sys.argv[2].split(',')
 else:
-    models = [
-        'circle', 'boids2d', 'game_of_life',
-        'sugarscape', 'ants', 'predator_prey'
-    ]
-
-default_agent_ranges = {
-    'c': (250, 32000),
-    'mason': (250, 128000),
-    'mason2': (250, 128000),
-    'flame': (250, 4000),
-    'flamegpu': (250, 10240000),
-}
+    models = default_models
 
 if len(sys.argv) >= 4:
     num_agents_spec = sys.argv[3].split('-')
@@ -166,6 +179,9 @@ if len(sys.argv) >= 4:
     num_agents_range = (int(num_agents_spec[0]), int(num_agents_spec[1]))
 else:
     num_agents_range = default_agent_ranges[backend]
+    num_agents_range = (
+        num_agents_range[0],
+        num_agents_range[1] / max_agent_num_reduction)
 
 for model in models:
     run_bench(backend, model, num_agents_range)
