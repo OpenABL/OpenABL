@@ -7,3 +7,4 @@ Makefile
 *.diff
 test-tmp/
 build/
+deps/
