@@ -17,7 +17,7 @@
 
 namespace OpenABL {
 
-void DMasonPrinter::printLocalTestCode() {
+void DMasonPrinter::printLocalTestCode(bool visualize) {
   Value &envSize = script.envDecl->envSize;
   assert(envSize.isVec2());
   int width = (int) ceil(envSize.getVec2().x);
@@ -33,10 +33,12 @@ void DMasonPrinter::printLocalTestCode() {
     << "import it.isislab.dmason.util.connection.ConnectionType;" << nl
     << "import java.util.ArrayList;" << nl
     << "import sim.display.Console;" << nl
+    << nl
     << "public class LocalTestSim {" << indent << nl
-    << "private static int numSteps = 3000; //only graphicsOn=false" << nl
-    << "private static int rows = 2; //number of rows" << nl
-    << "private static int columns = 2; //number of columns" << nl
+    << "private static boolean graphicsOn = " << (visualize ? "true" : "false") << ";" << nl
+    << "private static int numSteps = 3000; // only graphicsOn=false" << nl
+    << "private static int rows = 2; // number of rows" << nl
+    << "private static int columns = 2; // number of columns" << nl
     << "private static int AOI = " << maxDist << "; // max distance" << nl
     << "private static int NUM_AGENTS=20000; //number of agents" << nl
     << "private static int WIDTH = " << width << "; // field width" << nl
@@ -75,7 +77,7 @@ void DMasonPrinter::printLocalTestCode() {
     << "            genParam.setIp(ip);" << nl
     << "            genParam.setPort(port);" << nl
     << "            ArrayList<EntryParam<String, Object>> simParams=new ArrayList<EntryParam<String, Object>>();" << nl
-    << "            if (i == 0 && j == 0) {" << nl
+    << "            if (graphicsOn && i == 0 && j == 0) {" << nl
     << "                SimWithUI sim = new SimWithUI(genParam,simParams,topicPrefix);" << nl
     << "                ((Console) sim.createController()).pressPause();" << nl
     << "            } else {" << nl

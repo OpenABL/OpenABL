@@ -115,7 +115,7 @@ Available backends:
 
 Available configuration options:
  * bool use_float (default: false, flame/gpu only)
- * bool visualize (default: false, mason only)
+ * bool visualize (default: false, d/mason only)
 ```
 
 ### Configuration options
@@ -124,7 +124,7 @@ Available configuration options:
    numbers, as some backends only support doubles. For the Flame and FlameGPU backends this option
    may be enabled to use single-precision floating point numbers instead.
  * `bool visualize = false`: Display a graphical visualization of the model. This option is
-   currently only supported by the Mason backend.
+   currently only supported by the Mason and DMason backends.
 
 ## Environment configuration
 

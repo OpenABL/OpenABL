@@ -34,9 +34,9 @@ static std::string generateStubAgentCode(AST::Script &script, AST::AgentDeclarat
   printer.printStubAgent(agent);
   return printer.extractStr();
 }
-static std::string generateLocalTestCode(AST::Script &script) {
+static std::string generateLocalTestCode(AST::Script &script, bool visualize) {
   DMasonPrinter printer(script);
-  printer.printLocalTestCode();
+  printer.printLocalTestCode(visualize);
   return printer.extractStr();
 }
 static std::string generateUICode(AST::Script &script) {
@@ -63,9 +63,11 @@ void DMasonBackend::generate(
     throw BackendError("Floats are not supported by the Mason backend");
   }
 
+  bool visualize = ctx.config.getBool("visualize", false);
+
   writeToFile(ctx.outputDir + "/Sim.java", generateMainCode(script));
   writeToFile(ctx.outputDir + "/SimWithUI.java", generateUICode(script));
-  writeToFile(ctx.outputDir + "/LocalTestSim.java", generateLocalTestCode(script));
+  writeToFile(ctx.outputDir + "/LocalTestSim.java", generateLocalTestCode(script, visualize));
 
   for (AST::AgentDeclaration *agent : script.agents) {
     writeToFile(

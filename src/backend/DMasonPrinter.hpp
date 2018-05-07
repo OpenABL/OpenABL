@@ -25,7 +25,7 @@ struct DMasonPrinter : public Mason2Printer {
     : Mason2Printer(script) {}
 
   void printStubAgent(const AST::AgentDeclaration &);
-  void printLocalTestCode();
+  void printLocalTestCode(bool visualize);
   void print(const AST::Script &);
   void print(const AST::CallExpression &);
   void print(const AST::FunctionDeclaration &);

@@ -94,7 +94,7 @@ void printHelp() {
                "\n"
                "Available configuration options:\n"
                " * bool use_float (default: false, flame/gpu only)\n"
-               " * bool visualize (default: false, mason only)\n"
+               " * bool visualize (default: false, d/mason only)\n"
             << std::flush;
 }
 
