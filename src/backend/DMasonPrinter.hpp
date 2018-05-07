@@ -15,6 +15,7 @@
 #pragma once
 
 #include "Mason2Printer.hpp"
+#include "Config.hpp"
 
 namespace OpenABL {
 
@@ -25,7 +26,7 @@ struct DMasonPrinter : public Mason2Printer {
     : Mason2Printer(script) {}
 
   void printStubAgent(const AST::AgentDeclaration &);
-  void printLocalTestCode(bool visualize);
+  void printLocalTestCode(const Config &);
   void print(const AST::Script &);
   void print(const AST::CallExpression &);
   void print(const AST::FunctionDeclaration &);

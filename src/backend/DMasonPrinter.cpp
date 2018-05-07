@@ -17,12 +17,16 @@
 
 namespace OpenABL {
 
-void DMasonPrinter::printLocalTestCode(bool visualize) {
+void DMasonPrinter::printLocalTestCode(const Config &config) {
   Value &envSize = script.envDecl->envSize;
   assert(envSize.isVec2());
   int width = (int) ceil(envSize.getVec2().x);
   int height = (int) ceil(envSize.getVec2().y);
   int maxDist = width > 10 ? 10 : width - 1; // TODO
+
+  bool visualize = config.getBool("visualize", false);
+  long gridRows = config.getInt("dmason.grid_rows", 2);
+  long gridCols = config.getInt("dmason.grid_cols", 2);
 
   *this
     << "import it.isislab.dmason.experimentals.systemmanagement.utils.activemq.ActiveMQStarter;" << nl
@@ -36,8 +40,8 @@ void DMasonPrinter::printLocalTestCode(bool visualize) {
     << nl
     << "public class LocalTestSim {" << indent << nl
     << "private static boolean graphicsOn = " << (visualize ? "true" : "false") << ";" << nl
-    << "private static int rows = 2; // number of rows" << nl
-    << "private static int columns = 2; // number of columns" << nl
+    << "private static int rows = " << gridRows << "; // number of rows" << nl
+    << "private static int columns = " << gridCols << "; // number of columns" << nl
     << "private static int AOI = " << maxDist << "; // max distance" << nl
     << "private static int NUM_AGENTS=20000; //number of agents" << nl
     << "private static int WIDTH = " << width << "; // field width" << nl
