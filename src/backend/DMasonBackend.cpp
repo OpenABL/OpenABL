@@ -86,12 +86,12 @@ void DMasonBackend::generate(
 }
 
 void DMasonBackend::initEnv(const BackendContext &ctx) {
-  std::string dmasonTargetDir = ctx.depsDir + "/dmason/dmason/target";
-  if (directoryExists(dmasonTargetDir)) {
-    std::string jarPath = dmasonTargetDir + "/DMASON-3.2.jar:";
+  std::string dmasonDir = ctx.depsDir + "/dmason";
+  if (directoryExists(dmasonDir)) {
+    std::string jarPath = dmasonDir + "/DMASON-3.2.jar:";
     setenv("DMASON_JAR", jarPath.c_str(), true);
 
-    std::string resourcesPath = dmasonTargetDir + "/resources";
+    std::string resourcesPath = dmasonDir + "/resources";
     setenv("DMASON_RESOURCES", resourcesPath.c_str(), true);
   }
 }

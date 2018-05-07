@@ -65,20 +65,34 @@ clean-mason:
 # DMason
 #
 
-dmason: dmason/dmason/target/DMASON-3.2.jar
+dmason: dmason/DMASON-3.2.jar
 
-dmason/dmason/target: | dmason/dmason
-	cd dmason/dmason; \
+dmason/DMASON-3.2.jar: dmason/DMASON-3.2.zip
+	cd dmason; \
+		unzip -DD DMASON-3.2.zip
+
+dmason/DMASON-3.2.zip:
+	mkdir -p dmason;
+	wget https://github.com/OpenABL/OpenABL/releases/download/v0.0.1alpha1/DMASON-3.2.zip \
+		-O dmason/DMASON-3.2.zip
+
+# Instructions for a from-scratch build of DMason
+# Normally the JAR variant above should be used
+dmason-build: dmason-build/dmason/target/DMASON-3.2.jar
+
+dmason-build/dmason/target: | dmason-build/dmason
+	cd dmason-build/dmason; \
 		mvn -Dmaven.test.skip=true -Dmaven.javadoc.skip=true package
 
-dmason/dmason: dmason/dmason.zip
-	cd dmason; \
+dmason-build/dmason: dmason/dmason.zip
+	cd dmason-build; \
 		unzip -D dmason.zip; \
 		mv dmason-master dmason
 
-dmason/dmason.zip:
-	mkdir -p dmason
-	wget https://github.com/isislab-unisa/dmason/archive/master.zip -O dmason/dmason.zip
+dmason-build/dmason.zip:
+	mkdir -p dmason-build
+	wget https://github.com/isislab-unisa/dmason/archive/master.zip \
+		-O dmason-build/dmason.zip
 
 clean-dmason:
 	rm -rf dmason
