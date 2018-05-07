@@ -61,7 +61,11 @@ void DMasonPrinter::printLocalTestCode(const Config &config) {
     << "            sim.start();" << nl
     << "        }" << nl
     << "        public void run() {" << nl
-    << "            sim.run();" << nl
+    << "            if (graphicsOn) {" << nl
+    << "                while (true) sim.schedule.step(sim);" << nl
+    << "            } else {" << nl
+    << "                sim.run();" << nl
+    << "            }" << nl
     << "            System.exit(0);" << nl
     << "        }" << nl
     << "    }" << nl
