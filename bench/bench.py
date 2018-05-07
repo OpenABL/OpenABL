@@ -82,7 +82,8 @@ def run_bench(backend, model, num_agents_range):
     num_agents_factor = 2
 
     result = "n,t\n"
-    print('Running ' + model + ' on ' + backend)
+    print('Running %s on %s backend with %d-%d agents' %
+        (model, backend, min_num_agents, max_num_agents))
 
     num_agents = min_num_agents
     while num_agents <= max_num_agents:
@@ -109,8 +110,30 @@ def run_bench(backend, model, num_agents_range):
         with open(file_name, 'w') as f:
             f.write(result)
 
-if len(sys.argv) < 3:
-    print('Usage: [RESULT_DIR=data/] bench.py backend model [min_agents-max_agents]')
+if len(sys.argv) < 2:
+    print('''
+Usage:
+    [RESULT_DIR=data/]
+    python bench.py \\
+        backend \\
+        [model1,model2,...] \\
+        [min_agents-max_agents]
+
+    Default models:
+        * circle
+        * boids2d
+        * game_of_life
+        * sugarscape
+        * ants
+        * predator_prey
+
+    Default agent ranges:
+        * c:        250-32000
+        * mason:    250-128000
+        * mason2:   250-128000
+        * flame:    250-4000
+        * flamegpu: 250-10240000
+''')
     sys.exit(1)
 
 backend = sys.argv[1]
@@ -118,9 +141,22 @@ if backend == 'flamegpu' and 'SMS' not in os.environ:
     print('Using flamegpu backend without SMS environment variable')
     sys.exit(1)
 
-models = sys.argv[2].split(',')
+if len(sys.argv) >= 3:
+    models = sys.argv[2].split(',')
+else:
+    models = [
+        'circle', 'boids2d', 'game_of_life',
+        'sugarscape', 'ants', 'predator_prey'
+    ]
 
-num_agents_range = (250, 128000)
+default_agent_ranges = {
+    'c': (250, 32000),
+    'mason': (250, 128000),
+    'mason2': (250, 128000),
+    'flame': (250, 4000),
+    'flamegpu': (250, 10240000),
+}
+
 if len(sys.argv) >= 4:
     num_agents_spec = sys.argv[3].split('-')
     if len(num_agents_spec) != 2:
@@ -128,6 +164,8 @@ if len(sys.argv) >= 4:
         sys.exit(1)
 
     num_agents_range = (int(num_agents_spec[0]), int(num_agents_spec[1]))
+else:
+    num_agents_range = default_agent_ranges[backend]
 
 for model in models:
     run_bench(backend, model, num_agents_range)
