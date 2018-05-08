@@ -5,6 +5,7 @@ Makefile
 *.swp
 *.out
 *.diff
+*.pyc
 test-tmp/
 build/
 deps/
