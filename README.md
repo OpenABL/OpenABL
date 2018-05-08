@@ -94,7 +94,7 @@ Python >= 3.2. Usage summary:
 
 ```
 usage: bench.py [-h] [-b BACKENDS] [-m MODELS] [-n NUM_AGENTS] [-r RESULT_DIR]
-                [-R FACTOR]
+                [-M SEC]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -106,20 +106,21 @@ optional arguments:
                         Number of agent range (min-max)
   -r RESULT_DIR, --result-dir RESULT_DIR
                         Directory for benchmark results
-  -R FACTOR, --reduce-max FACTOR
-                        Reduce default max agent number by FACTOR
+  -M SEC, --max-time SEC
+                        (Apprimate) maximal time per backend per model
 ```
 
 Some example usages:
 
-```
+```sh
 # Benchmark default backends against default models with default agent numbers
 # Write results to results/ directory
 python bench/bench.py -r results/
 
-# Do the same, but reduce maximum agent number by a factor of 16
-# This will make the benchmarks run much faster...
-python bench/bench.py -r results/ --reduce-max 16
+# Do the same, but limit time spend on each backend+model combination to
+# approximately 30 seconds. With the default benchmark configuration of
+# 4 backends and 6 models this will take approximately 4*6*30s = 12min
+python bench/bench.py -r results/ --max-time 30
 
 # Run circle and boids2d models only with 250 to 64000 agents
 python bench/bench.py -r results/ -b mason -m circle,boids2d \

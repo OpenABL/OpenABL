@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import re
+import argparse
 import os
+import re
 import subprocess
 import sys
-import argparse
+import time
 
 main_dir = os.path.dirname(os.path.realpath(__file__)) + '/..'
 asset_dir = main_dir + '/asset'
@@ -69,9 +70,9 @@ parser.add_argument('-n', '--num-agents',
     help='Number of agent range (min-max)')
 parser.add_argument('-r', '--result-dir',
     help='Directory for benchmark results')
-parser.add_argument('-R', '--reduce-max',
-    metavar='FACTOR', default='1', type=int,
-    help='Reduce default max agent number by FACTOR')
+parser.add_argument('-M', '--max-time',
+    metavar='SEC', type=int,
+    help='(Apprimate) maximal time per backend per model')
 args = parser.parse_args()
 
 result_dir = args.result_dir
@@ -130,7 +131,7 @@ def openabl_get_exec_time(model, backend, params, config):
 def next_pow2(n):
     return 2**(n-1).bit_length()
 
-def run_bench(backend, model, num_agents_range):
+def run_bench(backend, model, num_agents_range, max_time):
     (min_num_agents, max_num_agents) = num_agents_range
     num_timesteps = 100
     num_agents_factor = 2
@@ -139,8 +140,11 @@ def run_bench(backend, model, num_agents_range):
     print('Running %s on %s backend with %d-%d agents' %
         (model, backend, min_num_agents, max_num_agents))
 
+    start_time = time.time()
     num_agents = min_num_agents
     while num_agents <= max_num_agents:
+        cur_start_time = time.time()
+
         params = {
             'num_timesteps': num_timesteps,
             'num_agents': num_agents,
@@ -163,6 +167,14 @@ def run_bench(backend, model, num_agents_range):
         print(csv_str)
 
         num_agents *= num_agents_factor
+
+        total_time = time.time() - start_time
+        cur_time = time.time() - cur_start_time
+
+        # Add time of current run as an estimate for the next
+        if max_time is not None and total_time + cur_time > max_time:
+            break
+
 
     if result_dir is not None:
         file_name = result_dir + '/bench_' + model + '_' + backend + '.txt'
@@ -194,8 +206,5 @@ for backend in backends:
             num_agents_range = (int(num_agents_spec[0]), int(num_agents_spec[1]))
         else:
             num_agents_range = default_agent_ranges[backend]
-            # Reduce maximum argument number
-            num_agents_range = (num_agents_range[0],
-                                num_agents_range[1] / args.reduce_max)
 
-        run_bench(backend, model, num_agents_range)
+        run_bench(backend, model, num_agents_range, args.max_time)
