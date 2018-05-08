@@ -32,6 +32,7 @@ default_agent_ranges = {
     'c': (250, 32000),
     'mason': (250, 128000),
     'mason2': (250, 128000),
+    'dmason': (250, 128000),
     'flame': (250, 4000),
     'flamegpu': (250, 10240000),
 }
@@ -72,8 +73,7 @@ args = parser.parse_args()
 result_dir = args.result_dir
 if result_dir is not None:
     if not os.path.isdir(result_dir):
-        print('Result directory ' + result_dir + ' does not exist')
-        sys.exit(1)
+        os.makedirs(result_dir)
 else:
     print('WARNING: No result directory specified')
 

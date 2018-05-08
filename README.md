@@ -114,14 +114,29 @@ Some example usages:
 
 ```
 # Benchmark Mason against default models with default agent numbers
-python bench/bench.py -b mason
+python bench/bench.py -r results/ -b mason
 
 # Do the same, but reduce maximum agent number by a factor of 16
 # This will make the benchmarks run much faster...
-python bench/bench.py -b mason --reduce-max 16
+python bench/bench.py -r results/ -b mason --reduce-max 16
 
 # Run circle and boids2d models only with 250 to 64000 agents
-python bench/bench.py -b mason -m circle,boids2d --num-agents=250-64000
+python bench/bench.py -r results/ -b mason -m circle,boids2d \
+       --num-agents=250-64000
+```
+
+Benchmark results are both written to stdout and the specified results
+directory. Subsequently it is possible to plot the obtained runtimes. This
+requires matplotlib to be installed:
+
+```sh
+sudo apt-get install python-matplotlib
+```
+
+Plotting can then be performed by calling:
+
+```sh
+python bench/plot.py results/
 ```
 
 ## Help
