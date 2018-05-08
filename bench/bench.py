@@ -14,15 +14,9 @@
 
 import argparse
 import os
-import re
-import subprocess
 import sys
 import time
-
-main_dir = os.path.dirname(os.path.realpath(__file__)) + '/..'
-asset_dir = main_dir + '/asset'
-example_dir = main_dir + '/examples'
-try_openabl_bins = [main_dir + '/OpenABL', main_dir + '/build/OpenABL']
+import openabl
 
 default_backends = [
     'c', 'mason', 'flame', 'flamegpu',
@@ -82,56 +76,16 @@ if result_dir is not None:
 else:
     print('WARNING: No result directory specified')
 
-openabl_bin = None
-for try_openabl_bin in try_openabl_bins:
-    if os.path.isfile(try_openabl_bin):
-        openabl_bin = try_openabl_bin
-        break
-
-if openabl_bin is None:
-    print('OpenABL binary not found. Tried: ' + ', '.join(try_openabl_bins))
+try:
+    runner = openabl.create_auto()
+except openabl.OpenAblNotFound as err:
+    print(str(err))
     sys.exit(1)
-
-class OpenABLInvocationFailed(Exception):
-    pass
-
-def openabl_run(model, backend, params, config):
-    model_file = example_dir + '/' + model + '.abl'
-    args = [
-        openabl_bin,
-        '-i', model_file,
-        '-b', backend,
-        '-A', asset_dir,
-        '-R'
-    ]
-
-    for key, value in params.items():
-        args.append('-P')
-        args.append(key + '=' + str(value))
-
-    for key, value in config.items():
-        args.append('-C')
-        args.append(key + '=' + str(value))
-
-    try:
-        return subprocess.check_output(args, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as err:
-        raise OpenABLInvocationFailed(
-            'Invocation of command\n' + ' '.join(args) + '\n'
-                + 'exited with exit code ' + str(err.returncode)
-                + ' and the following output:\n' + err.output.decode('utf-8'))
-
-def openabl_get_exec_time(model, backend, params, config):
-    output = openabl_run(model, backend, params, config).decode('utf-8')
-    matches = re.search('Execution time: (.*)s', output)
-    if matches is None:
-        raise RuntimeError('Failed to extract execution time')
-    return float(matches.group(1))
 
 def next_pow2(n):
     return 2**(n-1).bit_length()
 
-def run_bench(backend, model, num_agents_range, max_time):
+def run_bench(runner, backend, model, num_agents_range, max_time):
     (min_num_agents, max_num_agents) = num_agents_range
     num_timesteps = 100
     num_agents_factor = 2
@@ -156,8 +110,8 @@ def run_bench(backend, model, num_agents_range, max_time):
             config['flamegpu.buffer_size'] = next_pow2(num_agents)
 
         try:
-            exec_time = openabl_get_exec_time(model, backend, params, config)
-        except OpenABLInvocationFailed as err:
+            exec_time = runner.get_exec_time(model, backend, params, config)
+        except openabl.InvocationFailed as err:
             print(str(err))
             return
 
@@ -207,4 +161,4 @@ for backend in backends:
         else:
             num_agents_range = default_agent_ranges[backend]
 
-        run_bench(backend, model, num_agents_range, args.max_time)
+        run_bench(runner, backend, model, num_agents_range, args.max_time)
