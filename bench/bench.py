@@ -23,6 +23,10 @@ asset_dir = main_dir + '/asset'
 example_dir = main_dir + '/examples'
 try_openabl_bins = [main_dir + '/OpenABL', main_dir + '/build/OpenABL']
 
+default_backends = [
+    'c', 'mason', 'flame', 'flamegpu',
+]
+
 default_models = [
     'circle', 'boids2d', 'game_of_life',
     'sugarscape', 'ants', 'predator_prey'
@@ -57,10 +61,10 @@ Default agent ranges:
 parser = argparse.ArgumentParser(
     epilog=epilog,
     formatter_class=argparse.RawDescriptionHelpFormatter)
-parser.add_argument('-b', '--backend', required=True,
-    help='Backend to benchmark')
+parser.add_argument('-b', '--backends',
+    help='Backends to benchmark (comma separated)')
 parser.add_argument('-m', '--models',
-    help='Models (comma separated)')
+    help='Models to benchmark (comma separated)')
 parser.add_argument('-n', '--num-agents',
     help='Number of agent range (min-max)')
 parser.add_argument('-r', '--result-dir',
@@ -165,8 +169,12 @@ def run_bench(backend, model, num_agents_range):
         with open(file_name, 'w') as f:
             f.write(result)
 
-backend = args.backend
-if backend == 'flamegpu' and 'SMS' not in os.environ:
+if args.backends:
+    backends = args.backends.split(',')
+else:
+    backends = default_backends
+
+if 'flamegpu' in backends and 'SMS' not in os.environ:
     print('When using flamegpu the SM architecture must be specified using the SMS environment variable (e.g. SMS=52)')
     sys.exit(1)
 
@@ -175,18 +183,19 @@ if args.models:
 else:
     models = default_models
 
-if args.num_agents:
-    num_agents_spec = args.num_agents.split('-')
-    if len(num_agents_spec) != 2:
-        print('Invalid agent number specification (min-max)')
-        sys.exit(1)
+for backend in backends:
+    for model in models:
+        if args.num_agents:
+            num_agents_spec = args.num_agents.split('-')
+            if len(num_agents_spec) != 2:
+                print('Invalid agent number specification (min-max)')
+                sys.exit(1)
 
-    num_agents_range = (int(num_agents_spec[0]), int(num_agents_spec[1]))
-else:
-    num_agents_range = default_agent_ranges[backend]
-    # Reduce maximum argument number
-    num_agents_range = (num_agents_range[0],
-                        num_agents_range[1] / args.reduce_max)
+            num_agents_range = (int(num_agents_spec[0]), int(num_agents_spec[1]))
+        else:
+            num_agents_range = default_agent_ranges[backend]
+            # Reduce maximum argument number
+            num_agents_range = (num_agents_range[0],
+                                num_agents_range[1] / args.reduce_max)
 
-for model in models:
-    run_bench(backend, model, num_agents_range)
+        run_bench(backend, model, num_agents_range)
