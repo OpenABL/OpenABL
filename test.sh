@@ -18,7 +18,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 shopt -s nullglob
 
 # Save compilation time (FlameGPU)
-export SMS=20
+export SMS=32
 
 # Perform lint-only tests in test/ directory.
 # These check that errors are detected correctly.
@@ -63,23 +63,11 @@ for file in $DIR/examples/*abl; do
     BACKEND_DIR=$TARGET_DIR/$backend
     mkdir -p $BACKEND_DIR
 
-    # Codegen test
-    $DIR/OpenABL -i $file -o $BACKEND_DIR -b $backend
+    # Codegen + Build test
+    $DIR/OpenABL -i $file -o $BACKEND_DIR -b $backend -B > build.log 2>&1
     if [ $? -ne 0 ]; then
-      echo "CODEGEN-FAIL for backend $backend"
-      continue
-    fi
-
-    # Build test
-    if [ -f $BACKEND_DIR/build.sh ]; then
-      echo "BUILD"
-      pushd $BACKEND_DIR
-      ./build.sh > build.log 2>&1
-      if [ $? -ne 0 ]; then
-        echo "BUILD-FAIL $BACKEND_DIR/build.log"
-        cat build.log
-      fi
-      popd
+      echo "BUILD-FAIL $BACKEND_DIR/build.log"
+      cat build.log
     fi
   done
 done
