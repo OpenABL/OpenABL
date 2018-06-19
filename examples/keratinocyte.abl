@@ -138,6 +138,82 @@ step cycle(Keratinocyte in -> out) {
 
 // XXX bunch of stuff here
 
+step death_signal(Keratinocyte in -> out) {
+  int num_corn_neighbors = 0;
+
+  if (in.type == K_TYPE_CORN) {
+    return;
+  }
+
+  for (Keratinocyte other : near(in, K_WIDTH + FORCE_IRADIUS)) {
+    if (other.type == K_TYPE_CORN) {
+      num_corn_neighbors += 1;
+    }
+  }
+
+  float prob = num_corn_neighbors * num_corn_neighbors * 0.01;
+  if (random(1.0) < prob) {
+    /* jump through another hoop */
+    if (random(1.0) < 0.01) {
+      out.type = K_TYPE_CORN;
+    }
+  }
+}
+
+step migrate(Keratinocyte in -> out) {
+  float x1 = in.pos.x;
+  float y1 = in.pos.y;
+  float dir1 = in.dir;
+
+  if (random(1.0) < 0.1) {
+    /* if rnd less than 0.1, then changed direction within +/- 45 degrees */
+    dir1 += PI * random(1.0)/4.0; // XXX This only allows positive changes, seems wrong
+  }
+  x1 += in.motility * cos(dir1);
+  y1 += in.motility * cos(dir1);
+
+  for (Keratinocyte other : near(in, K_WIDTH)) {
+    // XXX skip whole loop?
+    if (in.type != K_TYPE_TA && in.type != K_TYPE_HACAT) {
+      continue;
+    }
+
+    if (on_substrate_surface(other.pos.z) && other.motility == 0) {
+      dir1 -= PI;
+      if (dir1 > 2 * PI) {
+        dir1 -= 2 * PI;
+      }
+
+      // XXX This overwrites x1,y1 completely, is that intentional?
+      // check if we're on the base of the dish and other cell is stationary
+      x1 = in.pos.x + in.motility * cos(dir1);
+      y1 = in.pos.y + in.motility * sin(dir1);
+    }
+  }
+
+  out.pos.x = x1;
+  out.pos.y = y1;
+  out.dir = dir1;
+
+  if (out.pos.x > SURFACE_WIDTH) {
+    out.pos.x = SURFACE_WIDTH - in.motility * random(1.0);
+    out.dir = PI + PI * random(-0.5, 0.5)/4.0;
+  }
+  if (out.pos.x < 0) {
+    out.pos.x = in.motility * random(1.0);
+    out.dir = PI * random(-0.5, 0.5)/4.0;
+  }
+
+  if (out.pos.y > SURFACE_WIDTH) {
+    out.pos.y = SURFACE_WIDTH - in.motility * random(1.0);
+    out.dir = 3*PI/2 + PI * random(-0.5, 0.5)/4.0;
+  }
+  if (out.pos.y < 0) {
+    out.pos.y = in.motility * random(1.0);
+    out.dir = PI/2 * random(-0.5, 0.5)/4.0;
+  }
+}
+
 step resolve_forces(Keratinocyte in -> out) {
   float3 new_force = in.force;
   int num_xy_bonds = 0;
@@ -203,5 +279,7 @@ step resolve_forces(Keratinocyte in -> out) {
 }
 
 void main() {
-  simulate(100) { cycle, resolve_forces }
+  simulate(100) {
+    cycle, death_signal, migrate, resolve_forces
+  }
 }

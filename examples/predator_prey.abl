@@ -56,9 +56,6 @@ int getColor(Grass g) {
 }
 
 
-// TODO Add this to the language, duh
-float PI = 3.14159265358979323846;
-
 // tunable model parameters
 param float SPACE_MULT = 1.0; // 128.0 is better for DMason here
 param float REPRODUCE_PREY_PROB     = 0.005; // 0.05 XML

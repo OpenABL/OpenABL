@@ -1,3 +1,7 @@
+// Constants
+
+float PI = 3.14159265358979323846;
+
 // float random(float, float) is defined by the backend
 
 float2 random(float2 min, float2 max) {
