@@ -40,6 +40,9 @@ float K_WIDTH = 20;
 float FORCE_IRADIUS = 10;
 float BASEMENT_MAX_Z = 5;
 
+int MAX_TO_GO_CONTACT_INHIBITED_TICKS = 300;
+int MAX_DEAD_TICKS = 600;
+
 int CYCLE_LENGTH[] = { 120, 60, 0, 0, 120 };
 
 float FORCE_REP = 0.5;
@@ -69,8 +72,20 @@ bool on_substrate_surface(float z) {
   return z < BASEMENT_MAX_Z;
 }
 
+float get_ta_to_comm_diff_minor_axis(float calcium_level) {
+  return K_WIDTH * 1.5;
+}
+
+float get_ta_to_comm_diff_major_axis(float calcium_level) {
+  return K_WIDTH * 5;
+}
+
 int get_max_num_bonds(float calcium_level) {
   return 6;
+}
+
+int get_max_stem_colony_size(float calcium_level) {
+  return 20;
 }
 
 bool divide(int type, int cycle) {
@@ -109,6 +124,23 @@ float ellipse_radius(float major_radius, float minor_radius, float theta) {
   return r;
 }
 
+bool check_distance(
+  float nearest_dist, float nearest_xy, float nearest_z,
+  float major_radius, float minor_radius, float thres
+) {
+  if (nearest_dist == -1) {
+    return true;
+  }
+
+  float theta = tan(nearest_z / nearest_xy);
+  float er = ellipse_radius(major_radius, minor_radius, theta);
+  return thres * er < nearest_dist;
+}
+
+bool on_colony_edge(int num_bonds) {
+  return num_bonds <= 2;
+}
+
 step cycle(Keratinocyte in -> out) {
   int contacts = in.num_xy_bonds + in.num_z_bonds;
 
@@ -137,6 +169,75 @@ step cycle(Keratinocyte in -> out) {
 }
 
 // XXX bunch of stuff here
+
+step differentiate(Keratinocyte in -> out) {
+  float nearest_dist = -1;
+  float nearest_xy = -1;
+  float nearest_z = -1;
+  int num_stem_neighbors = 0;
+
+  float radius = 125; // Specified location partitioning radius
+  for (Keratinocyte other : near(in, radius)) {
+    if (in.type == K_TYPE_STEM) {
+      if (on_colony_edge(in.num_stem_bonds) && other.type == K_TYPE_STEM) {
+        float dist = dist(in.pos, other.pos);
+        float max_dist = K_WIDTH * get_max_stem_colony_size(calcium_level) / 2;
+        if (dist < max_dist) {
+          num_stem_neighbors += 1;
+        }
+      }
+    } else if (in.type == K_TYPE_TA) {
+      /* If the TA cell is too far from the stem cell centre,
+       * it differentiates into in a committed cell. */
+      if (other.type == K_TYPE_STEM) {
+        float dist = dist(in.pos, other.pos);
+        if (nearest_dist == -1 || dist < nearest_dist) {
+          nearest_dist = dist;
+          nearest_xy = dist(float2(in.pos.x, in.pos.y), float2(other.pos.x, other.pos.y));
+          nearest_z = in.pos.z < other.pos.z ? other.pos.z - in.pos.z : in.pos.z - other.pos.z;
+        }
+      }
+    }
+  }
+
+  if (in.type == K_TYPE_STEM) {
+		/* For stem cells, we check if the colony is too big and if they are on the edge.*/
+    /* If so, they differentiate into TA cells.	*/
+    if (on_colony_edge(in.num_stem_bonds)) {
+      if (num_stem_neighbors > get_max_stem_colony_size(calcium_level)) {
+        out.type = K_TYPE_TA;
+      }
+    }
+
+    /* If the cell stratifies, it also differentiates into a TA cell*/
+    if (!on_substrate_surface(in.pos.z)) {
+      out.type = K_TYPE_TA;
+    }
+  } else if (in.type == K_TYPE_TA) {
+    bool do_diff = check_distance(
+      nearest_dist, nearest_xy, nearest_z,
+      get_ta_to_comm_diff_major_axis(calcium_level),
+      get_ta_to_comm_diff_minor_axis(calcium_level),
+      in.diff_noise_factor
+    );
+
+    if (do_diff) {
+      out.type = K_TYPE_COMM;
+    } else if (in.contact_inhibited_ticks >= MAX_TO_GO_CONTACT_INHIBITED_TICKS) {
+      out.type = K_TYPE_COMM;
+    }
+  } else if (in.type == K_TYPE_COMM) {
+    /* after a period as a committed cell, it dies for good - differentiation into a corneocyte*/
+    out.dead_ticks = in.dead_ticks + 1;
+    if (out.dead_ticks > MAX_DEAD_TICKS) {
+      out.type = K_TYPE_CORN;
+    }
+  } else if (in.type == K_TYPE_HACAT) {
+    if (in.contact_inhibited_ticks >= MAX_TO_GO_CONTACT_INHIBITED_TICKS) {
+      out.type = K_TYPE_COMM;
+    }
+  }
+}
 
 step death_signal(Keratinocyte in -> out) {
   int num_corn_neighbors = 0;
@@ -280,6 +381,6 @@ step resolve_forces(Keratinocyte in -> out) {
 
 void main() {
   simulate(100) {
-    cycle, death_signal, migrate, resolve_forces
+    cycle, differentiate, death_signal, migrate, resolve_forces
   }
 }
