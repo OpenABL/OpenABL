@@ -178,7 +178,9 @@ void SimulateStatement::accept(Visitor &visitor) {
 
 void ReturnStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
-  expr->accept(visitor);
+  if (expr) {
+    expr->accept(visitor);
+  }
   visitor.leave(*this);
 }
 

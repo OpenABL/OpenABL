@@ -447,8 +447,6 @@ struct ReturnStatement : public Statement {
 };
 
 struct BreakStatement : public Statement {
-  ExpressionPtr expr;
-
   BreakStatement(Location loc)
     : Statement{loc} {}
 
@@ -457,8 +455,6 @@ struct BreakStatement : public Statement {
 };
 
 struct ContinueStatement : public Statement {
-  ExpressionPtr expr;
-
   ContinueStatement(Location loc)
     : Statement{loc} {}
 
