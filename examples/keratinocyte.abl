@@ -32,7 +32,7 @@ agent Keratinocyte {
   int contact_inhibited_ticks;
   float motility;
   float dir;
-  float movement;
+  float movement; // Only used in force messages
 }
 
 float SURFACE_WIDTH = 500;
@@ -42,6 +42,7 @@ float BASEMENT_MAX_Z = 5;
 
 int MAX_TO_GO_CONTACT_INHIBITED_TICKS = 300;
 int MAX_DEAD_TICKS = 600;
+int MAX_NUM_LATERAL_BONDS = 4;
 
 int CYCLE_LENGTH[] = { 120, 60, 0, 0, 120 };
 
@@ -66,6 +67,8 @@ int K_TYPE_COMM  = 2;
 int K_TYPE_CORN  = 3;
 int K_TYPE_HACAT = 4;
 
+param int num_agents = 100;
+
 environment { max: float3(SURFACE_WIDTH) }
 
 bool on_substrate_surface(float z) {
@@ -84,8 +87,20 @@ int get_max_num_bonds(float calcium_level) {
   return 6;
 }
 
+bool can_stratify(int cell_type, float calcium_level) {
+  return cell_type != K_TYPE_HACAT;
+}
+
 int get_max_stem_colony_size(float calcium_level) {
   return 20;
+}
+
+float get_new_motility(int cell_type, float calcium_level) {
+  if (cell_type == K_TYPE_TA) {
+    return 0.5;
+  } else {
+    return 0;
+  }
 }
 
 bool divide(int type, int cycle) {
@@ -162,13 +177,39 @@ step cycle(Keratinocyte in -> out) {
   }
 
   if (divide(in.type, in.cycle)) {
-    // XXX Just a dummy statement to test RNG. Not part of model!
-    get_new_coord(in.pos.x, true);
-    // XXX Add new agent
+    int new_cycle = start_new_cycle_position(in.type);
+    float3 new_pos = float3(
+      get_new_coord(in.pos.x, false),
+      get_new_coord(in.pos.y, false),
+      in.pos.z 
+    );
+    float new_diff_noise_factor = random(0.9, 1.1);
+    float new_dir = random(2 * PI);
+    float new_motility = random(0.5, 1.0) * get_new_motility(in.type, calcium_level);
+
+    if (can_stratify(in.type, calcium_level) && in.num_xy_bonds >= MAX_NUM_LATERAL_BONDS) {
+      new_pos.z = get_new_coord(in.pos.z, true);
+    }
+    
+    out.cycle = start_new_cycle_position(in.type);
+    add(Keratinocyte {
+      type: in.type,
+      //pos: new_pos, // XXX not supported
+      pos: in.pos,
+      force: float3(0),
+      num_xy_bonds: 0,
+      num_z_bonds: 0,
+      num_stem_bonds: 0,
+      cycle: new_cycle,
+      diff_noise_factor: new_diff_noise_factor,
+      dead_ticks: 0,
+      contact_inhibited_ticks: 0,
+      motility: new_motility,
+      dir: new_dir,
+      movement: 0,
+    });
   }
 }
-
-// XXX bunch of stuff here
 
 step differentiate(Keratinocyte in -> out) {
   float nearest_dist = -1;
@@ -229,7 +270,7 @@ step differentiate(Keratinocyte in -> out) {
   } else if (in.type == K_TYPE_COMM) {
     /* after a period as a committed cell, it dies for good - differentiation into a corneocyte*/
     out.dead_ticks = in.dead_ticks + 1;
-    if (out.dead_ticks > MAX_DEAD_TICKS) {
+    if (in.dead_ticks+1 > MAX_DEAD_TICKS) {
       out.type = K_TYPE_CORN;
     }
   } else if (in.type == K_TYPE_HACAT) {
@@ -380,6 +421,25 @@ step resolve_forces(Keratinocyte in -> out) {
 }
 
 void main() {
+  for (int i : 0..num_agents) {
+    // XXX What is the correct initialization?
+    add(Keratinocyte {
+      type: K_TYPE_STEM,
+      pos: random(float3(SURFACE_WIDTH, SURFACE_WIDTH, 50)),
+      force: float3(0),
+      num_xy_bonds: 0,
+      num_z_bonds: 0,
+      num_stem_bonds: 0,
+      cycle: 0,
+      diff_noise_factor: 0,
+      dead_ticks: 0,
+      contact_inhibited_ticks: 0,
+      motility: 0,
+      dir: 0,
+      movement: 0,
+    });
+  }
+
   simulate(100) {
     cycle, differentiate, death_signal, migrate, resolve_forces
   }
