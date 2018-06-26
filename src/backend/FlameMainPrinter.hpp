@@ -25,8 +25,9 @@ namespace OpenABL {
 struct FlameMainPrinter : public CPrinter {
   using CPrinter::print;
 
-  FlameMainPrinter(AST::Script &script, bool useFloat, bool forGPU, bool parallel)
-    : CPrinter(script, useFloat), forGPU(forGPU), parallel(parallel) {}
+  FlameMainPrinter(AST::Script &script, bool useFloat, bool forGPU, bool parallel, bool visualize)
+    : CPrinter(script, useFloat),
+      forGPU(forGPU), parallel(parallel), visualize(visualize) {}
 
   void print(const AST::SimulateStatement &);
   void print(const AST::FunctionDeclaration &);
@@ -35,6 +36,7 @@ struct FlameMainPrinter : public CPrinter {
 private:
   bool forGPU;
   bool parallel;
+  bool visualize;
 };
 
 }

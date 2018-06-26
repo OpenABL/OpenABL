@@ -51,8 +51,6 @@ FLAMELIB := -I $(IDIR) -I $(SRC_) -I $(SRC_CUDA) -I $(SRC_VIZ) -I $(IDIR)GL/
 
 XML_MODEL:=$(SRC_)XMLModelFile.xml
 
-all: XSLTPREP build
-
 XML_Validate:
 	xmllint --noout $(XML_MODEL) --schema $(XSD_SCHEMA)XMMLGPU.xsd
 
@@ -63,6 +61,7 @@ XSLTPREP:
 	xsltproc $(TEMPLATE)io.xslt $(XML_MODEL) > $(SRC_CUDA)io.cu
 	xsltproc $(TEMPLATE)simulation.xslt $(XML_MODEL) > $(SRC_CUDA)simulation.cu
 	xsltproc $(TEMPLATE)main.xslt $(XML_MODEL) > $(SRC_CUDA)main.cu
+	xsltproc $(TEMPLATE)visualisation.xslt $(XML_MODEL) > $(SRC_CUDA)visualisation.cu
 
 ################################################################################
 
@@ -215,47 +214,9 @@ endif
 
 ################################################################################
 
-# Target rules
-help:
-	@echo "************************************************************************"
-	@echo "*  Copyright 2016 University of Sheffield.  All rights reserved.       *"
-	@echo "************************************************************************"
-	@echo "make all -> validate &processes XSL model and generates all .cu files  *"
-	@echo "                                                                       *"
-	@echo "           ------------------------------------------------            *"
-	@echo "make XSLTPREP -> Validate and preprocesses the xml model               *"
-	@echo "                                                                       *"
-	@echo "           ------------------------------------------------            *"
-	@echo "make XML_Validate -> To validate the XML file                          *"
-	@echo "run "sudo apt install libxml2-utils" to install xmllint                *"
-	@echo "                                                                       *"
-	@echo "           ------------------------------------------------            *"
-	@echo "make build -> builds executables in either release or debug            *"
-	@echo "                   -Debug_Console                                      *"
-	@echo "                          OR                                           *"
-	@echo "                   -Release_Console                                    *"
-	@echo "                                                                       *"
-	@echo "           ------------------------------------------------            *"
-	@echo "                                                                       *"
-	@echo "make console_mode -> builds executables in console mode                *"
-	@echo "                                                                       *"
-	@echo "make < .. > dbg='arg' -> builds in Release/Debug only                  *"
-	@echo "                                'arg' -> 0 or 1 value                  *"
-	@echo "                                                                       *"
-	@echo "To run executables for console mode, run below command:                *"
-	@echo "make run_console iter='arg'                                            *"
-	@echo "           Note that without the 'arg', it only runs for 1 iteration   *"
-	@echo "           ------------------------------------------------            *"
-	@echo "Alternatively, run the bash script stored in bin/x64. The iteration    *"
-	@echo "default value in console mode is 1. You can simple change it by       *"
-	@echo "entering a new value while running the ./*.sh file.                    *"
-	@echo "                                                                       *"
-	@echo "           ------------------------------------------------            *"
-	@echo "Note: You can manualy change the location/name of the INPUT_DATA       *"
-	@echo "                                                                       *"
-	@echo "************************************************************************"
+build: XSLTPREP main
 
-build: main
+build_vis: XSLTPREP main_vis
 
 check.deps:
 ifeq ($(SAMPLE_ENABLED),0)
@@ -270,13 +231,21 @@ io.o: $(SRC_CUDA)io.cu
 simulation.o: $(SRC_CUDA)simulation.cu
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(DEBUG) $(GENCODE_FLAGS) $(FLAMELIB) -o $@ -c $<
 
+visualisation.o: $(SRC_CUDA)visualisation.cu
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(DEBUG) $(GENCODE_FLAGS) $(FLAMELIB) -o $@ -c -DVISUALISATION $<
+
 main.o: $(SRC_CUDA)main.cu
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(DEBUG) $(GENCODE_FLAGS) $(FLAMELIB) -o $@ -c $<
 
+main_vis.o: $(SRC_CUDA)main.cu
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(DEBUG) $(GENCODE_FLAGS) $(FLAMELIB) -o $@ -c -DVISUALISATION $<
 
-main: BUILD_TYPE=$(Mode_TYPE)_Console
-main: io.o simulation.o  main.o
+main: io.o simulation.o main.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
+
+main_vis: io.o simulation.o main_vis.o visualisation.o
+	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) $(OPENGL_FLAGS) -o $@ $+ $(LIBRARIES) \
+		&& mv main_vis main
 
 .PHONY: clean
 clean:

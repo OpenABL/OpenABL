@@ -19,10 +19,15 @@ namespace OpenABL {
 void FlameMainPrinter::print(const AST::SimulateStatement &stmt) {
   if (forGPU) {
     *this << "save(&agents, agents_info, \"iterations/0.xml\", SAVE_FLAMEGPU_XML);"
-          << "char _cmd_buf[100];" << nl
-          << "snprintf(_cmd_buf, sizeof(_cmd_buf), \"./main iterations/0.xml %d\", "
-          << *stmt.timestepsExpr << ");" << nl
-          << "int _cmd_ret = system(_cmd_buf);" << nl
+          << "char _cmd_buf[100];" << nl;
+    if (visualize) {
+      // Visualization does not use timesteps
+      *this << "snprintf(_cmd_buf, sizeof(_cmd_buf), \"./main iterations/0.xml\");" << nl;
+    } else {
+      *this << "snprintf(_cmd_buf, sizeof(_cmd_buf), \"./main iterations/0.xml %d\", "
+            << *stmt.timestepsExpr << ");" << nl;
+    }
+    *this << "int _cmd_ret = system(_cmd_buf);" << nl
           << "if (_cmd_ret != 0) { return _cmd_ret; }" << nl;
   } else {
     *this << "save(&agents, agents_info, \"iterations/0.xml\", SAVE_FLAME_XML);"

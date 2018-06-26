@@ -220,10 +220,15 @@ static std::string createFunctionsFile(
   return printer.extractStr();
 }
 
-static std::string createMainFile(AST::Script &script, bool useFloat) {
-  FlameMainPrinter printer(script, useFloat, true, false);
+static std::string createMainFile(AST::Script &script, bool useFloat, bool visualize) {
+  FlameMainPrinter printer(script, useFloat, true, false, visualize);
   printer.print(script);
   return printer.extractStr();
+}
+
+static std::string createBuildFile(bool visualize) {
+  std::string type = visualize ? "build_vis" : "build";
+  return "make " + type + " && ./build_runner.sh";
 }
 
 static std::string createBuildRunner(bool useFloat) {
@@ -234,8 +239,18 @@ static std::string createBuildRunner(bool useFloat) {
   }
 }
 
+static std::string createRunFile(bool visualize) {
+  if (visualize) {
+    return "LD_LIBRARY_PATH=$FLAMEGPU_DIR/lib/x86_64-linux-gnu ./runner";
+  } else {
+    return "./runner";
+  }
+}
+
 void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
   bool useFloat = ctx.config.getBool("use_float", false);
+  bool visualize = ctx.config.getBool("visualize", false);
+  (void) visualize;
 
   // TODO How to determine this value ???
   // For now just using an explicit configuration parameter
@@ -245,19 +260,23 @@ void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
 
   createDirectory(ctx.outputDir + "/model");
   createDirectory(ctx.outputDir + "/dynamic");
+  createDirectory(ctx.outputDir + "/visualisation");
 
   writeToFile(ctx.outputDir + "/model/XMLModelFile.xml",
       createXmlModel(script, model, useFloat, bufferSize));
   writeToFile(ctx.outputDir + "/model/functions.c", createFunctionsFile(script, model, useFloat));
-  writeToFile(ctx.outputDir + "/runner.c", createMainFile(script, useFloat));
+  writeToFile(ctx.outputDir + "/runner.c", createMainFile(script, useFloat, visualize));
 
   copyFile(
       ctx.assetDir + "/flamegpu/libabl_flamegpu.h",
       ctx.outputDir + "/model/libabl_flamegpu.h");
+  copyFile(
+      ctx.assetDir + "/flamegpu/visualisation.h",
+      ctx.outputDir + "/visualisation/visualisation.h");
   copyFile(ctx.assetDir + "/flamegpu/Makefile", ctx.outputDir + "/Makefile");
-  copyFile(ctx.assetDir + "/flamegpu/build.sh", ctx.outputDir + "/build.sh");
-  copyFile(ctx.assetDir + "/flamegpu/run.sh", ctx.outputDir + "/run.sh");
+  writeToFile(ctx.outputDir + "/build.sh", createBuildFile(visualize));
   writeToFile(ctx.outputDir + "/build_runner.sh", createBuildRunner(useFloat));
+  writeToFile(ctx.outputDir + "/run.sh", createRunFile(visualize));
 
   // These are required for runner.c
   copyFile(ctx.assetDir + "/c/libabl.h", ctx.outputDir + "/libabl.h");
@@ -269,7 +288,6 @@ void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
 
   createDirectory(ctx.outputDir + "/iterations");
 }
-
 
 void FlameGPUBackend::initEnv(const BackendContext &ctx) {
   std::string flameGpuDir = ctx.depsDir + "/flamegpu";
