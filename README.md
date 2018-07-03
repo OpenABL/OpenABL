@@ -198,10 +198,9 @@ run scripts.
      directory.
  * `flamegpu` backend:
    * `FLAMEGPU_DIR` must be set to the FLAMEGPU directory.
-   * Unless CUDA is installed in `/usr/local/cuda`, `CUDA_PATH` must be set
-     to the CUDA directory.
+   * CUDA must be in `PATH` and `LD_LIBRARY_PATH`.
    * `SMS` can be used to specify the SM architecture. This defaults to
-     `"30 35 37 50 52"`
+     `"30 35 37 50 60"`
  * `mason` backend:
    * `MASON_JAR` must be set to the MASON Jar file.
  * `dmason` backend:
