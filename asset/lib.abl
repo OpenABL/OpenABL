@@ -1,8 +1,17 @@
+//
 // Constants
+//
 
 float PI = 3.14159265358979323846;
 
-// float random(float, float) is defined by the backend
+//
+// Random Number Generation
+//
+// The functions
+//   float random(float, float)
+//   int randomInt(int, int)
+// are defined by the backend. Here we only define helper functions on top of
+// these primitives.
 
 float2 random(float2 min, float2 max) {
   return float2(
@@ -27,6 +36,12 @@ float2 random(float2 max) {
 float3 random(float3 max) {
   return random(float3(0), max);
 }
+
+int randomInt(int max) {
+  return randomInt(0, max);
+}
+
+// Clamping
 
 float clamp(float pos, float min, float max) {
   return pos < min ? min : pos > max ? max : pos;

@@ -985,6 +985,8 @@ void AnalysisVisitor::leave(AST::AgentCreationExpression &expr) {
 
     Type memberType = member->type->resolved;
     Type exprType = entry->expr->type;
+    SKIP_INVALID(exprType);
+
     if (!promoteTo(entry->expr, memberType)) {
       err << "Trying to initialize member of type " << memberType
           << " from expression of type " << exprType << entry->expr->loc;

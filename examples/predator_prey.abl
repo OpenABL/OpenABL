@@ -314,7 +314,7 @@ void main() {
       pos: random(float2(env_size)),
       dir: random_direction(), //float2(0),
       steer: float2(0),
-      life: GAIN_FROM_FOOD_PREY + int(random(10)),
+      life: GAIN_FROM_FOOD_PREY + randomInt(10),
     });
   }
 
@@ -323,7 +323,7 @@ void main() {
       pos: random(float2(env_size)),
       dir: random_direction(), //float2(0),
       steer: float2(0),
-      life: GAIN_FROM_FOOD_PREDATOR + int(random(10)),
+      life: GAIN_FROM_FOOD_PREDATOR + randomInt(10),
 
     });
   }
