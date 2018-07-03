@@ -227,7 +227,7 @@ static std::string createMainFile(AST::Script &script, bool useFloat, bool visua
 }
 
 static std::string createBuildFile(bool visualize) {
-  std::string type = visualize ? "build_vis" : "build";
+  std::string type = visualize ? "visualisation-ext" : "console-ext";
   return "make " + type + " && ./build_runner.sh";
 }
 
@@ -258,22 +258,25 @@ void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
 
   FlameModel model = FlameModel::generateFromScript(script);
 
-  createDirectory(ctx.outputDir + "/model");
-  createDirectory(ctx.outputDir + "/dynamic");
-  createDirectory(ctx.outputDir + "/visualisation");
+  std::string assetDir = ctx.assetDir + "/flamegpu";
+  std::string modelDir = ctx.outputDir + "/src/model";
 
-  writeToFile(ctx.outputDir + "/model/XMLModelFile.xml",
+  createDirectory(ctx.outputDir + "/src");
+  createDirectory(ctx.outputDir + "/src/model");
+  createDirectory(ctx.outputDir + "/src/dynamic");
+  createDirectory(ctx.outputDir + "/src/visualisation");
+
+  // Model and visualization files
+  writeToFile(modelDir + "/XMLModelFile.xml",
       createXmlModel(script, model, useFloat, bufferSize));
-  writeToFile(ctx.outputDir + "/model/functions.c", createFunctionsFile(script, model, useFloat));
-  writeToFile(ctx.outputDir + "/runner.c", createMainFile(script, useFloat, visualize));
+  writeToFile(modelDir + "/functions.c", createFunctionsFile(script, model, useFloat));
+  copyFile(assetDir + "/libabl_flamegpu.h", modelDir + "/libabl_flamegpu.h");
+  copyFile(
+      assetDir + "/visualisation.h",
+      ctx.outputDir + "/src/visualisation/visualisation.h");
 
-  copyFile(
-      ctx.assetDir + "/flamegpu/libabl_flamegpu.h",
-      ctx.outputDir + "/model/libabl_flamegpu.h");
-  copyFile(
-      ctx.assetDir + "/flamegpu/visualisation.h",
-      ctx.outputDir + "/visualisation/visualisation.h");
-  copyFile(ctx.assetDir + "/flamegpu/Makefile", ctx.outputDir + "/Makefile");
+  copyFile(assetDir + "/Makefile", ctx.outputDir + "/Makefile");
+  writeToFile(ctx.outputDir + "/runner.c", createMainFile(script, useFloat, visualize));
   writeToFile(ctx.outputDir + "/build.sh", createBuildFile(visualize));
   writeToFile(ctx.outputDir + "/build_runner.sh", createBuildRunner(useFloat));
   writeToFile(ctx.outputDir + "/run.sh", createRunFile(visualize));
