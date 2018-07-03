@@ -122,7 +122,8 @@ static std::string createFunctionsFile(
 }
 
 static std::string createMainFile(AST::Script &script, bool useFloat, bool parallel) {
-  FlameMainPrinter printer(script, useFloat, false, parallel, false);
+  FlameMainPrinter printer(script,
+    FlameMainPrinter::Params::createForFlame(useFloat, parallel));
   printer.print(script);
   return printer.extractStr();
 }

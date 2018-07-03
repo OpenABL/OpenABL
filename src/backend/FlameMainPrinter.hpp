@@ -23,20 +23,32 @@ namespace OpenABL {
  * code is based on the C backend, which is however only used to generate the agents and then
  * export/import them in the format required by Flame and FlameGPU. */
 struct FlameMainPrinter : public CPrinter {
+  struct Params {
+    bool forGPU;
+    bool useFloat;
+    bool parallel;  // Flame only
+    bool visualize; // FlameGPU only
+    bool profile;   // FlameGPU only
+
+    static Params createForFlame(bool useFloat, bool parallel) {
+      return { false, useFloat, parallel, false, false };
+    }
+    static Params createForFlameGPU(bool useFloat, bool visualize, bool profile) {
+      return { true, useFloat, false, visualize, profile };
+    }
+  };
+
   using CPrinter::print;
 
-  FlameMainPrinter(AST::Script &script, bool useFloat, bool forGPU, bool parallel, bool visualize)
-    : CPrinter(script, useFloat),
-      forGPU(forGPU), parallel(parallel), visualize(visualize) {}
+  FlameMainPrinter(AST::Script &script, Params params)
+    : CPrinter(script, params.useFloat), params(params) {}
 
   void print(const AST::SimulateStatement &);
   void print(const AST::FunctionDeclaration &);
   void print(const AST::Script &);
 
 private:
-  bool forGPU;
-  bool parallel;
-  bool visualize;
+  Params params;
 };
 
 }

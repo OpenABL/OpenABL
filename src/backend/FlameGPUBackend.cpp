@@ -220,15 +220,18 @@ static std::string createFunctionsFile(
   return printer.extractStr();
 }
 
-static std::string createMainFile(AST::Script &script, bool useFloat, bool visualize) {
-  FlameMainPrinter printer(script, useFloat, true, false, visualize);
+static std::string createMainFile(
+    AST::Script &script, bool useFloat, bool visualize, bool profile) {
+  FlameMainPrinter printer(script,
+    FlameMainPrinter::Params::createForFlameGPU(useFloat, visualize, profile));
   printer.print(script);
   return printer.extractStr();
 }
 
-static std::string createBuildFile(bool visualize) {
+static std::string createBuildFile(bool visualize, bool profile) {
   std::string type = visualize ? "visualisation-ext" : "console-ext";
-  return "make " + type + " && ./build_runner.sh";
+  std::string optionalProfile = profile ? " profile=1" : "";
+  return "make " + type + optionalProfile + " && ./build_runner.sh";
 }
 
 static std::string createBuildRunner(bool useFloat) {
@@ -247,7 +250,6 @@ void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
   bool useFloat = ctx.config.getBool("use_float", false);
   bool visualize = ctx.config.getBool("visualize", false);
   bool profile = ctx.config.getBool("profile", false);
-  (void) profile;
 
   // TODO How to determine this value ???
   // For now just using an explicit configuration parameter
@@ -273,8 +275,8 @@ void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
       ctx.outputDir + "/src/visualisation/visualisation.h");
 
   copyFile(assetDir + "/Makefile", ctx.outputDir + "/Makefile");
-  writeToFile(ctx.outputDir + "/runner.c", createMainFile(script, useFloat, visualize));
-  writeToFile(ctx.outputDir + "/build.sh", createBuildFile(visualize));
+  writeToFile(ctx.outputDir + "/runner.c", createMainFile(script, useFloat, visualize, profile));
+  writeToFile(ctx.outputDir + "/build.sh", createBuildFile(visualize, profile));
   writeToFile(ctx.outputDir + "/build_runner.sh", createBuildRunner(useFloat));
   writeToFile(ctx.outputDir + "/run.sh", createRunFile());
 
