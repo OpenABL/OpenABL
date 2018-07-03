@@ -49,7 +49,7 @@ class OpenAbl:
         try:
             return subprocess.check_output(args, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as err:
-            raise OpenABLInvocationFailed(
+            raise InvocationFailed(
                 'Invocation of command\n' + ' '.join(args) + '\n'
                     + 'exited with exit code ' + str(err.returncode)
                     + ' and the following output:\n' + err.output.decode('utf-8'))
