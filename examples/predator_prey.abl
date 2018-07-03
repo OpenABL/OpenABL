@@ -79,6 +79,7 @@ param float prey_fraction     = 0.350; // XML 0.250
 param float predator_fraction = 0.025; // XML 0.125
 param float agent_density     = 1600;
 param int num_agents          = 3200;
+param int num_timesteps       = 100;
 
 float env_size = sqrt(num_agents/agent_density) * SPACE_MULT;
 environment { max: float2(env_size) }
@@ -328,7 +329,7 @@ void main() {
   }
 
 
-  simulate(100) {
+  simulate(num_timesteps) {
     pred_follow_prey, prey_avoid_pred,
     prey_flock, pred_avoid,
     prey_move, pred_move,
