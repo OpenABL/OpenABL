@@ -28,6 +28,7 @@ param float momentum_scale = 1.0;
 param float time_scale = 0.7;
 
 param int num_agents = 1000;
+param int num_timesteps = 100;
 
 float max_pos = sqrt(num_agents/agent_density);
 
@@ -96,7 +97,7 @@ void main() {
     });
   }
 
-  simulate(100) { update_boid }
+  simulate(num_timesteps) { update_boid }
 
   save("boids.out");
 }

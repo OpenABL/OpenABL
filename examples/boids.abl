@@ -29,6 +29,7 @@ float collision_scale = 0.75;
 float match_scale = 1.25;
 
 param int num_agents = 5000;
+param int num_timesteps = 100;
 
 float min_pos = 0;
 float max_pos = cbrt(num_agents/agent_density);
@@ -118,7 +119,7 @@ void main() {
     });
   }
 
-  simulate(100) { update_boid }
+  simulate(num_timesteps) { update_boid }
 
   save("boids.out");
 }

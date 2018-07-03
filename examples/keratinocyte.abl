@@ -68,6 +68,7 @@ int K_TYPE_CORN  = 3;
 int K_TYPE_HACAT = 4;
 
 param int num_agents = 100;
+param int num_timesteps = 100;
 
 environment { max: float3(SURFACE_WIDTH) }
 
@@ -440,7 +441,7 @@ void main() {
     });
   }
 
-  simulate(100) {
+  simulate(num_timesteps) {
     cycle, differentiate, death_signal, migrate, resolve_forces
   }
 }

@@ -52,6 +52,8 @@ float pheromone_radius = 1.42; // to get all the neighbors
 
 param float ants_density = 0.1; // simulation scaling with constant density
 param int num_agents = 11000;
+param int num_timesteps = 100;
+
 int num_ants = int(num_agents / (1 + 1/ants_density));
 int env_size = int(sqrt(num_ants/ants_density));
 int num_pheromones = env_size * env_size;
@@ -281,7 +283,7 @@ void main() {
     });
   }
 
-  simulate(100) { ant_deposit, pheromone_deposit, ant_act }
+  simulate(num_timesteps) { ant_deposit, pheromone_deposit, ant_act }
 
   save("ants.out");
 }
