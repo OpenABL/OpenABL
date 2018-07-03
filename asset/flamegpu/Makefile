@@ -1,11 +1,11 @@
 ################################################################################
 #
-# FLAME GPU Script for CUDA 7.5
+# FLAME GPU Makefile for CUDA 7.5 and above
 #
 # Copyright 2016 University of Sheffield.  All rights reserved.
 #
-# Authors : Dr Mozhgan Kabiri Chimeh, Dr Paul Richmond
-# Contact : {m.kabiri-chimeh,p.richmond}@sheffield.ac.uk
+# Authors : Dr Mozhgan Kabiri Chimeh, Peter Heywood, Dr Paul Richmond
+# Contact : {m.kabiri-chimeh,p.heywood,p.richmond}@sheffield.ac.uk
 #
 # NOTICE TO USER:
 #
@@ -127,7 +127,7 @@ HOST_COMPILER ?= g++
 NVCC          := $(CUDA_PATH)/bin/nvcc -ccbin $(HOST_COMPILER)
 
 # internal flags
-NVCCFLAGS   := -m${TARGET_SIZE}
+NVCCFLAGS   := -m${TARGET_SIZE} -std=c++11
 CCFLAGS     :=
 LDFLAGS     := -L$(LDIR)
 
@@ -190,7 +190,7 @@ LIBRARIES :=
 SAMPLE_ENABLED := 1
 
 # Gencode arguments
-SMS ?= 30 35 37 50 52
+SMS ?= 30 35 37 50 60
 
 ifeq ($(SMS),)
 $(info >>> WARNING - no SM architectures have been specified - waiving sample <<<)
