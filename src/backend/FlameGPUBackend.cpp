@@ -239,18 +239,15 @@ static std::string createBuildRunner(bool useFloat) {
   }
 }
 
-static std::string createRunFile(bool visualize) {
-  if (visualize) {
-    return "LD_LIBRARY_PATH=$FLAMEGPU_DIR/lib/x86_64-linux-gnu ./runner";
-  } else {
-    return "./runner";
-  }
+static std::string createRunFile() {
+  return "./runner";
 }
 
 void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
   bool useFloat = ctx.config.getBool("use_float", false);
   bool visualize = ctx.config.getBool("visualize", false);
-  (void) visualize;
+  bool profile = ctx.config.getBool("profile", false);
+  (void) profile;
 
   // TODO How to determine this value ???
   // For now just using an explicit configuration parameter
@@ -279,7 +276,7 @@ void FlameGPUBackend::generate(AST::Script &script, const BackendContext &ctx) {
   writeToFile(ctx.outputDir + "/runner.c", createMainFile(script, useFloat, visualize));
   writeToFile(ctx.outputDir + "/build.sh", createBuildFile(visualize));
   writeToFile(ctx.outputDir + "/build_runner.sh", createBuildRunner(useFloat));
-  writeToFile(ctx.outputDir + "/run.sh", createRunFile(visualize));
+  writeToFile(ctx.outputDir + "/run.sh", createRunFile());
 
   // These are required for runner.c
   copyFile(ctx.assetDir + "/c/libabl.h", ctx.outputDir + "/libabl.h");
