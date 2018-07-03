@@ -460,6 +460,11 @@ void AnalysisVisitor::leave(AST::ConstDeclaration &decl) {
     decl.expr.reset(val.toExpression());
   }
 
+  // Collect all declared params here, we will check that no invalid params were passed at the end
+  if (decl.isParam) {
+    script.params.insert(decl.var->name);
+  }
+
   declareVar(*decl.var, decl.type->resolved, true, true, val);
 };
 
@@ -1330,6 +1335,14 @@ void AnalysisVisitor::leave(AST::Script &script) {
     }
     if (!hasTopLevelSimulate) {
       err << "Simulate statement cannot be used conditionally" << script.simStmt->loc;
+      return;
+    }
+  }
+
+  for (const auto &param : params) {
+    const std::string &name = param.first;
+    if (script.params.find(name) == script.params.end()) {
+      err << "Unknown parameter \"" << name << "\" specified through -P" << AST::Location{};
       return;
     }
   }

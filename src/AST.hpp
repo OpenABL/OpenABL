@@ -655,6 +655,7 @@ struct Script : public Node {
   std::vector<AgentDeclaration *> agents;
   std::vector<ConstDeclaration *> consts;
   std::vector<FunctionDeclaration *> funcs;
+  std::set<std::string> params;
   SimulateStatement *simStmt = nullptr;
   FunctionDeclaration *mainFunc = nullptr;
   EnvironmentDeclaration *envDecl = nullptr;
