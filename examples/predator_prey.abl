@@ -84,12 +84,14 @@ param int num_timesteps       = 100;
 float env_size = sqrt(num_agents/agent_density) * SPACE_MULT;
 environment { max: float2(env_size) }
 
-float2 random_direction() {
+float2 randomDirection() {
   float phi = random(2*PI);
   return float2(sin(phi), cos(phi));
 }
 
-float2 boundPosition(float2 pos){ return clamp(pos, float2(env_size,env_size)); }
+float2 boundPosition(float2 pos) {
+  return clamp(pos, float2(env_size, env_size));
+}
 
 
 /* Prey step functions */
@@ -181,7 +183,7 @@ step prey_eat_or_starve(Prey in -> out) {
 step prey_reproduction(Prey in -> out) {
   if(random(1.0) < REPRODUCE_PREY_PROB){
     add(Prey { pos: in.pos,
-       //dir: random_direction(), steer: float2(0),
+       //dir: randomDirection(), steer: float2(0),
        dir: - in.dir, steer: - in.steer, // go to opposite direction
        life: in.life / 2 }); // life is split between father and child
     out.life = in.life / 2;
@@ -256,7 +258,7 @@ step pred_reproduction(Predator in -> out) {
   if (random(1.0) < REPRODUCE_PREDATOR_PROB) {
     add(Predator { pos: in.pos,
       dir: -in.dir, steer: -in.steer, // spawn in opposite direction
-      //dir: random_direction(), steer: float2(0),
+      //dir: randomDirection(), steer: float2(0),
       life: in.life / 2 }
     );
     out.life = in.life / 2;
@@ -299,20 +301,23 @@ step grass_growth(Grass in->out){
 }
 
 
-
 void main() {
   int num_predators = int(predator_fraction * num_agents);
   int num_prey      = int(prey_fraction * num_agents);
   int num_grass     = num_agents - num_predators - num_prey;
 
-  for(int i : 0..int(num_grass)){
-    add(Grass { pos: random(float2(env_size)), dead_cycles: 0, avail: true });
+  for (int i : 0..num_grass) {
+    add(Grass {
+      pos: random(float2(env_size)),
+      dead_cycles: 0,
+      avail: true,
+    });
   }
 
   for (int i : 0..num_prey) {
     add(Prey {
       pos: random(float2(env_size)),
-      dir: random_direction(), //float2(0),
+      dir: randomDirection(), //float2(0),
       steer: float2(0),
       life: GAIN_FROM_FOOD_PREY + randomInt(10),
     });
@@ -321,13 +326,11 @@ void main() {
   for (int i : 0..num_predators) {
     add(Predator {
       pos: random(float2(env_size)),
-      dir: random_direction(), //float2(0),
+      dir: randomDirection(), //float2(0),
       steer: float2(0),
       life: GAIN_FROM_FOOD_PREDATOR + randomInt(10),
-
     });
   }
-
 
   simulate(num_timesteps) {
     pred_follow_prey, prey_avoid_pred,
@@ -338,6 +341,6 @@ void main() {
     pred_reproduction, prey_reproduction, grass_growth
   }
 
-  save("agents.out");
+  save("agents.json");
 }
 
