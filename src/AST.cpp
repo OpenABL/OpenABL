@@ -16,6 +16,17 @@
 #include "ASTVisitor.hpp"
 #include "Printer.hpp"
 
+#define VISIT_EXPR(expr) do { \
+  bool oldInExpr = visitor.inExpr; \
+  visitor.inExpr = true; \
+  expr->accept(visitor); \
+  visitor.inExpr = oldInExpr; \
+  if (visitor.replacementExpr != nullptr) { \
+    expr.reset(visitor.replacementExpr); \
+    visitor.replacementExpr = nullptr; \
+  } \
+} while (0)
+
 namespace OpenABL {
 namespace AST {
 
@@ -37,49 +48,49 @@ void VarExpression::accept(Visitor &visitor) {
 
 void UnaryOpExpression::accept(Visitor &visitor) {
   visitor.enter(*this);
-  expr->accept(visitor);
+  VISIT_EXPR(expr);
   visitor.leave(*this);
 }
 
 void BinaryOpExpression::accept(Visitor &visitor) {
   visitor.enter(*this);
-  left->accept(visitor);
-  right->accept(visitor);
+  VISIT_EXPR(left);
+  VISIT_EXPR(right);
   visitor.leave(*this);
 }
 
 void CallExpression::accept(Visitor &visitor) {
   visitor.enter(*this);
   for (ExpressionPtr &arg : *args) {
-    arg->accept(visitor);
+    VISIT_EXPR(arg);
   }
   visitor.leave(*this);
 }
 
 void MemberAccessExpression::accept(Visitor &visitor) {
   visitor.enter(*this);
-  expr->accept(visitor);
+  VISIT_EXPR(expr);
   visitor.leave(*this);
 }
 
 void ArrayAccessExpression::accept(Visitor &visitor) {
   visitor.enter(*this);
-  arrayExpr->accept(visitor);
-  offsetExpr->accept(visitor);
+  VISIT_EXPR(arrayExpr);
+  VISIT_EXPR(offsetExpr);
   visitor.leave(*this);
 }
 
 void TernaryExpression::accept(Visitor &visitor) {
   visitor.enter(*this);
-  condExpr->accept(visitor);
-  ifExpr->accept(visitor);
-  elseExpr->accept(visitor);
+  VISIT_EXPR(condExpr);
+  VISIT_EXPR(ifExpr);
+  VISIT_EXPR(elseExpr);
   visitor.leave(*this);
 }
 
 void MemberInitEntry::accept(Visitor &visitor) {
   visitor.enter(*this);
-  expr->accept(visitor);
+  VISIT_EXPR(expr);
   visitor.leave(*this);
 }
 
@@ -94,7 +105,7 @@ void AgentCreationExpression::accept(Visitor &visitor) {
 void ArrayInitExpression::accept(Visitor &visitor) {
   visitor.enter(*this);
   for (ExpressionPtr &expr : *exprs) {
-    expr->accept(visitor);
+    VISIT_EXPR(expr);
   }
   visitor.leave(*this);
 }
@@ -102,27 +113,27 @@ void ArrayInitExpression::accept(Visitor &visitor) {
 void NewArrayExpression::accept(Visitor &visitor) {
   visitor.enter(*this);
   elemType->accept(visitor);
-  sizeExpr->accept(visitor);
+  VISIT_EXPR(sizeExpr);
   visitor.leave(*this);
 }
 
 void ExpressionStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
-  expr->accept(visitor);
+  VISIT_EXPR(expr);
   visitor.leave(*this);
 }
 
 void AssignStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
-  left->accept(visitor);
-  right->accept(visitor);
+  VISIT_EXPR(left);
+  VISIT_EXPR(right);
   visitor.leave(*this);
 }
 
 void AssignOpStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
-  left->accept(visitor);
-  right->accept(visitor);
+  VISIT_EXPR(left);
+  VISIT_EXPR(right);
   visitor.leave(*this);
 }
 
@@ -139,14 +150,14 @@ void VarDeclarationStatement::accept(Visitor &visitor) {
   type->accept(visitor);
   var->accept(visitor);
   if (initializer) {
-    initializer->accept(visitor);
+    VISIT_EXPR(initializer);
   }
   visitor.leave(*this);
 }
 
 void IfStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
-  condExpr->accept(visitor);
+  VISIT_EXPR(condExpr);
   ifStmt->accept(visitor);
   if (elseStmt) {
     elseStmt->accept(visitor);
@@ -156,7 +167,7 @@ void IfStatement::accept(Visitor &visitor) {
 
 void WhileStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
-  expr->accept(visitor);
+  VISIT_EXPR(expr);
   stmt->accept(visitor);
   visitor.leave(*this);
 }
@@ -165,21 +176,21 @@ void ForStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
   type->accept(visitor);
   var->accept(visitor);
-  expr->accept(visitor);
+  VISIT_EXPR(expr);
   stmt->accept(visitor);
   visitor.leave(*this);
 }
 
 void SimulateStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
-  timestepsExpr->accept(visitor);
+  VISIT_EXPR(timestepsExpr);
   visitor.leave(*this);
 }
 
 void ReturnStatement::accept(Visitor &visitor) {
   visitor.enter(*this);
   if (expr) {
-    expr->accept(visitor);
+    VISIT_EXPR(expr);
   }
   visitor.leave(*this);
 }
@@ -239,7 +250,7 @@ void ConstDeclaration::accept(Visitor &visitor) {
   visitor.enter(*this);
   type->accept(visitor);
   var->accept(visitor);
-  expr->accept(visitor);
+  VISIT_EXPR(expr);
   visitor.leave(*this);
 }
 

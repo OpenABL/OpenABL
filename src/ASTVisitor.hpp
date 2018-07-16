@@ -87,6 +87,14 @@ struct Visitor {
   virtual void leave(ConstDeclaration &) {};
   virtual void leave(EnvironmentDeclaration &) {};
   virtual void leave(Script &) {};
+
+  void replaceExpr(Expression *expr) {
+    assert(inExpr);
+    replacementExpr = expr;
+  }
+
+  bool inExpr = false;
+  Expression *replacementExpr = nullptr;
 };
 
 }
