@@ -74,13 +74,20 @@ private:
 };
 
 struct FunctionSignature {
+  static const unsigned MAIN_ONLY   = 1 << 0;
+  static const unsigned STEP_ONLY   = 1 << 1;
+  static const unsigned REDUCE_ONLY = 1 << 2;
+
+  static const unsigned MAIN_STEP_ONLY = MAIN_ONLY | STEP_ONLY;
+
   FunctionSignature()
-    : origName(""), name(""), paramTypes(), returnType(), decl(nullptr) {}
+    : origName(""), name(""), paramTypes(), returnType(), flags(0), decl(nullptr) {}
   FunctionSignature(const std::string &origName, const std::string &name,
                     const std::vector<Type> &paramTypes, Type returnType,
-                    const AST::FunctionDeclaration *decl)
+                    unsigned flags, const AST::FunctionDeclaration *decl)
     : origName(origName), name(name),
-      paramTypes(paramTypes), returnType(returnType), decl(decl) {}
+      paramTypes(paramTypes), returnType(returnType),
+      flags(flags), decl(decl) {}
 
   bool isCompatibleWith(const std::vector<Type> &argTypes) const {
     if (argTypes.size() != paramTypes.size()) {
@@ -125,6 +132,7 @@ struct FunctionSignature {
   std::string name;
   std::vector<Type> paramTypes;
   Type returnType;
+  unsigned flags;
   const AST::FunctionDeclaration *decl;
 };
 
@@ -160,13 +168,12 @@ struct FunctionList {
     funcs[sig.origName].signatures.push_back(sig);
   }
   void add(const std::string &name, const std::string &sigName,
-           std::vector<Type> argTypes, Type returnType,
-           const AST::FunctionDeclaration *decl = nullptr) {
-    add({ name, sigName, argTypes, returnType, decl });
+           std::vector<Type> argTypes, Type returnType, unsigned flags = 0) {
+    add({ name, sigName, argTypes, returnType, flags, nullptr });
   }
-  void add(const std::string &name, std::vector<Type> argTypes, Type returnType,
-           const AST::FunctionDeclaration *decl = nullptr) {
-    add(name, name, argTypes, returnType, decl);
+  void add(const std::string &name, std::vector<Type> argTypes,
+           Type returnType, unsigned flags = 0) {
+    add(name, name, argTypes, returnType, flags);
   }
 
   Function *getByName(const std::string &name) {

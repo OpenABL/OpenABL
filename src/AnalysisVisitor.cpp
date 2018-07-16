@@ -221,7 +221,9 @@ void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
     return;
   }
 
-  decl.sig = FunctionSignature { decl.name, sigName, paramTypes, returnType, &decl };
+  decl.sig = FunctionSignature {
+    decl.name, sigName, paramTypes, returnType, 0, &decl
+  };
   funcs.add(decl.sig);
 
   // TODO get rid of funcDecls (used for step functions only now)

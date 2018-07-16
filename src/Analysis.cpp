@@ -51,7 +51,7 @@ FunctionSignature FunctionSignature::getConcreteSignature(
     newReturnType = returnType;
   }
 
-  return { origName, name, newParamTypes, newReturnType, decl };
+  return { origName, name, newParamTypes, newReturnType, flags, decl };
 }
 
 }

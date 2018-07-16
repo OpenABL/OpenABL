@@ -54,14 +54,17 @@ void registerBuiltinFunctions(FunctionList &funcs) {
   funcs.add("max", { Type::FLOAT, Type::FLOAT }, Type::FLOAT);
 
   // Agent specific functions
-  funcs.add("add", { Type::AGENT }, Type::VOID);
-  funcs.add("near", { Type::AGENT, Type::FLOAT }, { Type::ARRAY, Type::AGENT });
-  funcs.add("save", { Type::STRING }, Type::VOID);
-  funcs.add("removeCurrent", {}, Type::VOID);
+  funcs.add("add", { Type::AGENT }, Type::VOID, FunctionSignature::MAIN_STEP_ONLY);
+  funcs.add("removeCurrent", {}, Type::VOID, FunctionSignature::STEP_ONLY);
+  funcs.add("near",
+    { Type::AGENT, Type::FLOAT },
+    { Type::ARRAY, Type::AGENT },
+    FunctionSignature::STEP_ONLY);
+  funcs.add("save", { Type::STRING }, Type::VOID, FunctionSignature::MAIN_ONLY);
 
   // Reduction functions
-  funcs.add("count", { Type::AGENT_TYPE }, Type::INT32);
-  funcs.add("sum", { Type::AGENT_MEMBER }, Type::UNRESOLVED);
+  funcs.add("count", { Type::AGENT_TYPE }, Type::INT32, FunctionSignature::REDUCE_ONLY);
+  funcs.add("sum", { Type::AGENT_MEMBER }, Type::UNRESOLVED, FunctionSignature::REDUCE_ONLY);
 }
 
 std::map<std::string, std::unique_ptr<Backend>> getBackends() {
