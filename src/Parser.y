@@ -255,7 +255,7 @@ statement: expression SEMI { $$ = new ExpressionStatement($1, @$); }
              { $$ = new BreakStatement(@$); }
          | CONTINUE SEMI
              { $$ = new ContinueStatement(@$); }
-         | SIMULATE LPAREN expression RPAREN LBRACE ident_list RBRACE
+         | SIMULATE LPAREN expression RPAREN LBRACE ident_list optional_comma RBRACE
              { $$ = new SimulateStatement($3, $6, @$); }
 
          | expression ASSIGN expression SEMI
