@@ -22,6 +22,7 @@ namespace OpenABL {
 
 namespace AST {
   struct AgentDeclaration;
+  struct AgentMember;
 }
 
 struct Type {
@@ -36,6 +37,8 @@ struct Type {
     VEC3,
     AGENT,
     ARRAY,
+    AGENT_TYPE,   // Reference to the agent type itself
+    AGENT_MEMBER, // Reference to a member of an agent type
   };
 
   Type() : type{INVALID} {}
@@ -45,7 +48,11 @@ struct Type {
 
   Type(TypeId type, AST::AgentDeclaration *agent)
     : type{type}, agent{agent}
-  { assert(type == AGENT); }
+  { assert(type == AGENT || type == AGENT_TYPE); }
+
+  Type(TypeId type, AST::AgentMember *member)
+    : type{type}, member{member}
+  { assert(type == AGENT_MEMBER); }
 
   Type(TypeId type, const Type &base)
     : type{type}, baseType{base.type}, agent{base.agent}
@@ -88,7 +95,7 @@ struct Type {
   }
 
   AST::AgentDeclaration *getAgentDecl() const {
-    assert(isAgent());
+    assert(isAgent() || isAgentType());
     return agent;
   }
 
@@ -106,6 +113,7 @@ struct Type {
   bool isVoid() const { return type == VOID; }
   bool isArray() const { return type == ARRAY; }
   bool isAgent() const { return type == AGENT; }
+  bool isAgentType() const { return type == AGENT_TYPE; }
   bool isVec() const { return type == VEC2 || type == VEC3; }
   bool isVec2() const { return type == VEC2; }
   bool isVec3() const { return type == VEC3; }
@@ -151,8 +159,13 @@ private:
   TypeId type;
   // Base type for ARRAY type. We support simple arrays only, for now.
   TypeId baseType;
-  // Agent declaration for AGENT type
-  AST::AgentDeclaration *agent;
+
+  union {
+    // Agent declaration for AGENT and AGENT_TYPE
+    AST::AgentDeclaration *agent;
+    // Agent member for AGENT_MEMBER
+    AST::AgentMember *member;
+  };
 };
 
 std::ostream &operator<<(std::ostream &, const Type &);

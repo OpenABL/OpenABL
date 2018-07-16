@@ -769,6 +769,17 @@ void AnalysisVisitor::enter(AST::AgentDeclaration &decl) {
 
   agents.insert({ decl.name, &decl });
   script.agents.push_back(&decl);
+
+  // Add a variable corresponding to this agent type, for uses like count(Agent1)
+  VarId id = VarId::make();
+  varMap.insert({ decl.name, id });
+  scope.add(
+    id,
+    { Type::AGENT_TYPE, &decl },
+    true, // isConst
+    true, // isGlobal
+    {}
+  );
 };
 
 void AnalysisVisitor::enter(AST::ConstDeclaration &decl) {
@@ -1044,7 +1055,7 @@ void AnalysisVisitor::leave(AST::MemberAccessExpression &expr) {
     }
 
     expr.type = Type::FLOAT;
-  } else if (type.isAgent()) {
+  } else if (type.isAgent() || type.isAgentType()) {
     AST::AgentDeclaration *agent = type.getAgentDecl();
     AST::AgentMember *member = findAgentMember(*agent, name);
     if (!member) {
@@ -1052,7 +1063,11 @@ void AnalysisVisitor::leave(AST::MemberAccessExpression &expr) {
       return;
     }
 
-    expr.type = member->type->resolved;
+    if (type.isAgent()) {
+      expr.type = member->type->resolved;
+    } else {
+      expr.type = { Type::AGENT_MEMBER, member };
+    }
   } else {
     err << "Can only access members on agent or vector type" << expr.loc;
     return;
