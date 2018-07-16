@@ -10,6 +10,7 @@ set(OpenABL_SOURCES
     src/FileUtil.cpp
     src/ParserContext.cpp
     src/Type.cpp
+    src/Value.cpp
     src/main.cpp
     src/backend/GenericPrinter.cpp
     src/backend/GenericCPrinter.cpp
