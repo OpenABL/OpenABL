@@ -371,4 +371,39 @@ AST::Expression *Value::toExpression() const {
   }
 }
 
+// Concrete signature with any generic agent types replaced
+FunctionSignature FunctionSignature::getConcreteSignature(
+    const std::vector<Type> &argTypes) const {
+  std::vector<Type> newParamTypes;
+  Type newReturnType;
+  Type agentType = Type::AGENT;
+  for (size_t i = 0; i < paramTypes.size(); i++) {
+    Type type = paramTypes[i];
+    if (type.isGenericAgent()) {
+      agentType = argTypes[i];
+      newParamTypes.push_back(argTypes[i]);
+    } else if (type.isGenericAgentArray()) {
+      agentType = argTypes[i].getBaseType();
+      newParamTypes.push_back({ Type::ARRAY, argTypes[i].getBaseType() });
+    } else {
+      newParamTypes.push_back(type);
+    }
+  }
+
+  if (returnType.isGenericAgent()) {
+    newReturnType = agentType;
+  } else if (returnType.isGenericAgentArray()) {
+    newReturnType = { Type::ARRAY, agentType };
+  } else if (returnType.isUnresolved()) {
+    // Just handle the one case we have explicitly (sum)
+    assert(paramTypes[0].isAgentMember());
+    AST::AgentMember *member = argTypes[0].getAgentMember();
+    newReturnType = member->type->resolved;
+  } else {
+    newReturnType = returnType;
+  }
+
+  return { origName, name, newParamTypes, newReturnType, decl };
+}
+
 }

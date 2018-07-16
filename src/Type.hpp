@@ -39,6 +39,7 @@ struct Type {
     ARRAY,
     AGENT_TYPE,   // Reference to the agent type itself
     AGENT_MEMBER, // Reference to a member of an agent type
+    UNRESOLVED,   // Unresolved return type, computed from args
   };
 
   Type() : type{INVALID} {}
@@ -99,6 +100,11 @@ struct Type {
     return agent;
   }
 
+  AST::AgentMember *getAgentMember() const {
+    assert(isAgentMember());
+    return member;
+  }
+
   unsigned getVecLen() const {
     assert(isVec());
     return type == VEC2 ? 2 : 3;
@@ -114,6 +120,7 @@ struct Type {
   bool isArray() const { return type == ARRAY; }
   bool isAgent() const { return type == AGENT; }
   bool isAgentType() const { return type == AGENT_TYPE; }
+  bool isAgentMember() const { return type == AGENT_MEMBER; }
   bool isVec() const { return type == VEC2 || type == VEC3; }
   bool isVec2() const { return type == VEC2; }
   bool isVec3() const { return type == VEC3; }
@@ -123,6 +130,7 @@ struct Type {
   bool isFloat() const { return type == FLOAT; }
   bool isBool() const { return type == BOOL; }
   bool isString() const { return type == STRING; }
+  bool isUnresolved() const { return type == UNRESOLVED; }
 
   bool isGenericAgent() const {
     return type == AGENT && agent == nullptr;
