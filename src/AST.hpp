@@ -218,6 +218,16 @@ struct MemberAccessExpression : public Expression {
   void print(Printer &) const;
 };
 
+struct EnvironmentAccessExpression : public Expression {
+  std::string member;
+
+  EnvironmentAccessExpression(std::string member, Location loc)
+    : Expression{loc}, member{member} {}
+
+  void accept(Visitor &);
+  void print(Printer &) const;
+};
+
 struct ArrayAccessExpression : public Expression {
   ExpressionPtr arrayExpr;
   ExpressionPtr offsetExpr;

@@ -36,6 +36,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void enter(AST::BinaryOpExpression &);
   void enter(AST::CallExpression &);
   void enter(AST::MemberAccessExpression &);
+  void enter(AST::EnvironmentAccessExpression &);
   void enter(AST::ArrayAccessExpression &);
   void enter(AST::TernaryExpression &);
   void enter(AST::MemberInitEntry &);
@@ -69,6 +70,7 @@ struct AnalysisVisitor : public AST::Visitor {
   void leave(AST::BinaryOpExpression &);
   void leave(AST::CallExpression &);
   void leave(AST::MemberAccessExpression &);
+  void leave(AST::EnvironmentAccessExpression &);
   void leave(AST::ArrayAccessExpression &);
   void leave(AST::TernaryExpression &);
   void leave(AST::MemberInitEntry &);

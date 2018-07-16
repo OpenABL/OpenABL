@@ -117,6 +117,7 @@ void AnalysisVisitor::enter(AST::UnaryOpExpression &) {}
 void AnalysisVisitor::enter(AST::BinaryOpExpression &) {}
 void AnalysisVisitor::enter(AST::CallExpression &) {}
 void AnalysisVisitor::enter(AST::MemberAccessExpression &) {}
+void AnalysisVisitor::enter(AST::EnvironmentAccessExpression &) {}
 void AnalysisVisitor::enter(AST::ArrayAccessExpression &) {}
 void AnalysisVisitor::enter(AST::TernaryExpression &) {}
 void AnalysisVisitor::enter(AST::MemberInitEntry &) {}
@@ -1064,6 +1065,21 @@ void AnalysisVisitor::leave(AST::MemberAccessExpression &expr) {
     }
   }
 };
+
+void AnalysisVisitor::leave(AST::EnvironmentAccessExpression &expr) {
+  if (!script.envDecl) {
+    err << "Cannot access environment prior to its declaration" << expr.loc;
+    return;
+  }
+
+  if (expr.member == "max") {
+    replaceExpr(script.envDecl->envMax.toExpression());
+  } else if (expr.member == "min") {
+    replaceExpr(script.envDecl->envMin.toExpression());
+  } else {
+    err << "Unknown environment member \"" << expr.member << "\"" << expr.loc;
+  }
+}
 
 void AnalysisVisitor::leave(AST::ArrayAccessExpression &expr) {
   Type arrayT = expr.arrayExpr->type;

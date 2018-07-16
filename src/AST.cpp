@@ -73,6 +73,11 @@ void MemberAccessExpression::accept(Visitor &visitor) {
   visitor.leave(*this);
 }
 
+void EnvironmentAccessExpression::accept(Visitor &visitor) {
+  visitor.enter(*this);
+  visitor.leave(*this);
+}
+
 void ArrayAccessExpression::accept(Visitor &visitor) {
   visitor.enter(*this);
   VISIT_EXPR(arrayExpr);
@@ -277,6 +282,7 @@ void UnaryOpExpression::print(Printer &printer) const { printer.print(*this); }
 void BinaryOpExpression::print(Printer &printer) const { printer.print(*this); }
 void CallExpression::print(Printer &printer) const { printer.print(*this); }
 void MemberAccessExpression::print(Printer &printer) const { printer.print(*this); }
+void EnvironmentAccessExpression::print(Printer &printer) const { printer.print(*this); }
 void ArrayAccessExpression::print(Printer &printer) const { printer.print(*this); }
 void TernaryExpression::print(Printer &printer) const { printer.print(*this); }
 void MemberInitEntry::print(Printer &printer) const { printer.print(*this); }

@@ -305,6 +305,7 @@ expression: var { $$ = new VarExpression($1, @$); }
           | IDENTIFIER LBRACE member_init_list RBRACE
               { $$ = new AgentCreationExpression($1, $3, @$); }
           | expression DOT IDENTIFIER { $$ = new MemberAccessExpression($1, $3, @$); }
+		  | ENVIRONMENT DOT IDENTIFIER { $$ = new EnvironmentAccessExpression($3, @$); }
           | expression LBRACKET expression RBRACKET { $$ = new ArrayAccessExpression($1, $3, @$); }
           | expression QM expression COLON expression
               { $$ = new TernaryExpression($1, $3, $5, @$); }

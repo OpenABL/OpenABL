@@ -70,6 +70,11 @@ struct GenericPrinter : public Printer {
     assert(0);
   }
 
+  virtual void print(const AST::EnvironmentAccessExpression &) {
+    // Should be statically resolved
+    assert(0);
+  }
+
 protected:
   AST::Script &script;
   bool supportsOverloads;
