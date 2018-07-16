@@ -46,6 +46,11 @@ static void printType(std::ostream &s, Type t) {
     } else {
       s << "agent";
     }
+  } else if (t.isAgentType()) {
+    s << "agentType{" << t.getAgentDecl()->name << "}";
+  } else if (t.isAgentMember()) {
+    AST::AgentMember *member = t.getAgentMember();
+    s << "agentMember{." << member->name << "}";
   } else {
     s << getTypeIdStr(t.getTypeId());
   }

@@ -1,0 +1,8 @@
+agent Foo {
+  int bar;
+}
+
+void main() {
+  int x = Foo;
+  int y = Foo.bar;
+}
