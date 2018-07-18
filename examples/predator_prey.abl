@@ -300,6 +300,12 @@ step grass_growth(Grass in->out){
     out.dead_cycles = in.dead_cycles + 1;
 }
 
+sequential step gather_stats() {
+  int num_prey = count(Prey);
+  int num_predator = count(Predator);
+  int num_grass = sum(Grass.avail);
+  log(num_prey, num_predator, num_grass);
+}
 
 void main() {
   int num_predators = int(predator_fraction * num_agents);
@@ -338,7 +344,8 @@ void main() {
     prey_move, pred_move,
     prey_eat_or_starve, pred_eat_or_starve,
     grass_eaten, prey_eaten,
-    pred_reproduction, prey_reproduction, grass_growth
+    pred_reproduction, prey_reproduction, grass_growth,
+    gather_stats
   }
 
   save("agents.json");
