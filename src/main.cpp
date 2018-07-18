@@ -63,8 +63,8 @@ void registerBuiltinFunctions(FunctionList &funcs) {
   funcs.add("save", { Type::STRING }, Type::VOID, FunctionSignature::MAIN_ONLY);
 
   // Reduction functions
-  funcs.add("count", { Type::AGENT_TYPE }, Type::INT32, FunctionSignature::REDUCE_ONLY);
-  funcs.add("sum", { Type::AGENT_MEMBER }, Type::UNRESOLVED, FunctionSignature::REDUCE_ONLY);
+  funcs.add("count", { Type::AGENT_TYPE }, Type::INT32, FunctionSignature::SEQ_STEP_ONLY);
+  funcs.add("sum", { Type::AGENT_MEMBER }, Type::UNRESOLVED, FunctionSignature::SEQ_STEP_ONLY);
 }
 
 std::map<std::string, std::unique_ptr<Backend>> getBackends() {

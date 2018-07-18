@@ -59,20 +59,21 @@ ID [a-zA-Z_][a-zA-Z0-9_]*
 loc.step();
 %}
 
-"agent"    { return Parser::make_AGENT(loc); }
-"break"    { return Parser::make_BREAK(loc); }
-"continue" { return Parser::make_CONTINUE(loc); }
-"else"     { return Parser::make_ELSE(loc); }
+"agent"       { return Parser::make_AGENT(loc); }
+"break"       { return Parser::make_BREAK(loc); }
+"continue"    { return Parser::make_CONTINUE(loc); }
+"else"        { return Parser::make_ELSE(loc); }
 "environment" { return Parser::make_ENVIRONMENT(loc); }
-"if"       { return Parser::make_IF(loc); }
-"for"      { return Parser::make_FOR(loc); }
-"new"      { return Parser::make_NEW(loc); }
-"param"    { return Parser::make_PARAM(loc); }
-"position" { return Parser::make_POSITION(loc); }
-"return"   { return Parser::make_RETURN(loc); }
-"simulate" { return Parser::make_SIMULATE(loc); }
-"step"     { return Parser::make_STEP(loc); }
-"while"    { return Parser::make_WHILE(loc); }
+"if"          { return Parser::make_IF(loc); }
+"for"         { return Parser::make_FOR(loc); }
+"new"         { return Parser::make_NEW(loc); }
+"param"       { return Parser::make_PARAM(loc); }
+"position"    { return Parser::make_POSITION(loc); }
+"return"      { return Parser::make_RETURN(loc); }
+"sequential"  { return Parser::make_SEQUENTIAL(loc); }
+"simulate"    { return Parser::make_SIMULATE(loc); }
+"step"        { return Parser::make_STEP(loc); }
+"while"       { return Parser::make_WHILE(loc); }
 
 true  { return Parser::make_BOOL(true, loc); }
 false { return Parser::make_BOOL(false, loc); }

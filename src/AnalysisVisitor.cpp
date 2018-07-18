@@ -187,7 +187,7 @@ void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
     SKIP_INVALID(paramType);
     paramTypes.push_back(paramType);
 
-    if (!decl.isStep && param->outVar) {
+    if (!decl.isParallelStep() && param->outVar) {
       err << "Out variable (-> " << param->outVar->name
           << ") can only be used in step functions" << param->outVar->loc;
     }
@@ -239,7 +239,7 @@ void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
 void AnalysisVisitor::leave(AST::FunctionDeclaration &decl) {
   popVarScope();
 
-  if (decl.isStep && !isValidStepFunctionSignature(decl)) {
+  if (decl.isParallelStep() && !isValidStepFunctionSignature(decl)) {
     err << "Step function " << decl.name << " does not have a valid signature" << decl.loc;
   }
 };
@@ -687,10 +687,12 @@ void AnalysisVisitor::leave(AST::SimulateStatement &stmt) {
     }
 
     AST::FunctionDeclaration &fn = *it->second;
-    if (!fn.isStep) {
+    if (!fn.isAnyStep()) {
       err << "Function \"" << name << "\" is not a step function" << stmt.loc;
       return;
     }
+
+    // TODO check that parallel step is last and there is only one
 
     stmt.stepFuncDecls.push_back(&fn);
   }
@@ -1230,13 +1232,13 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
     return;
   }
 
-  if (sig->decl && sig->decl->isStep) {
+  if (sig->decl && sig->decl->isAnyStep()) {
     err << "Cannot directly call step function " << expr.name << "()" << expr.loc;
     return;
   }
 
   if (expr.name == "removeCurrent") {
-    if (!currentFunc->isStep) {
+    if (!currentFunc->isParallelStep()) {
       err << "removeCurrent() can only be used inside a step function" << expr.loc;
       return;
     }
@@ -1247,12 +1249,12 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
   }
 
   if (expr.name == "add") {
-    if (!currentFunc->isStep && !currentFunc->isMain()) {
+    if (!currentFunc->isParallelStep() && !currentFunc->isMain()) {
       err << "add() can only be used in main() or a step function" << expr.loc;
       return;
     }
 
-    if (currentFunc->isStep) {
+    if (currentFunc->isParallelStep()) {
       const AST::AgentCreationExpression *creationExpr
         = dynamic_cast<const AST::AgentCreationExpression *>(&expr.getArg(0));
       if (!creationExpr) {

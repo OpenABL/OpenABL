@@ -358,7 +358,7 @@ void MasonPrinter::print(const AST::ConstDeclaration &decl) {
 }
 
 void MasonPrinter::print(const AST::FunctionDeclaration &decl) {
-  if (decl.isStep) {
+  if (decl.isParallelStep()) {
     const AST::Param &param = decl.stepParam();
     AST::AgentDeclaration &agent = decl.stepAgent();
     AST::AgentMember *posMember = agent.getPositionMember();
@@ -424,7 +424,7 @@ void MasonPrinter::print(const AST::AgentDeclaration &decl) {
   *this << outdent << nl << "}";
 
   for (AST::FunctionDeclaration *fn : script.funcs) {
-    if (fn->isStep && &fn->stepAgent() == &decl) {
+    if (fn->isParallelStep() && &fn->stepAgent() == &decl) {
       *this << nl << nl << *fn;
     }
   }
@@ -492,7 +492,7 @@ void MasonPrinter::print(const AST::Script &script) {
 
   // Print non-step, non-main functions
   for (const AST::FunctionDeclaration *decl : script.funcs) {
-    if (!decl->isStep && !decl->isMain()) {
+    if (!decl->isParallelStep() && !decl->isMain()) {
       *this << nl << nl << *decl;
     }
   }

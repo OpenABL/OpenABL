@@ -74,9 +74,9 @@ private:
 };
 
 struct FunctionSignature {
-  static const unsigned MAIN_ONLY   = 1 << 0;
-  static const unsigned STEP_ONLY   = 1 << 1;
-  static const unsigned REDUCE_ONLY = 1 << 2;
+  static const unsigned MAIN_ONLY     = 1 << 0;
+  static const unsigned STEP_ONLY     = 1 << 1;
+  static const unsigned SEQ_STEP_ONLY = 1 << 2;
 
   static const unsigned MAIN_STEP_ONLY = MAIN_ONLY | STEP_ONLY;
 

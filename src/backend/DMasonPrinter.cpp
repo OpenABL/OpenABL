@@ -147,7 +147,7 @@ void DMasonPrinter::printUICtors() {
 }
 
 void DMasonPrinter::print(const AST::FunctionDeclaration &decl) {
-  if (decl.isStep) {
+  if (decl.isParallelStep()) {
     const AST::Param &param = decl.stepParam();
     AST::AgentDeclaration &agent = decl.stepAgent();
     AST::AgentMember *posMember = agent.getPositionMember();
@@ -356,7 +356,7 @@ void DMasonPrinter::print(const AST::Script &script) {
 
   // Print non-step, non-main functions
   for (const AST::FunctionDeclaration *decl : script.funcs) {
-    if (!decl->isStep && !decl->isMain()) {
+    if (!decl->isParallelStep() && !decl->isMain()) {
       *this << nl << nl << *decl;
     }
   }

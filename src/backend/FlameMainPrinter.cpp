@@ -51,7 +51,7 @@ void FlameMainPrinter::print(const AST::SimulateStatement &stmt) {
 }
 
 void FlameMainPrinter::print(const AST::FunctionDeclaration &decl) {
-  if (decl.isStep) {
+  if (decl.isAnyStep()) {
     // Don't print step functions, those are in the simulation code
     return;
   }

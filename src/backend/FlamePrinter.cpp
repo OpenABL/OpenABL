@@ -216,13 +216,13 @@ void FlamePrinter::print(const AST::Script &script) {
   }
 
   for (AST::FunctionDeclaration *func : script.funcs) {
-    if (func->isStep) {
+    if (func->isAnyStep()) {
       // Step functions will be handled separately later
       continue;
     }
 
     if (func->isMain()) {
-      // TODO Not sure what to do about this one yet
+      // Handled by FlameMainPrinter
       continue;
     }
 

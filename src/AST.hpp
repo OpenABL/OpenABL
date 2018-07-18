@@ -514,11 +514,17 @@ using DeclarationList = std::vector<DeclarationPtr>;
 using DeclarationListPtr = std::unique_ptr<DeclarationList>;
 
 struct FunctionDeclaration : public Declaration {
+  enum Kind {
+    NORMAL,
+    STEP,
+    SEQ_STEP,
+  };
+
   TypePtr returnType;
   std::string name;
   ParamListPtr params;
   StatementListPtr stmts;
-  bool isStep;
+  Kind kind;
 
   FunctionSignature sig;
   // The following members are for step functions only
@@ -535,19 +541,29 @@ struct FunctionDeclaration : public Declaration {
   bool usesRng = false;
 
   FunctionDeclaration(Type *returnType, std::string name,
-                      ParamList *params, StatementList *stmts, bool isStep, Location loc)
+                      ParamList *params, StatementList *stmts, Kind kind, Location loc)
     : Declaration{loc}, returnType{returnType},
-      name{name}, params{params}, stmts{stmts}, isStep{isStep} {}
+      name{name}, params{params}, stmts{stmts}, kind{kind} {}
 
   bool isMain() const { return name == "main"; }
 
+  bool isParallelStep() const {
+    return kind == STEP;
+  }
+  bool isSequentialStep() const {
+    return kind == SEQ_STEP;
+  }
+  bool isAnyStep() const {
+    return isParallelStep() || isSequentialStep();
+  }
+
   AST::Param &stepParam() const {
-    assert(isStep);
+    assert(isParallelStep());
     return *(*this->params)[0];
   }
 
   AST::AgentDeclaration &stepAgent() const {
-    assert(isStep);
+    assert(isParallelStep());
     return *stepParam().type->resolved.getAgentDecl();
   }
 

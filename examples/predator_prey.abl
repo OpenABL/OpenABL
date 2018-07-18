@@ -304,7 +304,7 @@ sequential step gather_stats() {
   int num_prey = count(Prey);
   int num_predator = count(Predator);
   int num_grass = sum(Grass.avail);
-  log(num_prey, num_predator, num_grass);
+  print(num_prey, num_predator, num_grass);
 }
 
 void main() {
