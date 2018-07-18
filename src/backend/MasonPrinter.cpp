@@ -21,6 +21,9 @@ void MasonPrinter::print(const AST::NewArrayExpression &) {}
 
 void MasonPrinter::printType(Type type) {
   switch (type.getTypeId()) {
+    case Type::VOID:
+      *this << "void";
+      return;
     case Type::BOOL:
       *this << "boolean";
       return;
@@ -173,6 +176,11 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
       *this << "Util.save(env.getAllObjects(), " << expr.getArg(0) << ")";
     } else if (name == "removeCurrent") {
       *this << "_isDead = true";
+    } else if (name == "count") {
+      Type type = expr.getArg(0).type;
+      AST::AgentDeclaration *decl = type.getAgentDecl();
+      *this << "count" << decl->name << "()";
+      // TODO
     } else {
       assert(0);
     }

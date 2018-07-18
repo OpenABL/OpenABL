@@ -303,8 +303,8 @@ step grass_growth(Grass in->out){
 sequential step gather_stats() {
   int num_prey = count(Prey);
   int num_predator = count(Predator);
-  int num_grass = sum(Grass.avail);
-  print(num_prey, num_predator, num_grass);
+  //int num_grass = sum(Grass.avail);
+  //print(num_prey, num_predator, num_grass);
 }
 
 void main() {
