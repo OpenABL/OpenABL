@@ -437,7 +437,9 @@ struct SimulateStatement : public Statement {
   ExpressionPtr timestepsExpr;
   IdentListPtr stepFuncs;
 
+  // Populated during analysis
   std::vector<FunctionDeclaration *> stepFuncDecls;
+  FunctionDeclaration *seqStepDecl = nullptr;
 
   SimulateStatement(Expression *timestepsExpr, IdentList *stepFuncs, Location loc)
     : Statement{loc}, timestepsExpr{timestepsExpr}, stepFuncs{stepFuncs} {}

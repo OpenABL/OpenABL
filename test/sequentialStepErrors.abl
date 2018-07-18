@@ -1,0 +1,15 @@
+agent Foo {}
+
+step normal_step(Foo in -> out) {
+}
+
+sequential step sequential_step() {
+  count(Foo);
+}
+
+void main() {
+  simulate(100) {
+    sequential_step,
+    normal_step
+  }
+}

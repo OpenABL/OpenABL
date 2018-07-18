@@ -1,0 +1,15 @@
+agent Foo {
+  float2 pos;
+}
+
+step foo(Foo in -> out) {
+  count(Foo);
+}
+
+sequential step foo() {
+  count(Foo);
+}
+
+void main() {
+  count(Foo);
+}

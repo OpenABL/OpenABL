@@ -692,9 +692,21 @@ void AnalysisVisitor::leave(AST::SimulateStatement &stmt) {
       return;
     }
 
-    // TODO check that parallel step is last and there is only one
+    if (fn.isSequentialStep()) {
+      if (stmt.seqStepDecl) {
+        err << "Can only use single sequential step function" << stmt.loc;
+        return;
+      }
 
-    stmt.stepFuncDecls.push_back(&fn);
+      stmt.seqStepDecl = &fn;
+    } else {
+      if (stmt.seqStepDecl) {
+        err << "Sequential step function must be last" << stmt.loc;
+        return;
+      }
+
+      stmt.stepFuncDecls.push_back(&fn);
+    }
   }
 
   script.simStmt = &stmt;
@@ -1235,6 +1247,13 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
   if (sig->decl && sig->decl->isAnyStep()) {
     err << "Cannot directly call step function " << expr.name << "()" << expr.loc;
     return;
+  }
+
+  if (sig->flags & FunctionSignature::SEQ_STEP_ONLY) {
+    if (!currentFunc->isSequentialStep()) {
+      err << expr.name << "() can only be used inside a sequential step function" << expr.loc;
+      return;
+    }
   }
 
   if (expr.name == "removeCurrent") {
