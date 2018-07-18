@@ -14,16 +14,16 @@
 
 #pragma once
 
-#include "Mason2Printer.hpp"
+#include "MasonPrinter.hpp"
 #include "Config.hpp"
 
 namespace OpenABL {
 
-struct DMasonPrinter : public Mason2Printer {
-  using Mason2Printer::print;
+struct DMasonPrinter : public MasonPrinter {
+  using MasonPrinter::print;
 
   DMasonPrinter(AST::Script &script)
-    : Mason2Printer(script) {}
+    : MasonPrinter(script) {}
 
   void printStubAgent(const AST::AgentDeclaration &);
   void printLocalTestCode(const Config &);

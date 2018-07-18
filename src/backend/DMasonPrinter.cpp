@@ -182,7 +182,7 @@ void DMasonPrinter::print(const AST::FunctionDeclaration &decl) {
     currentInVar.reset();
     currentOutVar.reset();
   } else {
-    Mason2Printer::print(decl);
+    MasonPrinter::print(decl);
   }
 }
 
@@ -219,7 +219,7 @@ void DMasonPrinter::printStepDefaultCode(const AST::AgentDeclaration &decl) {
 void DMasonPrinter::print(const AST::CallExpression &expr) {
   const std::string &name = expr.name;
   if (expr.isCtor()) {
-    Mason2Printer::print(expr);
+    MasonPrinter::print(expr);
   } else if (expr.isBuiltin()) {
     if (name == "add") {
       std::string aLabel = makeAnonLabel();
@@ -249,10 +249,10 @@ void DMasonPrinter::print(const AST::CallExpression &expr) {
       // TODO Handle save
       *this << "//save()";
     } else {
-      Mason2Printer::print(expr);
+      MasonPrinter::print(expr);
     }
   } else {
-    Mason2Printer::print(expr);
+    MasonPrinter::print(expr);
   }
 }
 void DMasonPrinter::print(const AST::AgentCreationExpression &expr) {

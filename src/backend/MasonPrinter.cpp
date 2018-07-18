@@ -57,12 +57,6 @@ void MasonPrinter::print(const AST::VarExpression &expr) {
   if (entry.isGlobal) {
     *this << "Sim." << *expr.var;
   } else {
-    if (id == currentInVar || id == currentOutVar) {
-      // TODO Correct mapping for "out" variable
-      *this << "this";
-      return;
-    }
-
     *this << *expr.var;
   }
 }
@@ -164,58 +158,16 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
       *this << "final " << type << " " << aLabel << " = " << arg << ";" << nl;
       if (posMember) {
         *this << simVar << ".env.setObjectLocation(" << aLabel << ", "
-              << aLabel << "." << posMember->name << ");" << nl;
+              << aLabel << ".getInState()." << posMember->name << ");" << nl;
       }
 
-      *this << "final Schedule _schedule = " << simVar << ".schedule;" << nl
-            << "double _time = "
-            << (isRuntimeAdd ? "_schedule.getTime() + 1" : "_schedule.EPOCH") << ";" << nl;
+      std::string scheduleVar = simVar + ".schedule";
+      std::string time = isRuntimeAdd ? scheduleVar + ".getTime() + 1.0" : "Schedule.EPOCH";
 
-      size_t numStepFns = script.simStmt->stepFuncDecls.size();
-      for (size_t i = 0; i < numStepFns; i++) {
-        const AST::FunctionDeclaration *stepFn = script.simStmt->stepFuncDecls[i];
-        const AST::AgentDeclaration &stepAgent = stepFn->stepAgent();
-        if (&stepAgent != agent) {
-          continue;
-        }
-
-        if (stepAgent.usesRuntimeRemoval) {
-          // If runtime removal is used, we scheduleOnce and check the _isDead flag
-          *this << "_schedule.scheduleOnce(_time, " << (2*i)
-                << ", new Steppable() {" << indent << nl
-                << "public void step(SimState state) {" << indent << nl
-                << aLabel << "._" << stepFn->name << "(state);" << nl
-                << "if (!" << aLabel << "._isDead) {" << indent << nl
-                << "_schedule.scheduleOnceIn(1.0, this, " << (2*i) << ");"
-                << outdent << nl << "}"
-                << outdent << nl << "}"
-                << outdent << nl << "});" << nl
-                << "_schedule.scheduleOnce(_time, " << (2*i + 1)
-                << ", new Steppable() {" << indent << nl
-                << "public void step(SimState state) {" << indent << nl
-                << aLabel << "._dbuf_copy();" << nl
-                << "if (!" << aLabel << "._isDead) {" << indent << nl
-                << "_schedule.scheduleOnceIn(1.0, this, " << (2*i + 1) << ");"
-                << outdent << nl << "}"
-                << outdent << nl << "}"
-                << outdent << nl << "})";
-        } else {
-          *this << "_schedule.scheduleRepeating(_time, " << (2*i)
-                << ", new Steppable() {" << indent << nl
-                << "public void step(SimState state) {" << indent << nl
-                << aLabel << "._" << stepFn->name << "(state);"
-                << outdent << nl << "}"
-                << outdent << nl << "});" << nl
-                << "_schedule.scheduleRepeating(_time, " << (2*i + 1)
-                << ", new Steppable() {" << indent << nl
-                << "public void step(SimState state) {" << indent << nl
-                << aLabel << "._dbuf_copy();"
-                << outdent << nl << "}"
-                << outdent << nl << "})";
-        }
-        if (i != numStepFns - 1) {
-          *this << ";" << nl;
-        }
+      if (agent->usesRuntimeRemoval) {
+        *this << scheduleVar << ".scheduleOnce(" << time << ", " << aLabel << ")";
+      } else {
+        *this << scheduleVar << ".scheduleRepeating(" << time << ", " << aLabel << ")";
       }
     } else if (name == "save") {
       *this << "Util.save(env.getAllObjects(), " << expr.getArg(0) << ")";
@@ -233,11 +185,7 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
 
 void MasonPrinter::print(const AST::AssignStatement &stmt) {
   if (auto *access = dynamic_cast<const AST::MemberAccessExpression *>(&*stmt.left)) {
-    if (access->expr->type.isAgent()) {
-      // Write to agent variable -- write to double buffer instead
-      *this << *access->expr << "._dbuf_" << access->member << " = " << *stmt.right << ";";
-      return;
-    } else if (access->expr->type.isVec()) {
+    if (access->expr->type.isVec()) {
       // Assignment to vector component
       // Convert into creation of new DoubleND, because it is immmutable
       // TODO Automatic conversion to MutableDoubleND would be nice
@@ -303,7 +251,9 @@ void MasonPrinter::print(const AST::AgentCreationExpression &expr) {
 
   *this << "new " << expr.name << "(";
   printCommaSeparated(*agent->members, [&](const AST::AgentMemberPtr &member) {
-    *this << expr.getExprFor(member->name);
+    auto it = expr.memberMap.find(member->name);
+    assert(it != expr.memberMap.end());
+    *this << *it->second;
   });
   *this <<")";
 }
@@ -335,8 +285,9 @@ void MasonPrinter::print(const AST::ForStatement &stmt) {
       // were asked for
       *this << "if (!(_agent instanceof " << agentDecl->name << ")) continue;" << nl;
     }
-    *this << agentDecl->name << " " << *stmt.var << " = "
-          << "(" << agentDecl->name << ") _agent;" << nl
+    *this << agentDecl->name << ".State " << *stmt.var << " = "
+          << "((" << agentDecl->name << ") _agent)"
+          << (agentDecl == nearAgentDecl ? ".getState(currentState);" : ".getInState();") << nl
           << *stmt.stmt
           << outdent << nl << "}";
   } else if (stmt.isRange()) {
@@ -368,18 +319,38 @@ void MasonPrinter::print(const AST::FunctionDeclaration &decl) {
 
     // Use a leading "_" to avoid clashes with existing methods like "step()"
     *this << "public void _" << decl.name << "(SimState state) {" << indent << nl
-          << "Sim _sim = (Sim) state;"
+          << "Sim _sim = (Sim) state;" << nl
+          << "prepareOutState();" << nl
+          << "State " << *param.var << " = getInState();" << nl
+          << "State " << *param.outVar << " = getOutState();"
           << *decl.stmts;
     if (posMember) {
       if (agent.usesRuntimeRemoval) {
-        *this << nl << "if (_isDead) { _sim.env.remove(this); return; }";
+        *this << nl << "if (_isDead) {" << indent << nl
+              << "_sim.env.remove(this);"
+              << outdent << nl << "} else {" << indent
+              << nl << "_sim.env.setObjectLocation(this, "
+              << *param.outVar << "." << posMember->name << ");"
+              << nl << "_sim.schedule.scheduleOnceIn(1.0, this);"
+              << nl << "swapStates();"
+              << outdent << nl << "}";
+      } else {
+        *this << nl << "_sim.env.setObjectLocation(this, "
+              << *param.outVar << "." << posMember->name << ");"
+              << nl << "swapStates();";
       }
-      *this << nl << "_sim.env.setObjectLocation(this, this._dbuf_" << posMember->name << ");";
     }
     *this << outdent << nl << "}";
 
     currentInVar.reset();
     currentOutVar.reset();
+  } else if (decl.name == "getColor") {
+    const AST::Param &param = *(*decl.params)[0];
+    *this << "public " << *decl.returnType << " " << decl.name << "("
+          << *param.type << " _" << *param.var << ") {" << indent
+          << nl << *param.type << ".State " << *param.var
+          << " = _" << *param.var << ".getInState();"
+          << *decl.stmts << outdent << nl << "}";
   } else {
     *this << "public " << *decl.returnType << " " << decl.name << "(";
     printParams(decl);
@@ -389,37 +360,125 @@ void MasonPrinter::print(const AST::FunctionDeclaration &decl) {
 
 void MasonPrinter::print(const AST::AgentMember &member) {
   *this << *member.type << " " << member.name << ";";
-  *this << nl << *member.type << " _dbuf_" << member.name << ";";
+}
+
+void MasonPrinter::printAgentImports() {
+  *this << "import java.io.Serializable;" << nl
+        << "import sim.engine.*;" << nl
+        << "import sim.util.*;" << nl;
+}
+void MasonPrinter::printAgentExtends(const AST::AgentDeclaration &) {
+  *this << " implements Steppable";
+}
+void MasonPrinter::printAgentExtraCode(const AST::AgentDeclaration &) { }
+void MasonPrinter::printAgentExtraCtorArgs() { }
+void MasonPrinter::printAgentExtraCtorCode() { }
+void MasonPrinter::printStepDefaultCode(const AST::AgentDeclaration &decl) {
+  if (decl.usesRuntimeRemoval) {
+    // Make sure we always reschedule the agent, even if no step function is run
+    *this << "((Sim) state).schedule.scheduleOnceIn(1.0, this);" << nl;
+  }
 }
 
 void MasonPrinter::print(const AST::AgentDeclaration &decl) {
+  const auto &stepFns = script.simStmt->stepFuncDecls;
+
   inAgent = true;
 
-  *this << "import sim.engine.*;" << nl
-        << "import sim.util.*;" << nl << nl
-        << "public class " << decl.name << " {" << indent
+  printAgentImports();
+  *this << nl
+        << "public class " << decl.name;
+  printAgentExtends(decl);
+  *this << " {" << indent << nl
+        << "public class State implements Serializable {" << indent
         << *decl.members << nl;
-  if (decl.usesRuntimeRemoval) {
-    *this << "public boolean _isDead = false;";
-  }
-  *this << nl;
 
-  // Print constructor
-  *this << "public " << decl.name << "(";
+  // State constructor
+  *this << "State(";
   printCommaSeparated(*decl.members, [&](const AST::AgentMemberPtr &member) {
     *this << *member->type << " " << member->name;
   });
   *this << ") {" << indent;
   for (AST::AgentMemberPtr &member : *decl.members) {
     *this << nl << "this." << member->name << " = " << member->name << ";";
-    *this << nl << "this._dbuf_" << member->name << " = " << member->name << ";";
   }
-  *this << outdent << nl << "}" << nl;
+  *this << outdent << nl << "}"
+        << outdent << nl << "}" << nl
+        << "State state0;" << nl
+        << "State state1;" << nl
+        << "int currentState = 0;" << nl;
+  if (stepFns.size() != 1) {
+    *this << "int currentStep = 0;" << nl;
+  }
+  if (decl.usesRuntimeRemoval) {
+    *this << "public boolean _isDead = false;" << nl;
+  }
 
-  // Copy double-buffered properties to main properties
-  *this << "public void _dbuf_copy() {" << indent;
+  printAgentExtraCode(decl);
+
+  // Agent constructor
+  *this << "public " << decl.name << "(";
+  printAgentExtraCtorArgs();
+  printCommaSeparated(*decl.members, [&](const AST::AgentMemberPtr &member) {
+    *this << *member->type << " " << member->name;
+  });
+  *this << ") {" << indent << nl;
+  printAgentExtraCtorCode();
+  *this << "state0 = new State(";
+  printCommaSeparated(*decl.members, [&](const AST::AgentMemberPtr &member) {
+    *this << member->name;
+  });
+  *this << ");" << nl
+        << "state1 = new State(";
+  printCommaSeparated(*decl.members, [&](const AST::AgentMemberPtr &member) {
+    *this << member->name;
+  });
+  *this << ");"
+        << outdent << nl << "}" << nl;
+
+  // Add some helper functions
+  *this << "public State getState(int n) {" << indent << nl
+        << "return n == 0 ? state0 : state1;"
+        << outdent << nl << "}" << nl
+        << "public State getInState() {" << indent << nl
+        << "return currentState == 0 ? state0 : state1;"
+        << outdent << nl << "}" << nl
+        << "State getOutState() {" << indent << nl
+        << "return currentState == 0 ? state1 : state0;"
+        << outdent << nl << "}" << nl
+        << "void prepareOutState() {" << indent << nl
+        << "State outState = getOutState();" << nl
+        << "State inState = getInState();";
   for (const AST::AgentMemberPtr &member : *decl.members) {
-    *this << nl << member->name << " = _dbuf_" << member->name << ";";
+    *this << nl << "outState." << member->name << " = " << "inState." << member->name << ";";
+  };
+  *this << outdent << nl << "}" << nl
+        << "void swapStates() {" << indent << nl
+        << "currentState ^= 1;"
+        << outdent << nl << "}" << nl
+        << "public void step(SimState state) {" << indent << nl;
+  if (stepFns.size() == 1) {
+    // If there is only one step function, just call it directly
+    const AST::FunctionDeclaration *stepFn = script.simStmt->stepFuncDecls[0];
+    *this << "_" << stepFn->name << "(state);";
+  } else {
+    // Otherwise cycle through step functions with a counter
+    *this << "switch (currentStep) {" << indent;
+    for (size_t i = 0; i < stepFns.size(); i++) {
+      *this << nl << "case " << i << ":" << indent << nl;
+      const auto *stepFn = stepFns[i];
+      if (&stepFn->stepAgent() == &decl) {
+        *this << "_" << stepFn->name << "(state);" << nl;
+      } else {
+        printStepDefaultCode(decl);
+      }
+      *this << "break;" << outdent;
+    }
+    *this << outdent << nl << "}" << nl
+          << "currentStep++;" << nl
+          << "if (currentStep == " << stepFns.size() << ") {" << indent << nl
+          << "currentStep = 0;"
+          << outdent << nl << "}";
   }
   *this << outdent << nl << "}";
 
@@ -433,10 +492,12 @@ void MasonPrinter::print(const AST::AgentDeclaration &decl) {
 }
 
 void MasonPrinter::print(const AST::SimulateStatement &stmt) {
-  *this << "do {" << indent << nl
+  std::string tLabel = makeAnonLabel();
+  *this << "int " << tLabel << " = " << *stmt.timestepsExpr
+        << " * " << stmt.stepFuncDecls.size() << ";" << nl
+        << "do {" << indent << nl
         << "if (!_sim.schedule.step(_sim)) break;" << outdent << nl
-        << "} while (_sim.schedule.getSteps() < "
-        << *stmt.timestepsExpr << ");";
+        << "} while (_sim.schedule.getSteps() < " << tLabel << ");";
 }
 
 void MasonPrinter::print(const AST::Script &script) {
@@ -500,27 +561,9 @@ void MasonPrinter::print(const AST::Script &script) {
   *this << outdent << nl << "}";
 }
 
-void MasonPrinter::printUI() {
-  int dim = script.envDecl->envDimension;
+void MasonPrinter::printUIExtraImports() { }
+void MasonPrinter::printUICtors() {
   *this <<
-  "import sim.portrayal.continuous.*;\n"
-  "import sim.portrayal.simple.*;\n"
-  "import sim.portrayal.*;\n"
-  "import sim.portrayal3d.continuous.*;\n"
-  "import sim.portrayal3d.simple.*;\n"
-  "import sim.engine.*;\n"
-  "import sim.display.*;\n"
-  "import sim.display3d.*;\n"
-  "import javax.swing.*;\n"
-  "import java.awt.*;\n"
-  "\n"
-  "public class SimWithUI extends GUIState\n"
-  "{\n"
-  "    private static final int SIZE = 500;\n"
-  "    public Display" << dim << "D display;\n"
-  "    public JFrame displayFrame;\n"
-  "    ContinuousPortrayal" << dim << "D envPortrayal = new ContinuousPortrayal" << dim << "D();\n"
-  "\n"
   "    public static void main(String[] args) {\n"
   "        SimWithUI vid = new SimWithUI();\n"
   "        Console c = new Console(vid);\n"
@@ -532,9 +575,45 @@ void MasonPrinter::printUI() {
   "    }\n"
   "    public SimWithUI(SimState state) {\n"
   "        super(state);\n"
+  "    }\n";
+}
+
+void MasonPrinter::printUI() {
+  int dim = script.envDecl->envDimension;
+  size_t numSteps = script.simStmt->stepFuncDecls.size();
+  *this <<
+  "import sim.portrayal.continuous.*;\n"
+  "import sim.portrayal.simple.*;\n"
+  "import sim.portrayal.*;\n"
+  "import sim.portrayal3d.continuous.*;\n"
+  "import sim.portrayal3d.simple.*;\n"
+  "import sim.engine.*;\n"
+  "import sim.display.*;\n"
+  "import sim.display3d.*;\n"
+  "import javax.swing.*;\n"
+  "import java.awt.*;\n";
+  printUIExtraImports();
+  *this <<
+  "\n"
+  "public class SimWithUI extends GUIState {\n"
+  "    class MyDisplay extends Display" << dim << "D {\n"
+  "        MyDisplay(double width, double height, GUIState sim) {\n"
+  "            super(width, height, sim);\n"
+  "            updateRule = Display2D.UPDATE_RULE_STEPS;\n"
+  "            stepInterval = " << numSteps << ";\n"
+  "        }\n"
   "    }\n"
+  "    private static final int SIZE = 500;\n"
+  "    public Display" << dim << "D display;\n"
+  "    public JFrame displayFrame;\n"
+  "    public static String name = \"Visualization\";\n"
+  "    ContinuousPortrayal" << dim << "D envPortrayal = new ContinuousPortrayal" << dim << "D();\n"
+  "\n";
+  printUICtors();
+  *this <<
+  "\n"
   "    public static String getName() {\n"
-  "        return \"Visualization\";\n"
+  "        return name;\n"
   "    }\n"
   "\n"
   "    public void start() {\n"
@@ -583,7 +662,7 @@ void MasonPrinter::printUI() {
   "    public void init(Controller c) {\n"
   "        super.init(c);\n"
   "\n"
-  "        display = new Display" << dim << "D(SIZE, SIZE, this);\n"
+  "        display = new MyDisplay(SIZE, SIZE, this);\n"
   "        //display.setClipping(false);\n"
   "\n"
   "        displayFrame = display.createFrame();\n"

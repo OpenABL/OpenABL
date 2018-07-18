@@ -42,10 +42,19 @@ struct MasonPrinter : public GenericPrinter {
 
   void printType(Type t);
 
-  virtual void printSpecialBinaryOp(
+  void printSpecialBinaryOp(
       const AST::BinaryOp, const AST::Expression &, const AST::Expression &);
-  virtual bool isSpecialBinaryOp(
+  bool isSpecialBinaryOp(
       const AST::BinaryOp, const AST::Expression &, const AST::Expression &);
+
+  virtual void printAgentImports();
+  virtual void printAgentExtends(const AST::AgentDeclaration &);
+  virtual void printAgentExtraCode(const AST::AgentDeclaration &);
+  virtual void printAgentExtraCtorArgs();
+  virtual void printAgentExtraCtorCode();
+  virtual void printStepDefaultCode(const AST::AgentDeclaration &);
+  virtual void printUIExtraImports();
+  virtual void printUICtors();
 
   void printUI();
 
@@ -58,9 +67,9 @@ protected:
   VarId currentInVar;
   VarId currentOutVar;
   // Whether we're in agent code
-  bool inAgent;
+  bool inAgent = false;
   // Whether we're in the main function
-  bool inMain;
+  bool inMain = false;
 };
 
 }
