@@ -72,7 +72,7 @@ void DMasonPrinter::printLocalTestCode(const Config &config) {
     << "    ArrayList<worker> myWorker = new ArrayList<worker>();" << nl
     << "    for (int i = 0; i < rows; i++) {" << nl
     << "        for (int j = 0; j < columns; j++) {" << nl
-    << "            GeneralParam genParam = new GeneralParam(WIDTH, HEIGHT, AOI, rows,columns,NUM_AGENTS, MODE,ConnectionType.pureActiveMQ); " << nl
+    << "            GeneralParam genParam = new GeneralParam(WIDTH, HEIGHT, 0, AOI, rows, columns, 0, NUM_AGENTS, MODE, ConnectionType.pureActiveMQ, /* is3D */ false); " << nl
     << "            genParam.setI(i);" << nl
     << "            genParam.setJ(j);" << nl
     << "            genParam.setIp(ip);" << nl
