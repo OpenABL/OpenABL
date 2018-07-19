@@ -78,13 +78,17 @@ dmason/DMASON-3.2.zip:
 
 # Instructions for a from-scratch build of DMason
 # Normally the JAR variant above should be used
-dmason-build: dmason-build/dmason/target/DMASON-3.2.jar
+dmason-build: dmason-build/dmason/target/DMASON-3.2.zip
 
-dmason-build/dmason/target: | dmason-build/dmason
+dmason-build/dmason/target/DMASON-3.2.zip: dmason-build/dmason/target/DMASON-3.2.jar
+	cd dmason-build/dmason/target; \
+		zip -r DMASON-3.2.zip DMASON-3.2.jar DMASON-3.2-lib.jar resources/
+
+dmason-build/dmason/target/DMASON-3.2.jar: | dmason-build/dmason
 	cd dmason-build/dmason; \
 		mvn -Dmaven.test.skip=true -Dmaven.javadoc.skip=true package
 
-dmason-build/dmason: dmason/dmason.zip
+dmason-build/dmason: dmason-build/dmason.zip
 	cd dmason-build; \
 		unzip -D dmason.zip; \
 		mv dmason-master dmason
