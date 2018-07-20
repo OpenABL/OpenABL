@@ -49,9 +49,6 @@ static std::string generateUICode(AST::Script &script) {
 void DMasonBackend::generate(
     AST::Script &script, const BackendContext &ctx) {
   if (script.envDecl) {
-    if (script.envDecl->envDimension == 3) {
-      throw BackendError("3D environments are not supported by DMason");
-    }
     for (double d : script.envDecl->envMin.getVec()) {
       if (d < 0) {
         throw BackendError("Negative environment bounds are not supported by DMason");

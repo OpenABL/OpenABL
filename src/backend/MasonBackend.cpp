@@ -58,7 +58,6 @@ void MasonBackend::generate(
 
   copyFile(ctx.assetDir + "/mason/Util.java", ctx.outputDir + "/Util.java");
   copyFile(ctx.assetDir + "/mason/build.sh", ctx.outputDir + "/build.sh");
-  copyFile(ctx.assetDir + "/mason/build.sh", ctx.outputDir + "/build.sh");
   writeToFile(ctx.outputDir + "/run.sh", generateRunScript(ctx));
   makeFileExecutable(ctx.outputDir + "/build.sh");
   makeFileExecutable(ctx.outputDir + "/run.sh");

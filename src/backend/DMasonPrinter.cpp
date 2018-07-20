@@ -19,21 +19,26 @@ namespace OpenABL {
 
 void DMasonPrinter::printLocalTestCode(const Config &config) {
   Value &envSize = script.envDecl->envSize;
-  assert(envSize.isVec2());
-  int width = (int) ceil(envSize.getVec2().x);
-  int height = (int) ceil(envSize.getVec2().y);
+  Value::Vec3 envSizeVec = envSize.extendToVec3().getVec3();
+  int dim = envSize.isVec2() ? 2 : 3;
+  int width = (int) ceil(envSizeVec.x);
+  int height = (int) ceil(envSizeVec.y);
+  int length = (int) ceil(envSizeVec.z);
   int maxDist = width > 10 ? 10 : width - 1; // TODO
 
   bool visualize = config.getBool("visualize", false);
   long gridRows = config.getInt("dmason.grid_rows", 2);
   long gridCols = config.getInt("dmason.grid_cols", 2);
+  long gridLengths = config.getInt("dmason.grid_lengths", 1);
+
+  const char *fieldPkg = dim == 3 ? "field3D" : "field";
 
   *this
     << "import it.isislab.dmason.experimentals.systemmanagement.utils.activemq.ActiveMQStarter;" << nl
     << "import it.isislab.dmason.experimentals.tools.batch.data.EntryParam;" << nl
     << "import it.isislab.dmason.experimentals.tools.batch.data.GeneralParam;" << nl
     << "import it.isislab.dmason.sim.engine.DistributedState;" << nl
-    << "import it.isislab.dmason.sim.field.DistributedField2D;" << nl
+    << "import it.isislab.dmason.sim." << fieldPkg << ".DistributedField" << dim << "D;" << nl
     << "import it.isislab.dmason.util.connection.ConnectionType;" << nl
     << "import java.util.ArrayList;" << nl
     << "import sim.display.Console;" << nl
@@ -42,14 +47,16 @@ void DMasonPrinter::printLocalTestCode(const Config &config) {
     << "private static boolean graphicsOn = " << (visualize ? "true" : "false") << ";" << nl
     << "private static int rows = " << gridRows << "; // number of rows" << nl
     << "private static int columns = " << gridCols << "; // number of columns" << nl
+    << "private static int lengths = " << gridLengths << "; // number of lengths" << nl
     << "private static int AOI = " << maxDist << "; // max distance" << nl
     << "private static int NUM_AGENTS=20000; //number of agents" << nl
     << "private static int WIDTH = " << width << "; // field width" << nl
     << "private static int HEIGHT = " << height << "; // field height" << nl
+    << "private static int LENGTH = " << length << "; // field length" << nl
     << "private static String ip=\"127.0.0.1\"; //ip of activemq" << nl
     << "private static String port=\"61616\"; //port of activemq" << nl
     << "private static String topicPrefix=\"SIM-NAME\"; //unique string to identify topics for this simulation " << nl
-    << "private static int MODE = DistributedField2D.UNIFORM_PARTITIONING_MODE;" << nl
+    << "private static int MODE = DistributedField" << dim << "D.UNIFORM_PARTITIONING_MODE;" << nl
     << "public static void main(String[] args) {" << nl
     << "    ActiveMQStarter starter = new ActiveMQStarter();" << nl
     << "    starter.startActivemq();" << nl
@@ -72,19 +79,25 @@ void DMasonPrinter::printLocalTestCode(const Config &config) {
     << "    ArrayList<worker> myWorker = new ArrayList<worker>();" << nl
     << "    for (int i = 0; i < rows; i++) {" << nl
     << "        for (int j = 0; j < columns; j++) {" << nl
-    << "            GeneralParam genParam = new GeneralParam(WIDTH, HEIGHT, 0, AOI, rows, columns, 0, NUM_AGENTS, MODE, ConnectionType.pureActiveMQ, /* is3D */ false); " << nl
-    << "            genParam.setI(i);" << nl
-    << "            genParam.setJ(j);" << nl
-    << "            genParam.setIp(ip);" << nl
-    << "            genParam.setPort(port);" << nl
-    << "            ArrayList<EntryParam<String, Object>> simParams=new ArrayList<EntryParam<String, Object>>();" << nl
-    << "            if (graphicsOn && i == 0 && j == 0) {" << nl
-    << "                SimWithUI sim = new SimWithUI(genParam,simParams,topicPrefix);" << nl
-    << "                ((Console) sim.createController()).pressPause();" << nl
-    << "            } else {" << nl
-    << "                Sim sim = new Sim(genParam,simParams,topicPrefix); " << nl
-    << "                worker a = new worker(sim);" << nl
-    << "                myWorker.add(a);" << nl
+    << "            for (int z = 0; z < lengths; z++) {" << nl
+    << "                GeneralParam genParam = new GeneralParam(" << nl
+    << "                    WIDTH, HEIGHT, LENGTH, AOI," << nl
+    << "                    rows, columns, lengths, NUM_AGENTS, MODE, ConnectionType.pureActiveMQ, /* is3D */ " << (dim == 3 ? "true" : "false") << nl
+    << "                ); " << nl
+    << "                genParam.setI(i);" << nl
+    << "                genParam.setJ(j);" << nl
+    << "                genParam.setZ(z);" << nl
+    << "                genParam.setIp(ip);" << nl
+    << "                genParam.setPort(port);" << nl
+    << "                ArrayList<EntryParam<String, Object>> simParams=new ArrayList<EntryParam<String, Object>>();" << nl
+    << "                if (graphicsOn && i == 0 && j == 0 && z == 0) {" << nl
+    << "                    SimWithUI sim = new SimWithUI(genParam,simParams,topicPrefix);" << nl
+    << "                    ((Console) sim.createController()).pressPause();" << nl
+    << "                } else {" << nl
+    << "                    Sim sim = new Sim(genParam,simParams,topicPrefix); " << nl
+    << "                    worker a = new worker(sim);" << nl
+    << "                    myWorker.add(a);" << nl
+    << "                }" << nl
     << "            }" << nl
     << "        }" << nl
     << "    }" << nl
@@ -201,7 +214,8 @@ void DMasonPrinter::printAgentExtraCode(const AST::AgentDeclaration &decl) {
   *this << "public " << decl.name << "() { }" << nl;
 }
 void DMasonPrinter::printAgentExtraCtorArgs() {
-  *this << "DistributedState<Double2D> sm, ";
+  unsigned dim = script.envDecl->getEnvDimension();
+  *this << "DistributedState<Double" << dim << "D> sm, ";
 }
 void DMasonPrinter::printAgentExtraCtorCode() {
   *this << "super(sm);" << nl;
@@ -228,16 +242,22 @@ void DMasonPrinter::print(const AST::CallExpression &expr) {
       Type type = arg.type;
       AST::AgentDeclaration *agent = type.getAgentDecl();
       AST::AgentMember *posMember = agent->getPositionMember();
+      unsigned dim = script.envDecl->getEnvDimension();
       bool isRuntimeAdd = !inMain;
 
       *this << type << " " << aLabel << " = " << arg << ";" << nl
-            << "Double2D " << pLabel << " = " << aLabel
+            << *posMember->type << " " << pLabel << " = " << aLabel
             << ".getInState()." << posMember->name << ";" << nl;
       if (!isRuntimeAdd) {
         *this << "if (" << pLabel << ".x >= env.own_x && "
               << pLabel << ".x < env.own_x + env.my_width && "
               << pLabel << ".y >= env.own_y && "
-              << pLabel << ".y < env.own_y + env.my_height) {" << indent << nl;
+              << pLabel << ".y < env.own_y + env.my_height";
+        if (dim == 3) {
+          *this << " && " << pLabel << ".z >= env.own_z && "
+                << pLabel << ".z < env.own_z + env.my_length";
+        }
+        *this << ") {" << indent << nl;
       }
       *this << aLabel << ".setPos(" << pLabel << ");" << nl
             << getSimVarName() << ".env.setObjectLocation(" << aLabel << ", " << pLabel << ");" << nl
@@ -278,6 +298,9 @@ void DMasonPrinter::print(const AST::SimulateStatement &stmt) {
 
 void DMasonPrinter::print(const AST::Script &script) {
   inAgent = false; // Printing main simulation code
+  unsigned dim = script.envDecl->getEnvDimension();
+  const char *fieldPkg = dim == 3 ? "field3D" : "field";
+  const char *continuousPkg = dim == 3 ? "continuous3D" : "continuous";
 
   *this << "import sim.engine.*;" << nl
         << "import sim.util.*;" << nl
@@ -289,35 +312,41 @@ void DMasonPrinter::print(const AST::Script &script) {
 	<< "import it.isislab.dmason.sim.engine.DistributedState;" << nl
 	<< "import it.isislab.dmason.sim.engine.RemotePositionedAgent;" << nl
 	<< "import it.isislab.dmason.sim.field.DistributedField;" << nl
-	<< "import it.isislab.dmason.sim.field.DistributedField2D;" << nl
-	<< "import it.isislab.dmason.sim.field.continuous.DContinuousGrid2D;" << nl
-	<< "import it.isislab.dmason.sim.field.continuous.DContinuousGrid2DFactory;"<< nl << nl
-        << "public class Sim extends DistributedState<Double2D> {" << indent << nl;
+	<< "import it.isislab.dmason.sim." << fieldPkg << ".DistributedField" << dim << "D;" << nl
+	<< "import it.isislab.dmason.sim." << fieldPkg << "." << continuousPkg
+      << ".DContinuousGrid" << dim << "D;" << nl
+	<< "import it.isislab.dmason.sim." << fieldPkg << "." << continuousPkg
+      << ".DContinuousGrid" << dim << "DFactory;"<< nl << nl
+  << "public class Sim extends DistributedState<Double" << dim << "D> {" << indent << nl;
 
   for (const AST::ConstDeclaration *decl : script.consts) {
     *this << *decl << nl;
   }
 
-  *this << "DContinuousGrid2D env;"  << nl
+  *this << "DContinuousGrid" << dim << "D env;"  << nl
       << "String topicPrefix;"  << nl
       << "int MODE;"  << nl
       << "public double gridWidth;" << nl
-      << "public double gridHeight;" << nl << nl;
+      << "public double gridHeight;" << nl
+      << "public double gridLength;" << nl
+      << nl;
 
   *this << "public Sim(GeneralParam params,String prefix) {" << indent << nl
-        << "super(params, new DistributedMultiSchedule<Double2D>(),prefix,params.getConnectionType());" << nl
-	<< "this.MODE=params.getMode();" << nl
-	<< "this.topicPrefix=prefix;" << nl
-	<< "gridWidth=params.getWidth();" << nl
-	<< "gridHeight=params.getHeight();" << nl
+        << "super(params, new DistributedMultiSchedule<Double" << dim << "D>(), prefix, params.getConnectionType());" << nl
+	<< "this.MODE = params.getMode();" << nl
+	<< "this.topicPrefix = prefix;" << nl
+	<< "gridWidth = params.getWidth();" << nl
+	<< "gridHeight = params.getHeight();" << nl
+	<< "gridLength = params.getLenght();" << nl
  	<< outdent << nl << "}" << nl << nl;
 
   *this << "public Sim(GeneralParam params,List<EntryParam<String, Object>> simParams,String prefix) {" << indent << nl
-        << "super(params, new DistributedMultiSchedule<Double2D>(),prefix,params.getConnectionType());" << nl
-        << "this.MODE=params.getMode();" << nl
-        << "this.topicPrefix=prefix;" << nl
-        << "gridWidth=params.getWidth();" << nl
-        << "gridHeight=params.getHeight();" << nl
+        << "super(params, new DistributedMultiSchedule<Double" << dim << "D>(),prefix,params.getConnectionType());" << nl
+        << "this.MODE = params.getMode();" << nl
+        << "this.topicPrefix = prefix;" << nl
+        << "gridWidth = params.getWidth();" << nl
+        << "gridHeight = params.getHeight();" << nl
+        << "gridLength = params.getLenght();" << nl
 	<< "for (EntryParam<String, Object> entryParam : simParams) {" << indent << nl
  	<< "try { " << nl
  		<< "this.getClass().getDeclaredField(entryParam.getParamName()).set(this, entryParam.getParamValue());"  << outdent << nl
@@ -335,12 +364,20 @@ void DMasonPrinter::print(const AST::Script &script) {
  	<< "catch (NoSuchFieldException e) {e.printStackTrace();}}" << nl
        << outdent << nl << "}" << nl << nl;
 
-
   *this << "public void start() {" << indent << nl
         << "super.start();" << nl
 	<< "try { "<< indent << nl
-	<< "env = DContinuousGrid2DFactory.createDContinuous2D(8.0,gridWidth, gridHeight,this,"<< nl
-	<< "	super.AOI,TYPE.pos_i,TYPE.pos_j,super.rows,super.columns,MODE,\"env\", topicPrefix,true);" << nl
+	<< "env = DContinuousGrid" << dim << "DFactory.createDContinuous" << dim << "D(" << nl;
+  if (dim == 3) {
+    *this << "    8.0, gridWidth, gridHeight, gridLength, this," << nl
+          << "    super.AOI, TYPE.pos_i, TYPE.pos_j, TYPE.pos_z," << nl
+          << "    super.rows, super.columns, super.lenghts, MODE, \"env\", topicPrefix, true" << nl;
+  } else {
+    *this << "    8.0, gridWidth, gridHeight, this," << nl
+          << "    super.AOI, TYPE.pos_i, TYPE.pos_j," << nl
+          << "    super.rows, super.columns, MODE, \"env\", topicPrefix, true" << nl;
+  }
+  *this << ");" << nl
 	<< "init_connection();"<< outdent << nl
 	<< "} catch (DMasonException e) { e.printStackTrace();}" << nl << nl;
 
@@ -361,10 +398,10 @@ void DMasonPrinter::print(const AST::Script &script) {
     }
   }
 
-  *this <<"public DistributedField<Double2D> getField() {" << indent << nl
+  *this <<"public DistributedField<Double" << dim << "D> getField() {" << indent << nl
         <<"return env;" << nl
         <<"}" << outdent << nl
-        <<"public void addToField(RemotePositionedAgent<Double2D> rm, Double2D loc) {"<< indent << nl
+        <<"public void addToField(RemotePositionedAgent<Double" << dim << "D> rm, Double" << dim << "D loc) {"<< indent << nl
         <<"env.setObjectLocation(rm, loc);" << nl
         <<"}"<< outdent << nl
 	      <<"public SimState getState() {"<< indent << nl
