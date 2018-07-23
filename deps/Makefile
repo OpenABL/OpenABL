@@ -73,7 +73,7 @@ dmason/DMASON-3.2.jar: dmason/DMASON-3.2.zip
 
 dmason/DMASON-3.2.zip:
 	mkdir -p dmason;
-	wget https://github.com/OpenABL/OpenABL/releases/download/v0.0.1alpha1/DMASON-3.2.zip \
+	wget https://github.com/OpenABL/OpenABL/releases/download/v0.0.1alpha2/DMASON-3.2.zip \
 		-O dmason/DMASON-3.2.zip
 
 # Instructions for a from-scratch build of DMason
