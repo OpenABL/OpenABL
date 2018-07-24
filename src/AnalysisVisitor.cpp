@@ -764,7 +764,15 @@ void AnalysisVisitor::leave(AST::AssignStatement &stmt) {
     return;
   }
 
-  // TODO Check type compatibility
+  Type leftType = stmt.left->type;
+  Type rightType = stmt.right->type;
+  SKIP_INVALID(leftType);
+  SKIP_INVALID(rightType);
+  if (!rightType.isPromotableTo(leftType)) {
+    err << "Cannot assign value of type " << rightType
+        << " to variable of type " << leftType << stmt.right->loc;
+    return;
+  }
 };
 
 void AnalysisVisitor::leave(AST::AssignOpStatement &stmt) {
