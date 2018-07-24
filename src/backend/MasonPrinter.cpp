@@ -627,17 +627,20 @@ void MasonPrinter::print(const AST::Script &script) {
       AST::AgentDeclaration *decl = type.getAgentDecl();
       AST::AgentMember *member = type.getAgentMember();
       Value identity = Value::getSumIdentity(member->type->resolved);
+      Type resultType = identity.getType();
       AST::Expression *identityExpr = identity.toExpression();
-      *this << nl << "public " << *member->type << " sum"
+      *this << nl << "public " << resultType << " sum"
             << decl->name << "_" << member->name << "() {" << indent << nl
             << "Bag bag = env.getAllObjects();" << nl
-            << *member->type << " result = " << *identityExpr << ";" << nl
+            << resultType << " result = " << *identityExpr << ";" << nl
             << "for (int i = 0; i < bag.size(); i++) {" << indent << nl
             << "Object maybe_agent = bag.get(i);" << nl
             << "if (!(maybe_agent instanceof " << decl->name << ")) continue;" << nl
             << decl->name << " agent = (" << decl->name << ") maybe_agent;" << nl;
       if (member->type->resolved.isVec()) {
         *this << "result = result.add(agent.getInState()." << member->name << ");";
+      } else if (member->type->resolved.isBool()) {
+        *this << "result += agent.getInState()." << member->name << " ? 1 : 0;";
       } else {
         *this << "result += agent.getInState()." << member->name << ";";
       }

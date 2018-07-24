@@ -46,11 +46,6 @@ FunctionSignature FunctionSignature::getConcreteSignature(
     newReturnType = agentType;
   } else if (returnType.isGenericAgentArray()) {
     newReturnType = { Type::ARRAY, agentType };
-  } else if (returnType.isUnresolved()) {
-    // Just handle the one case we have explicitly (sum)
-    assert(paramTypes[0].isAgentMember());
-    AST::AgentMember *member = argTypes[0].getAgentMember();
-    newReturnType = member->type->resolved;
   } else {
     newReturnType = returnType;
   }

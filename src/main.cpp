@@ -64,14 +64,36 @@ void registerBuiltinFunctions(FunctionList &funcs) {
 
   // Reduction functions
   funcs.add("count", { Type::AGENT_TYPE }, Type::INT32, FunctionSignature::SEQ_STEP_ONLY);
-  funcs.add("sum", { Type::AGENT_MEMBER }, Type::UNRESOLVED, FunctionSignature::SEQ_STEP_ONLY);
   funcs.add("getLastExecTime", {}, Type::FLOAT, FunctionSignature::SEQ_STEP_ONLY);
+
+  // sumFn() determines the return type based on the member that is summed over
+  FunctionSignature sumFn(
+      "sum", "sum", { Type::AGENT_MEMBER }, Type::UNRESOLVED,
+      FunctionSignature::SEQ_STEP_ONLY, nullptr);
+  sumFn.customIsCompatibleWith = [](const std::vector<Type> &argTypes) {
+    return argTypes.size() == 1 && argTypes[0].isAgentMember();
+  };
+  sumFn.customGetConcreteSignature = [sumFn](const std::vector<Type> &argTypes) {
+    Type argType = argTypes[0];
+    assert(argType.isAgentMember());
+    Type memberType = argType.getAgentMember()->type->resolved;
+
+    FunctionSignature copy = sumFn;
+    copy.paramTypes = argTypes;
+    copy.returnType = memberType;
+    if (memberType.isBool()) {
+      // Bools sum to integer
+      copy.returnType = { Type::INT32 };
+    }
+    return copy;
+  };
+  funcs.add(sumFn);
 
   // log_csv() is a variadic function. We don't have native support for variadics,
   // implement some custom handlers.
-  FunctionSignature fn(
+  FunctionSignature logCsvFn(
       "log_csv", "log_csv", {}, Type::VOID, FunctionSignature::SEQ_STEP_ONLY, nullptr);
-  fn.customIsCompatibleWith = [](const std::vector<Type> &argTypes) -> bool {
+  logCsvFn.customIsCompatibleWith = [](const std::vector<Type> &argTypes) {
     // For now only support int and float arguments
     for (Type type : argTypes) {
       if (!type.isInt() && !type.isFloat()) {
@@ -80,12 +102,12 @@ void registerBuiltinFunctions(FunctionList &funcs) {
     }
     return true;
   };
-  fn.customGetConcreteSignature = [fn](const std::vector<Type> &argTypes) -> FunctionSignature {
-    FunctionSignature copy = fn;
+  logCsvFn.customGetConcreteSignature = [logCsvFn](const std::vector<Type> &argTypes) {
+    FunctionSignature copy = logCsvFn;
     copy.paramTypes = argTypes;
     return copy;
   };
-  funcs.add(fn);
+  funcs.add(logCsvFn);
 }
 
 std::map<std::string, std::unique_ptr<Backend>> getBackends() {

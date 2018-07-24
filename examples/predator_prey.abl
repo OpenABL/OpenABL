@@ -303,10 +303,9 @@ step grass_growth(Grass in->out){
 sequential step gather_stats() {
   int num_prey = count(Prey);
   int num_predator = count(Predator);
-  float avg_prey_life = sum(Prey.life) / num_prey;
+  int num_avail_grass = sum(Grass.avail);
   float exec_time = getLastExecTime();
-  //int num_grass = sum(Grass.avail);
-  log_csv(num_prey, num_predator, avg_prey_life, exec_time);
+  log_csv(num_prey, num_predator, num_avail_grass, exec_time);
 }
 
 void main() {

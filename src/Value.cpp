@@ -323,6 +323,9 @@ Value Value::calcBuiltinCall(const FunctionSignature &sig, const std::vector<Val
 
 Value Value::getSumIdentity(const Type &type) {
   switch (type.getTypeId()) {
+    case Type::BOOL:
+      // We define that bool reductions sum to int
+      return {0l};
     case Type::INT32:
       return {0l};
     case Type::FLOAT:
