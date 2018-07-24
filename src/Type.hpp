@@ -133,10 +133,16 @@ struct Type {
   bool isUnresolved() const { return type == UNRESOLVED; }
 
   bool isGenericAgent() const {
-    return type == AGENT && agent == nullptr;
+    return (isAgent() || isAgentType()) && agent == nullptr;
   }
   bool isGenericAgentArray() const {
     return type == ARRAY && baseType == AGENT && agent == nullptr;
+  }
+
+  size_t calcHash() const {
+    return std::hash<int>()(type)
+         ^ std::hash<int>()(baseType)
+         ^ std::hash<AST::AgentDeclaration *>()(agent);
   }
 
 private:
@@ -178,4 +184,12 @@ private:
 
 std::ostream &operator<<(std::ostream &, const Type &);
 
+}
+
+namespace std {
+  template<> struct hash<OpenABL::Type> {
+    std::size_t operator()(const OpenABL::Type &t) const {
+      return t.calcHash();
+    }
+  };
 }

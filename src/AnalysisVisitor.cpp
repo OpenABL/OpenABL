@@ -1325,6 +1325,10 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
   expr.type = expr.calledSig.returnType;
   expr.calledFunc = sig->decl;
 
+  if (expr.name == "count") {
+    script.reductions.insert(expr.calledSig.paramTypes[0]);
+  }
+
   // FlameGPU needs to know
   if (expr.name == "random" || expr.name == "randomInt") {
     currentFunc->usesRng = true;

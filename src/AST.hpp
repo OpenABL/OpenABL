@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <set>
+#include <unordered_set>
 #include "Analysis.hpp"
 #include "location.hh"
 
@@ -683,6 +684,7 @@ struct Script : public Node {
   std::vector<AgentDeclaration *> agents;
   std::vector<ConstDeclaration *> consts;
   std::vector<FunctionDeclaration *> funcs;
+  std::unordered_set<OpenABL::Type> reductions;
   std::set<std::string> params;
   SimulateStatement *simStmt = nullptr;
   FunctionDeclaration *mainFunc = nullptr;

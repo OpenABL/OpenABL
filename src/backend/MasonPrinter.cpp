@@ -180,7 +180,6 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
       Type type = expr.getArg(0).type;
       AST::AgentDeclaration *decl = type.getAgentDecl();
       *this << "count" << decl->name << "()";
-      // TODO
     } else {
       assert(0);
     }
@@ -556,13 +555,31 @@ void MasonPrinter::print(const AST::Script &script) {
         << outdent << nl << "}"
         << nl << "public static int getColor(Object obj) {" << indent
         << nl << "return 0;"
-        << outdent << nl << "}";
+        << outdent << nl << "}" << nl;
   inMain = false;
 
   // Print non-step, non-main functions
   for (const AST::FunctionDeclaration *decl : script.funcs) {
     if (!decl->isParallelStep() && !decl->isMain()) {
-      *this << nl << nl << *decl;
+      *this << nl << *decl << nl;
+    }
+  }
+
+  // Print reducton helper functions
+  for (const Type &type : script.reductions) {
+    if (type.isAgentType()) {
+      AST::AgentDeclaration *decl = type.getAgentDecl();
+      *this << nl << "public int count" << decl->name << "() {" << indent << nl
+            << "Bag bag = env.getAllObjects();" << nl
+            << "int count = 0;" << nl
+            << "for (int i = 0; i < bag.size(); i++) {" << indent << nl
+            << "Object agent = bag.get(i);" << nl
+            << "if (agent instanceof " << decl->name << ") count++;"
+            << outdent << nl << "}" << nl
+            << "return 0;"
+            << outdent << nl << "}" << nl;
+    } else {
+      assert(0);
     }
   }
 
