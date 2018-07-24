@@ -16,6 +16,7 @@
 
 #include <map>
 #include <vector>
+#include <functional>
 #include <cassert>
 
 #include "Type.hpp"
@@ -90,6 +91,10 @@ struct FunctionSignature {
       flags(flags), decl(decl) {}
 
   bool isCompatibleWith(const std::vector<Type> &argTypes) const {
+    if (customIsCompatibleWith) {
+      return customIsCompatibleWith(argTypes);
+    }
+
     if (argTypes.size() != paramTypes.size()) {
       return false;
     }
@@ -134,6 +139,8 @@ struct FunctionSignature {
   Type returnType;
   unsigned flags;
   const AST::FunctionDeclaration *decl;
+  std::function<bool(const std::vector<Type> &)> customIsCompatibleWith = {};
+  std::function<FunctionSignature(const std::vector<Type> &)> customGetConcreteSignature = {};
 };
 
 struct Function {

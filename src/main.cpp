@@ -65,6 +65,26 @@ void registerBuiltinFunctions(FunctionList &funcs) {
   // Reduction functions
   funcs.add("count", { Type::AGENT_TYPE }, Type::INT32, FunctionSignature::SEQ_STEP_ONLY);
   funcs.add("sum", { Type::AGENT_MEMBER }, Type::UNRESOLVED, FunctionSignature::SEQ_STEP_ONLY);
+
+  // log_csv() is a variadic function. We don't have native support for variadics,
+  // implement some custom handlers.
+  FunctionSignature fn(
+      "log_csv", "log_csv", {}, Type::VOID, FunctionSignature::SEQ_STEP_ONLY, nullptr);
+  fn.customIsCompatibleWith = [](const std::vector<Type> &argTypes) -> bool {
+    // For now only support int and float arguments
+    for (Type type : argTypes) {
+      if (!type.isInt() && !type.isFloat()) {
+        return false;
+      }
+    }
+    return true;
+  };
+  fn.customGetConcreteSignature = [fn](const std::vector<Type> &argTypes) -> FunctionSignature {
+    FunctionSignature copy = fn;
+    copy.paramTypes = argTypes;
+    return copy;
+  };
+  funcs.add(fn);
 }
 
 std::map<std::string, std::unique_ptr<Backend>> getBackends() {

@@ -185,6 +185,16 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
       AST::AgentDeclaration *decl = type.getAgentDecl();
       AST::AgentMember *member = type.getAgentMember();
       *this << "sum" << decl->name << "_" << member->name << "()";
+    } else if (name == "log_csv") {
+      bool first = true;
+      for (const AST::ExpressionPtr &arg : *expr.args) {
+        if (!first) {
+          *this << "logWriter.print(',');" << nl;
+        }
+        first = false;
+        *this << "logWriter.print(" << *arg << ");" << nl;
+      }
+      *this << "logWriter.println()";
     } else {
       assert(0);
     }
@@ -517,8 +527,11 @@ void MasonPrinter::print(const AST::Script &script) {
 
   *this << "import sim.engine.*;" << nl
         << "import sim.util.*;" << nl
-        << "import sim.field.continuous.*;" << nl << nl
-        << "public class Sim extends SimState {" << indent << nl;
+        << "import sim.field.continuous.*;" << nl;
+  if (script.usesLogging) {
+    *this << "import java.io.*;" << nl;
+  }
+  *this << nl << "public class Sim extends SimState {" << indent << nl;
 
   for (const AST::ConstDeclaration *decl : script.consts) {
     *this << *decl << nl;
@@ -533,10 +546,14 @@ void MasonPrinter::print(const AST::Script &script) {
     printCommaSeparated(size.getVec(), [&](double d) {
         *this << d;
     });
-    *this << ");" << nl << nl;
+    *this << ");" << nl;
   }
 
-  *this << "public Sim(long seed) {" << indent << nl
+  if (script.usesLogging) {
+    *this << "private PrintWriter logWriter;" << nl;
+  }
+
+  *this << nl << "public Sim(long seed) {" << indent << nl
         << "super(seed);"
         << outdent << nl << "}" << nl;
 
@@ -544,8 +561,13 @@ void MasonPrinter::print(const AST::Script &script) {
   inMain = true;
   *this << "public void start() {" << indent
         << nl << "super.start();"
-        << nl << "env.clear();"
-        << nl << mainFunc->getStmtsBeforeSimulate()
+        << nl << "env.clear();";
+  if (script.usesLogging) {
+    *this << nl << "try {"
+          << nl << "    logWriter = new PrintWriter(\"log.csv\", \"UTF-8\");"
+          << nl << "} catch (Exception e) { e.printStackTrace(); }";
+  }
+  *this << nl << mainFunc->getStmtsBeforeSimulate()
         << outdent << nl << "}"
         << nl << "public void finish() {" << indent
         << nl << "super.finish();"

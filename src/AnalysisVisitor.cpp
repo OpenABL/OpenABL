@@ -1329,6 +1329,10 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
     script.reductions.insert(expr.calledSig.paramTypes[0]);
   }
 
+  if (expr.name == "log_csv") {
+    script.usesLogging = true;
+  }
+
   // FlameGPU needs to know
   if (expr.name == "random" || expr.name == "randomInt") {
     currentFunc->usesRng = true;

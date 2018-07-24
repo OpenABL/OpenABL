@@ -22,6 +22,10 @@ uint32_t VarId::max_id;
 // Concrete signature with any generic agent types replaced
 FunctionSignature FunctionSignature::getConcreteSignature(
     const std::vector<Type> &argTypes) const {
+  if (customGetConcreteSignature) {
+    return customGetConcreteSignature(argTypes);
+  }
+
   std::vector<Type> newParamTypes;
   Type newReturnType;
   Type agentType = Type::AGENT;

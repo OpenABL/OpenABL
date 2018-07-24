@@ -691,6 +691,7 @@ struct Script : public Node {
   EnvironmentDeclaration *envDecl = nullptr;
   bool usesRuntimeRemoval = false;
   bool usesRuntimeAddition = false;
+  bool usesLogging = false;
 
   Script(DeclarationList *decls, Location loc)
     : Node{loc}, decls{decls} {}
