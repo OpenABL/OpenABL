@@ -1090,7 +1090,7 @@ void AnalysisVisitor::leave(AST::MemberAccessExpression &expr) {
     if (type.isAgent()) {
       expr.type = member->type->resolved;
     } else {
-      expr.type = { Type::AGENT_MEMBER, member };
+      expr.type = { Type::AGENT_MEMBER, agent, member };
     }
   } else {
     err << "Can only access members on agent or vector type" << expr.loc;
@@ -1325,7 +1325,7 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
   expr.type = expr.calledSig.returnType;
   expr.calledFunc = sig->decl;
 
-  if (expr.name == "count") {
+  if (expr.name == "count" || expr.name == "sum") {
     script.reductions.insert(expr.calledSig.paramTypes[0]);
   }
 

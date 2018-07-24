@@ -180,6 +180,11 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
       Type type = expr.getArg(0).type;
       AST::AgentDeclaration *decl = type.getAgentDecl();
       *this << "count" << decl->name << "()";
+    } else if (name == "sum") {
+      Type type = expr.getArg(0).type;
+      AST::AgentDeclaration *decl = type.getAgentDecl();
+      AST::AgentMember *member = type.getAgentMember();
+      *this << "sum" << decl->name << "_" << member->name << "()";
     } else {
       assert(0);
     }
@@ -578,6 +583,24 @@ void MasonPrinter::print(const AST::Script &script) {
             << outdent << nl << "}" << nl
             << "return 0;"
             << outdent << nl << "}" << nl;
+    } else if (type.isAgentMember()) {
+      AST::AgentDeclaration *decl = type.getAgentDecl();
+      AST::AgentMember *member = type.getAgentMember();
+      Value identity = Value::getSumIdentity(member->type->resolved);
+      AST::Expression *identityExpr = identity.toExpression();
+      *this << nl << "public " << *member->type << " sum"
+            << decl->name << "_" << member->name << "() {" << indent << nl
+            << "Bag bag = env.getAllObjects();" << nl
+            << *member->type << " result = " << *identityExpr << ";" << nl
+            << "for (int i = 0; i < bag.size(); i++) {" << indent << nl
+            << "Object maybe_agent = bag.get(i);" << nl
+            << "if (!(maybe_agent instanceof " << decl->name << ")) continue;" << nl
+            << decl->name << " agent = (" << decl->name << ") maybe_agent;" << nl
+            << "result += agent.getInState()." << member->name << ";"
+            << outdent << nl << "}" << nl
+            << "return result;"
+            << outdent << nl << "}" << nl;
+      delete identityExpr;
     } else {
       assert(0);
     }

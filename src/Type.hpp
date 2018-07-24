@@ -44,33 +44,30 @@ struct Type {
 
   Type() : type{INVALID} {}
   Type(TypeId type)
-    : type{type}, agent{nullptr}
+    : type{type}, agent{nullptr}, member{nullptr}
   { assert(type != ARRAY); }
 
   Type(TypeId type, AST::AgentDeclaration *agent)
-    : type{type}, agent{agent}
+    : type{type}, agent{agent}, member{nullptr}
   { assert(type == AGENT || type == AGENT_TYPE); }
 
-  Type(TypeId type, AST::AgentMember *member)
-    : type{type}, member{member}
+  Type(TypeId type, AST::AgentDeclaration *agent, AST::AgentMember *member)
+    : type{type}, agent{agent}, member{member}
   { assert(type == AGENT_MEMBER); }
 
   Type(TypeId type, const Type &base)
-    : type{type}, baseType{base.type}, agent{base.agent}
+    : type{type}, baseType{base.type},
+      agent{base.agent}, member{base.member}
   { assert(type == ARRAY); }
 
   bool operator==(const Type &other) const {
     if (type != other.type) {
       return false;
     }
-    switch (type) {
-      case AGENT:
-        return agent == other.agent;
-      case ARRAY:
-        return getBaseType() == other.getBaseType();
-      default:
-        return true;
+    if (type == ARRAY) {
+      return getBaseType() == other.getBaseType();
     }
+    return agent == other.agent && member == other.member;
   }
   bool operator!=(const Type &other) const {
     return !(*this == other);
@@ -96,7 +93,7 @@ struct Type {
   }
 
   AST::AgentDeclaration *getAgentDecl() const {
-    assert(isAgent() || isAgentType());
+    assert(canHaveAgent());
     return agent;
   }
 
@@ -132,8 +129,12 @@ struct Type {
   bool isString() const { return type == STRING; }
   bool isUnresolved() const { return type == UNRESOLVED; }
 
+  bool canHaveAgent() const {
+    return isAgent() || isAgentType() || isAgentMember();
+  }
+
   bool isGenericAgent() const {
-    return (isAgent() || isAgentType()) && agent == nullptr;
+    return canHaveAgent() && agent == nullptr;
   }
   bool isGenericAgentArray() const {
     return type == ARRAY && baseType == AGENT && agent == nullptr;
@@ -142,7 +143,8 @@ struct Type {
   size_t calcHash() const {
     return std::hash<int>()(type)
          ^ std::hash<int>()(baseType)
-         ^ std::hash<AST::AgentDeclaration *>()(agent);
+         ^ std::hash<AST::AgentDeclaration *>()(agent)
+         ^ std::hash<AST::AgentMember *>()(member);
   }
 
 private:
@@ -174,12 +176,10 @@ private:
   // Base type for ARRAY type. We support simple arrays only, for now.
   TypeId baseType;
 
-  union {
-    // Agent declaration for AGENT and AGENT_TYPE
-    AST::AgentDeclaration *agent;
-    // Agent member for AGENT_MEMBER
-    AST::AgentMember *member;
-  };
+  // Agent declaration for AGENT, AGENT_TYPE and AGENT_MEMBER
+  AST::AgentDeclaration *agent;
+  // Agent member for AGENT_MEMBER
+  AST::AgentMember *member;
 };
 
 std::ostream &operator<<(std::ostream &, const Type &);

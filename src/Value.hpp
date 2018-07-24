@@ -276,6 +276,7 @@ struct Value {
   static Value calcUnaryOp(AST::UnaryOp op, const Value &val);
   static Value calcBinaryOp(AST::BinaryOp op, const Value &left, const Value &right);
   static Value calcBuiltinCall(const FunctionSignature &sig, const std::vector<Value> &args);
+  static Value getSumIdentity(const Type &type);
 
 private:
   Type type;

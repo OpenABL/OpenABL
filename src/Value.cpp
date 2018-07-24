@@ -321,6 +321,21 @@ Value Value::calcBuiltinCall(const FunctionSignature &sig, const std::vector<Val
   return {};
 }
 
+Value Value::getSumIdentity(const Type &type) {
+  switch (type.getTypeId()) {
+    case Type::INT32:
+      return {0l};
+    case Type::FLOAT:
+      return {0.};
+    case Type::VEC2:
+      return {0., 0.};
+    case Type::VEC3:
+      return {0., 0., 0.};
+    default:
+      return {};
+  }
+}
+
 static inline AST::Expression *withType(AST::Expression *expr, Type t) {
   expr->type = t;
   return expr;
