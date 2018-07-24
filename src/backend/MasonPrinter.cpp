@@ -514,12 +514,19 @@ void MasonPrinter::print(const AST::AgentDeclaration &decl) {
 }
 
 void MasonPrinter::print(const AST::SimulateStatement &stmt) {
+  AST::FunctionDeclaration *seqStep = stmt.seqStepDecl;
+  size_t numStepFuncs = stmt.stepFuncDecls.size();
   std::string tLabel = makeAnonLabel();
   *this << "int " << tLabel << " = " << *stmt.timestepsExpr
-        << " * " << stmt.stepFuncDecls.size() << ";" << nl
+        << " * " << numStepFuncs << ";" << nl
         << "do {" << indent << nl
-        << "if (!_sim.schedule.step(_sim)) break;" << outdent << nl
-        << "} while (_sim.schedule.getSteps() < " << tLabel << ");";
+        << "if (!_sim.schedule.step(_sim)) break;";
+  if (seqStep) {
+    *this << nl << "if (_sim.schedule.getSteps() % " << numStepFuncs << " == 0) {" << nl
+          << "    _sim." << seqStep->name << "();" << nl
+          << "}";
+  }
+  *this << outdent << nl << "} while (_sim.schedule.getSteps() < " << tLabel << ");";
 }
 
 void MasonPrinter::print(const AST::Script &script) {
@@ -570,8 +577,11 @@ void MasonPrinter::print(const AST::Script &script) {
   *this << nl << mainFunc->getStmtsBeforeSimulate()
         << outdent << nl << "}"
         << nl << "public void finish() {" << indent
-        << nl << "super.finish();"
-        << nl << mainFunc->getStmtsAfterSimulate()
+        << nl << "super.finish();";
+  if (script.usesLogging) {
+    *this << nl << "logWriter.close();";
+  }
+  *this << nl << mainFunc->getStmtsAfterSimulate()
         << outdent << nl << "}"
         << nl << "public static void main(String[] args) {" << indent
         << nl << "Sim _sim = new Sim(System.currentTimeMillis());"
@@ -603,7 +613,7 @@ void MasonPrinter::print(const AST::Script &script) {
             << "Object agent = bag.get(i);" << nl
             << "if (agent instanceof " << decl->name << ") count++;"
             << outdent << nl << "}" << nl
-            << "return 0;"
+            << "return count;"
             << outdent << nl << "}" << nl;
     } else if (type.isAgentMember()) {
       AST::AgentDeclaration *decl = type.getAgentDecl();
