@@ -595,9 +595,13 @@ void MasonPrinter::print(const AST::Script &script) {
             << "for (int i = 0; i < bag.size(); i++) {" << indent << nl
             << "Object maybe_agent = bag.get(i);" << nl
             << "if (!(maybe_agent instanceof " << decl->name << ")) continue;" << nl
-            << decl->name << " agent = (" << decl->name << ") maybe_agent;" << nl
-            << "result += agent.getInState()." << member->name << ";"
-            << outdent << nl << "}" << nl
+            << decl->name << " agent = (" << decl->name << ") maybe_agent;" << nl;
+      if (member->type->resolved.isVec()) {
+        *this << "result = result.add(agent.getInState()." << member->name << ");";
+      } else {
+        *this << "result += agent.getInState()." << member->name << ";";
+      }
+      *this << outdent << nl << "}" << nl
             << "return result;"
             << outdent << nl << "}" << nl;
       delete identityExpr;
