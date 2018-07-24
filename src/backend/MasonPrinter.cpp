@@ -195,6 +195,8 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
         *this << "logWriter.print(" << *arg << ");" << nl;
       }
       *this << "logWriter.println()";
+    } else if (name == "getLastExecTime") {
+      *this << "lastExecTime";
     } else {
       assert(0);
     }
@@ -517,16 +519,21 @@ void MasonPrinter::print(const AST::SimulateStatement &stmt) {
   AST::FunctionDeclaration *seqStep = stmt.seqStepDecl;
   size_t numStepFuncs = stmt.stepFuncDecls.size();
   std::string tLabel = makeAnonLabel();
+  std::string timerLabel = makeAnonLabel();
   *this << "int " << tLabel << " = " << *stmt.timestepsExpr
         << " * " << numStepFuncs << ";" << nl
+        << "long lastTime = System.currentTimeMillis();" << nl
         << "do {" << indent << nl
-        << "if (!_sim.schedule.step(_sim)) break;";
+        << "if (!_sim.schedule.step(_sim)) break;" << nl
+        << "if (_sim.schedule.getSteps() % " << numStepFuncs << " == 0) {" << indent << nl
+        << "long curTime = System.currentTimeMillis();" << nl
+        << "_sim.lastExecTime = (curTime - lastTime) / 1000.0;" << nl
+        << "lastTime = curTime;";
   if (seqStep) {
-    *this << nl << "if (_sim.schedule.getSteps() % " << numStepFuncs << " == 0) {" << nl
-          << "    _sim." << seqStep->name << "();" << nl
-          << "}";
+    *this << "_sim." << seqStep->name << "();" << nl;
   }
-  *this << outdent << nl << "} while (_sim.schedule.getSteps() < " << tLabel << ");";
+  *this << outdent << nl << "}"
+        << outdent << nl << "} while (_sim.schedule.getSteps() < " << tLabel << ");";
 }
 
 void MasonPrinter::print(const AST::Script &script) {
@@ -556,6 +563,7 @@ void MasonPrinter::print(const AST::Script &script) {
     *this << ");" << nl;
   }
 
+  *this << "private double lastExecTime;" << nl;
   if (script.usesLogging) {
     *this << "private PrintWriter logWriter;" << nl;
   }

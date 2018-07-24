@@ -65,6 +65,7 @@ void registerBuiltinFunctions(FunctionList &funcs) {
   // Reduction functions
   funcs.add("count", { Type::AGENT_TYPE }, Type::INT32, FunctionSignature::SEQ_STEP_ONLY);
   funcs.add("sum", { Type::AGENT_MEMBER }, Type::UNRESOLVED, FunctionSignature::SEQ_STEP_ONLY);
+  funcs.add("getLastExecTime", {}, Type::FLOAT, FunctionSignature::SEQ_STEP_ONLY);
 
   // log_csv() is a variadic function. We don't have native support for variadics,
   // implement some custom handlers.
