@@ -1,0 +1,71 @@
+/* Copyright 2017 OpenABL Contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License. */
+
+agent Point {
+  position float3 pos;
+}
+
+// Number of timesteps
+param int num_timesteps = 100;
+// Number of agents
+param int num_agents = 1000;
+
+// Density of agents
+param float rho = 0.05;
+// Repulsive force parameter
+param float k_rep = 0.05;
+// Attractive force parameter
+param float k_att = 0.01;
+// Radius of agent (radius of repulsion)
+param float r = 5;
+
+// Choose environment size to satisfy given
+// number of agents and density
+float W = cbrt(num_agents / rho);
+
+// Specify environment size
+environment { max: float3(W) }
+
+// Step function
+step move_point(Point in -> out) {
+  float3 new_pos = in.pos;
+  for (Point nx : near(in, 2*r)) {
+    float pos_dist = dist(in.pos, nx.pos);
+    if (pos_dist == 0) continue;
+
+    float sep_dist = pos_dist - r;
+    float3 force = float3(0);
+    if (sep_dist > 0.0) {
+      force = k_att * (2*r - pos_dist) * (nx.pos - in.pos) / pos_dist;
+    } else {
+      force = k_rep * (in.pos - nx.pos);
+    }
+    new_pos += force;
+  }
+  out.pos = clamp(new_pos, float3(1), float3(W-1));
+}
+
+void main() {
+  // initialization (sequential)
+  for (int i : 0..num_agents) {
+    add(Point {
+      pos: random(environment.max)
+    });
+  }
+
+  // simulation (parallel)
+  simulate(num_timesteps) { move_point }
+
+  save("points.json");
+}
