@@ -687,6 +687,9 @@ void MasonPrinter::printUI() {
   "import sim.display3d.*;\n"
   "import javax.swing.*;\n"
   "import java.awt.*;\n";
+  if (dim == 3) {
+    *this << "import javax.media.j3d.TransformGroup;\n";
+  }
   printUIExtraImports();
   *this <<
   "\n"
@@ -725,24 +728,32 @@ void MasonPrinter::printUI() {
   "        double scale = 4 * sim.env.width / SIZE;\n"
   "\n"
   "        envPortrayal.setField(sim.env);\n";
-  if (dim == 2) {
-    for (const AST::AgentDeclaration *agent : script.agents) {
+
+  for (const AST::AgentDeclaration *agent : script.agents) {
+    if (dim == 2) {
       *this << "        envPortrayal.setPortrayalForClass("
-            << agent->name << ".class, new OvalPortrayal2D(scale) {\n"
+            << agent->name << ".class, new OvalProtrayal2D(scale) {\n"
             "            public void draw(Object object, Graphics2D graphics, DrawInfo2D info) {\n"
             "                " << agent->name << " agent = (" << agent->name << ") object;\n"
             "                paint = new Color(sim.getColor(agent));\n"
             "                super.draw(object, graphics, info);\n"
             "            }\n"
             "        });\n";
+    } else {
+      *this << "        envPortrayal.setPortrayalForClass("
+            << agent->name << ".class, new SpherePortrayal3D(scale) {\n"
+            "            public TransformGroup getModel(Object object, TransformGroup j3dModel) {\n"
+            "                " << agent->name << " agent = (" << agent->name << ") object;\n"
+            "                Color color = new Color(sim.getColor(agent));\n"
+            "                setAppearance(null, appearanceForColor(color));\n"
+            "                return super.getModel(object, j3dModel);\n"
+            "            }\n"
+            "        });\n";
     }
-  } else {
-    *this << "        envPortrayal.setPortrayalForAll(new SpherePortrayal3D(scale));\n";
   }
   *this << "\n";
 
   if (dim == 2) {
-    *this << "        display.setBackdrop(Color.white);\n";
     *this << "        display.repaint();\n";
   } else {
     *this << "        display.createSceneGraph();\n";
@@ -756,6 +767,7 @@ void MasonPrinter::printUI() {
   "        super.init(c);\n"
   "\n"
   "        display = new MyDisplay(SIZE, SIZE, this);\n"
+  "        display.setBackdrop(Color.white);\n"
   "        //display.setClipping(false);\n";
   if (dim == 3) {
     Value::Vec3 envMin = script.envDecl->envMin.extendToVec3().getVec3();
