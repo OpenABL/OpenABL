@@ -365,6 +365,8 @@ step resolve_forces(Keratinocyte in -> out) {
 
   for (Keratinocyte other : near(in, K_WIDTH + FORCE_IRADIUS)) {
     float distance = dist(in.pos, other.pos);
+    if (distance == 0.) continue;
+
     float separation_distance = distance - K_WIDTH;
     if (other.pos.z >= in.pos.z) {
       if (other.pos.z - in.pos.z > K_WIDTH/2) {
