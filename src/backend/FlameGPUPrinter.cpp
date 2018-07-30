@@ -181,6 +181,44 @@ void FlameGPUPrinter::print(const AST::CallExpression &expr) {
         });
         *this << ")";
         return;
+      } else if (expr.name == "count") {
+        Type type = expr.getArg(0).type;
+        AST::AgentDeclaration *decl = type.getAgentDecl();
+        std::string state = decl->name + "_default";
+        *this << "get_agent_" << decl->name << "_" << state << "_count()";
+        return;
+      } else if (expr.name == "sum") {
+        Type type = expr.getArg(0).type;
+        AST::AgentDeclaration *decl = type.getAgentDecl();
+        AST::AgentMember *member = type.getAgentMember();
+        std::string state = decl->name + "_default";
+        *this << "reduce_" << decl->name << "_" << state
+              << "_" << member->name << "_variable()";
+        return;
+      } else if (expr.name == "log_csv") {
+        std::string formatStr;
+        bool first = true;
+        for (const AST::ExpressionPtr &arg : *expr.args) {
+          if (!first) {
+            formatStr += ",";
+          }
+          first = false;
+          if (arg->type.isInt()) {
+            formatStr += "%d";
+          } else if (arg->type.isFloat()) {
+            formatStr += "%f";
+          } else {
+            assert(0); // TODO
+          }
+        }
+        *this << "fprintf(openabl_log_file, \"" << formatStr << "\", ";
+        printArgs(expr);
+        *this << ")";
+        return;
+      } else if (expr.name == "getLastExecTime") {
+        // TODO
+        *this << "0.0";
+        return;
       }
     }
 
@@ -352,10 +390,12 @@ void FlameGPUPrinter::print(const AST::Script &script) {
     }
 
     if (func->isSequentialStep()) {
-      *this << "__FLAME_GPU_STEP_FUNC__" << *func << nl;
+      *this << "__FLAME_GPU_STEP_FUNC__ ";
+    } else {
+      *this << "__device__ ";
     }
 
-    *this << "__device__ " << *func << nl;
+    *this << *func << nl;
   }
 
   for (const FlameModel::Func &func : model.funcs) {
