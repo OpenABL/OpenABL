@@ -313,7 +313,7 @@ step migrate(Keratinocyte in -> out) {
     dir1 += PI * random(1.0)/4.0; // XXX This only allows positive changes, seems wrong
   }
   x1 += in.motility * cos(dir1);
-  y1 += in.motility * cos(dir1);
+  y1 += in.motility * sin(dir1);
 
   for (Keratinocyte other : near(in, K_WIDTH)) {
     // XXX skip whole loop?
@@ -334,27 +334,27 @@ step migrate(Keratinocyte in -> out) {
     }
   }
 
+  if (x1 > SURFACE_WIDTH) {
+    x1 = SURFACE_WIDTH - in.motility * random(1.0);
+    dir1 = PI + PI * random(-0.5, 0.5)/4.0;
+  }
+  if (x1 < 0) {
+    x1 = in.motility * random(1.0);
+    dir1 = PI * random(-0.5, 0.5)/4.0;
+  }
+
+  if (y1 > SURFACE_WIDTH) {
+    y1 = SURFACE_WIDTH - in.motility * random(1.0);
+    dir1 = 3*PI/2 + PI * random(-0.5, 0.5)/4.0;
+  }
+  if (y1 < 0) {
+    y1 = in.motility * random(1.0);
+    dir1 = PI/2 * random(-0.5, 0.5)/4.0;
+  }
+
   out.pos.x = x1;
   out.pos.y = y1;
   out.dir = dir1;
-
-  if (out.pos.x > SURFACE_WIDTH) {
-    out.pos.x = SURFACE_WIDTH - in.motility * random(1.0);
-    out.dir = PI + PI * random(-0.5, 0.5)/4.0;
-  }
-  if (out.pos.x < 0) {
-    out.pos.x = in.motility * random(1.0);
-    out.dir = PI * random(-0.5, 0.5)/4.0;
-  }
-
-  if (out.pos.y > SURFACE_WIDTH) {
-    out.pos.y = SURFACE_WIDTH - in.motility * random(1.0);
-    out.dir = 3*PI/2 + PI * random(-0.5, 0.5)/4.0;
-  }
-  if (out.pos.y < 0) {
-    out.pos.y = in.motility * random(1.0);
-    out.dir = PI/2 * random(-0.5, 0.5)/4.0;
-  }
 }
 
 step resolve_forces(Keratinocyte in -> out) {
