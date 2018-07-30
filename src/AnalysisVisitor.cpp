@@ -1333,6 +1333,10 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
     script.usesLogging = true;
   }
 
+  if (expr.name == "getLastExecTime") {
+    script.usesTiming = true;
+  }
+
   // FlameGPU needs to know
   if (expr.name == "random" || expr.name == "randomInt") {
     currentFunc->usesRng = true;

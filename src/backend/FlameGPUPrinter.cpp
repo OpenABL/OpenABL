@@ -211,13 +211,12 @@ void FlameGPUPrinter::print(const AST::CallExpression &expr) {
             assert(0); // TODO
           }
         }
-        *this << "fprintf(openabl_log_file, \"" << formatStr << "\", ";
+        *this << "fprintf(openabl_log_file, \"" << formatStr << "\\n\", ";
         printArgs(expr);
         *this << ")";
         return;
       } else if (expr.name == "getLastExecTime") {
-        // TODO
-        *this << "0.0";
+        *this << "(openabl_event_elapsed / 1000)";
         return;
       }
     }
@@ -355,6 +354,13 @@ void FlameGPUPrinter::print(const AST::FunctionDeclaration &decl) {
   }
   printParams(decl);
   *this << ") {" << indent;
+  if (decl.isSequentialStep() && script.usesTiming) {
+    *this << nl << "cudaEventRecord(openabl_event_stop);"
+          << nl << "cudaEventSynchronize(openabl_event_stop);"
+          << nl << "float openabl_event_elapsed = 0.;"
+          << nl << "cudaEventElapsedTime(&openabl_event_elapsed, openabl_event_start, openabl_event_stop);"
+          << nl << "cudaEventRecord(openabl_event_start);";
+  }
   *this << *decl.stmts << outdent << nl << "}";
 }
 
@@ -369,14 +375,32 @@ void FlameGPUPrinter::print(const AST::Script &script) {
   }
 
   if (script.usesLogging) {
-    *this << "FILE *openabl_log_file;" << nl << nl
-          << "__FLAME_GPU_INIT_FUNC__ void openabl_init() {" << indent << nl
-          << "openabl_log_file = fopen(\"log.csv\", \"w\");" 
-          << outdent << nl << "}" << nl << nl
-          << "__FLAME_GPU_EXIT_FUNC__ void openabl_exit() {" << indent << nl
-          << "fclose(openabl_log_file);"
-          << outdent << nl << "}" << nl;
+    *this << "FILE *openabl_log_file;" << nl;
   }
+  if (script.usesTiming) {
+    *this << "cudaEvent_t openabl_event_start, openabl_event_stop;" << nl;
+  }
+
+  *this << nl << "__FLAME_GPU_INIT_FUNC__ void openabl_init() {" << indent;
+  if (script.usesLogging) {
+    *this << nl << "openabl_log_file = fopen(\"log.csv\", \"w\");";
+  }
+  if (script.usesTiming) {
+    *this << nl << "cudaEventCreate(&openabl_event_start);"
+          << nl << "cudaEventCreate(&openabl_event_stop);"
+          << nl << "cudaEventRecord(openabl_event_start);";
+  }
+
+  *this << outdent << nl << "}" << nl << nl
+        << "__FLAME_GPU_EXIT_FUNC__ void openabl_exit() {" << indent;
+  if (script.usesLogging) {
+    *this << nl << "fclose(openabl_log_file);";
+  }
+  if (script.usesTiming) {
+    *this << nl << "cudaEventDestroy(openabl_event_start);"
+          << nl << "cudaEventDestroy(openabl_event_stop);";
+  }
+  *this << outdent << nl << "}" << nl;
 
   for (const AST::FunctionDeclaration *func : script.funcs) {
     if (func->isParallelStep()) {

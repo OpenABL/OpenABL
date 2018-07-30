@@ -192,22 +192,21 @@ static XmlElems createXmlLayers(const FlameModel &model) {
 }
 
 static XmlElems createXmlEnv(AST::Script &script) {
-  XmlElems env;
-  env.push_back({ "gpu:functionFiles", {
-    { "file", {{ "functions.c" }} },
-  }});
-  if (script.usesLogging) {
-    env.push_back({ "gpu:initFunctions", {
+  XmlElems env = {
+    { "gpu:functionFiles", {
+      { "file", {{ "functions.c" }} },
+    }},
+    { "gpu:initFunctions", {
       { "gpu:initFunction", {
         { "gpu:name", {{ "openabl_init" }} }
       }}
-    }});
-    env.push_back({ "gpu:exitFunctions", {
+    }},
+    { "gpu:exitFunctions", {
       { "gpu:exitFunction", {
         { "gpu:name", {{ "openabl_exit" }} }
       }}
-    }});
-  }
+    }}
+  };
 
   AST::FunctionDeclaration *seqStep = script.simStmt->seqStepDecl;
   if (seqStep) {
