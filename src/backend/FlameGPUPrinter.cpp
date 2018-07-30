@@ -330,8 +330,18 @@ void FlameGPUPrinter::print(const AST::Script &script) {
     *this << *decl << nl;
   }
 
+  if (script.usesLogging) {
+    *this << "FILE *openabl_log_file;" << nl << nl
+          << "__FLAME_GPU_INIT_FUNC__ void openabl_init() {" << indent << nl
+          << "openabl_log_file = fopen(\"log.csv\", \"w\");" 
+          << outdent << nl << "}" << nl << nl
+          << "__FLAME_GPU_EXIT_FUNC__ void openabl_exit() {" << indent << nl
+          << "fclose(openabl_log_file);"
+          << outdent << nl << "}" << nl;
+  }
+
   for (const AST::FunctionDeclaration *func : script.funcs) {
-    if (func->isAnyStep()) {
+    if (func->isParallelStep()) {
       // Step functions will be handled separately later
       continue;
     }
@@ -339,6 +349,10 @@ void FlameGPUPrinter::print(const AST::Script &script) {
     if (func->isMain()) {
       // Handled by FlameMainPrinter
       continue;
+    }
+
+    if (func->isSequentialStep()) {
+      *this << "__FLAME_GPU_STEP_FUNC__" << *func << nl;
     }
 
     *this << "__device__ " << *func << nl;
@@ -405,7 +419,6 @@ void FlameGPUPrinter::print(const AST::Script &script) {
       *this << outdent << nl << "}\n\n";
       currentFunc = nullptr;
     }
-
   }
 
   *this << "#endif // #ifndef _FUNCTIONS_H\n";

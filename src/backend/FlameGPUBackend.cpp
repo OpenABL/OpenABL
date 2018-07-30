@@ -191,18 +191,45 @@ static XmlElems createXmlLayers(const FlameModel &model) {
   return layers;
 }
 
+static XmlElems createXmlEnv(AST::Script &script) {
+  XmlElems env;
+  env.push_back({ "gpu:functionFiles", {
+    { "file", {{ "functions.c" }} },
+  }});
+  if (script.usesLogging) {
+    env.push_back({ "gpu:initFunctions", {
+      { "gpu:initFunction", {
+        { "gpu:name", {{ "openabl_init" }} }
+      }}
+    }});
+    env.push_back({ "gpu:exitFunctions", {
+      { "gpu:exitFunction", {
+        { "gpu:name", {{ "openabl_exit" }} }
+      }}
+    }});
+  }
+
+  AST::FunctionDeclaration *seqStep = script.simStmt->seqStepDecl;
+  if (seqStep) {
+    env.push_back({ "gpu:stepFunctions", {
+      { "gpu:stepFunction", {
+        { "gpu:name", {{ seqStep->name }} }
+      }}
+    }});
+  }
+  return env;
+}
+
 static std::string createXmlModel(
     AST::Script &script, const FlameModel &model, bool useFloat, long bufferSize) {
   XmlElems xagents = createXmlAgents(script, model, useFloat, bufferSize);
   XmlElems messages = createXmlMessages(script, model, useFloat, bufferSize);
   XmlElems layers = createXmlLayers(model);
+  XmlElems environment = createXmlEnv(script);
+
   XmlElem root("gpu:xmodel", {
     { "name", {{ "TODO" }} },
-    { "gpu:environment", {
-      { "gpu:functionFiles", {
-        { "file", {{ "functions.c" }} },
-      }}
-    }},
+    { "gpu:environment", environment },
     { "xagents", xagents },
     { "messages", messages },
     { "layers", layers },
