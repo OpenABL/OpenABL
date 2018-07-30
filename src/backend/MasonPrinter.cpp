@@ -368,7 +368,7 @@ void MasonPrinter::print(const AST::FunctionDeclaration &decl) {
 
     currentInVar.reset();
     currentOutVar.reset();
-  } else if (decl.name == "getColor") {
+  } else if (decl.name == "getColor" || decl.name == "getSize") {
     const AST::Param &param = *(*decl.params)[0];
     *this << "public " << *decl.returnType << " " << decl.name << "("
           << *param.type << " _" << *param.var << ") {" << indent
@@ -600,6 +600,9 @@ void MasonPrinter::print(const AST::Script &script) {
         << outdent << nl << "}"
         << nl << "public static int getColor(Object obj) {" << indent
         << nl << "return 0;"
+        << outdent << nl << "}"
+        << nl << "public static int getSize(Object obj) {" << indent
+        << nl << "return 1;"
         << outdent << nl << "}" << nl;
   inMain = false;
 
@@ -725,7 +728,7 @@ void MasonPrinter::printUI() {
   "\n"
   "    public void setupPortrayals() {\n"
   "        Sim sim = (Sim) state;\n"
-  "        double scale = 4 * sim.env.width / SIZE;\n"
+  "        final double defaultScale = 4 * sim.env.width / SIZE;\n"
   "\n"
   "        envPortrayal.setField(sim.env);\n";
 
@@ -741,11 +744,12 @@ void MasonPrinter::printUI() {
             "        });\n";
     } else {
       *this << "        envPortrayal.setPortrayalForClass("
-            << agent->name << ".class, new SpherePortrayal3D(scale) {\n"
+            << agent->name << ".class, new SpherePortrayal3D() {\n"
             "            public TransformGroup getModel(Object object, TransformGroup j3dModel) {\n"
             "                " << agent->name << " agent = (" << agent->name << ") object;\n"
             "                Color color = new Color(sim.getColor(agent));\n"
             "                setAppearance(null, appearanceForColor(color));\n"
+            "                setScale(null, defaultScale * sim.getSize(agent));\n"
             "                return super.getModel(object, j3dModel);\n"
             "            }\n"
             "        });\n";

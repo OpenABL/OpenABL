@@ -215,7 +215,7 @@ void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
   // TODO Ignore getColor() function for non-mason backends, they'll not be able to
   // codegen it. A more general solution would be to not emit functions that aren't
   // used.
-  if (decl.name == "getColor"
+  if ((decl.name == "getColor" || decl.name == "getSize")
       && backend != "mason" && backend != "mason2" && backend != "dmason") {
     currentFunc = &decl;
     return;

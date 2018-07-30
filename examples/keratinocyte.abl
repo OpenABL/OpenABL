@@ -86,6 +86,10 @@ int getColor(Keratinocyte k) {
   }
 }
 
+int getSize(Keratinocyte k) {
+  return 4;
+}
+
 bool on_substrate_surface(float z) {
   return z < BASEMENT_MAX_Z;
 }
