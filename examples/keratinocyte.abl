@@ -72,6 +72,20 @@ param int num_timesteps = 100;
 
 environment { max: float3(SURFACE_WIDTH) }
 
+int getColor(Keratinocyte k) {
+  if (k.type == K_TYPE_STEM) {
+    return 0x000000;
+  } else if (k.type == K_TYPE_TA) {
+    return 0xff0000;
+  } else if (k.type == K_TYPE_COMM) {
+    return 0x00ff00;
+  } else if (k.type == K_TYPE_CORN) {
+    return 0x0000ff;
+  } else {
+    return 0xffff00;
+  }
+}
+
 bool on_substrate_surface(float z) {
   return z < BASEMENT_MAX_Z;
 }
