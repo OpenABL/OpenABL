@@ -195,8 +195,8 @@ step cycle(Keratinocyte in -> out) {
     out.cycle = start_new_cycle_position(in.type);
     add(Keratinocyte {
       type: in.type,
-      //pos: new_pos, // XXX not supported
-      pos: in.pos,
+      pos: new_pos, // XXX not supported
+      //pos: in.pos,
       force: float3(0),
       num_xy_bonds: 0,
       num_z_bonds: 0,
