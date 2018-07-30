@@ -739,9 +739,7 @@ void MasonPrinter::printUI() {
   } else {
     *this << "        envPortrayal.setPortrayalForAll(new SpherePortrayal3D(scale));\n";
   }
-  *this <<
-  "\n"
-  "        display.reset();\n";
+  *this << "\n";
 
   if (dim == 2) {
     *this << "        display.setBackdrop(Color.white);\n";
@@ -758,7 +756,17 @@ void MasonPrinter::printUI() {
   "        super.init(c);\n"
   "\n"
   "        display = new MyDisplay(SIZE, SIZE, this);\n"
-  "        //display.setClipping(false);\n"
+  "        //display.setClipping(false);\n";
+  if (dim == 3) {
+    Value::Vec3 envMin = script.envDecl->envMin.extendToVec3().getVec3();
+    Value::Vec3 envSize = script.envDecl->envSize.extendToVec3().getVec3();
+    double translate_x = -envSize.x / 2.0 + envMin.x;
+    double translate_y = -envSize.y / 2.0 + envMin.y;
+    double maxSize = std::max(envSize.x, envSize.y);
+    *this << "        display.translate(" << translate_x << ", " << translate_y << ", 0);\n"
+          << "        display.scale(1.0 / " << maxSize << ");";
+  }
+  *this <<
   "\n"
   "        displayFrame = display.createFrame();\n"
   "        displayFrame.setTitle(\"Visualization Display\");\n"
