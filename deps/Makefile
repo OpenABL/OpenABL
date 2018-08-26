@@ -42,7 +42,7 @@ clean-flame:
 flamegpu: flamegpu/FLAMEGPU
 
 flamegpu/FLAMEGPU:
-	git clone -b release-1.5 https://github.com/FLAMEGPU/FLAMEGPU flamegpu/FLAMEGPU
+	git clone https://github.com/FLAMEGPU/FLAMEGPU flamegpu/FLAMEGPU
 
 clean-flamegpu:
 	rm -rf flamegpu
