@@ -32,12 +32,11 @@ agent Keratinocyte {
   float movement; // Only used in force messages
 }
 
-float SURFACE_WIDTH = 500;
 float K_WIDTH = 20;
 float FORCE_IRADIUS = 10;
 float BASEMENT_MAX_Z = 5;
 
-int MAX_TO_GO_CONTACT_INHIBITED_TICKS = 300;
+int MAX_TO_G0_CONTACT_INHIBITED_TICKS = 300;
 int MAX_DEAD_TICKS = 600;
 int MAX_NUM_LATERAL_BONDS = 4;
 
@@ -66,6 +65,9 @@ int K_TYPE_HACAT = 4;
 
 param int num_agents = 100;
 param int num_timesteps = 100;
+
+// Keep a constant initial agent density
+float SURFACE_WIDTH = 50 * sqrt(num_agents);
 
 environment { max: float3(SURFACE_WIDTH) }
 
@@ -130,7 +132,7 @@ float get_new_coord(float old_coord, bool pos_only) {
     coord = random(0, K_WIDTH / 10);
   }
 
-  if (!pos_only && coord >= 0.5) {
+  if (!pos_only && coord > 0.5) {
     coord = -coord;
   }
 
@@ -183,7 +185,7 @@ step cycle(Keratinocyte in -> out) {
     contacts += 2;
   }
 
-  if (contacts < get_max_num_bonds(calcium_level)) {
+  if (contacts <= get_max_num_bonds(calcium_level)) {
     // cell comes out of G0
     out.cycle = in.cycle + 1;
     out.contact_inhibited_ticks = 0;
@@ -280,7 +282,7 @@ step differentiate(Keratinocyte in -> out) {
 
     if (do_diff) {
       out.type = K_TYPE_COMM;
-    } else if (in.contact_inhibited_ticks >= MAX_TO_GO_CONTACT_INHIBITED_TICKS) {
+    } else if (in.contact_inhibited_ticks >= MAX_TO_G0_CONTACT_INHIBITED_TICKS) {
       out.type = K_TYPE_COMM;
     }
   } else if (in.type == K_TYPE_COMM) {
@@ -290,7 +292,7 @@ step differentiate(Keratinocyte in -> out) {
       out.type = K_TYPE_CORN;
     }
   } else if (in.type == K_TYPE_HACAT) {
-    if (in.contact_inhibited_ticks >= MAX_TO_GO_CONTACT_INHIBITED_TICKS) {
+    if (in.contact_inhibited_ticks >= MAX_TO_G0_CONTACT_INHIBITED_TICKS) {
       out.type = K_TYPE_COMM;
     }
   }
@@ -325,7 +327,7 @@ step migrate(Keratinocyte in -> out) {
 
   if (random(1.0) < 0.1) {
     /* if rnd less than 0.1, then changed direction within +/- 45 degrees */
-    dir1 += PI * random(1.0)/4.0; // XXX This only allows positive changes, seems wrong
+    dir1 += random(PI / 4.0); // XXX This only allows positive changes, seems wrong
   }
   x1 += in.motility * cos(dir1);
   y1 += in.motility * sin(dir1);
@@ -372,6 +374,9 @@ step migrate(Keratinocyte in -> out) {
   out.dir = dir1;
 }
 
+// The original FlameGPU model works by resolving forces iteratively
+// multiple times, until all cells move a minimum amount or exceed an
+// iteration limit. We only do one iteration here.
 step resolve_forces(Keratinocyte in -> out) {
   float3 new_force = in.force;
   int num_xy_bonds = 0;
