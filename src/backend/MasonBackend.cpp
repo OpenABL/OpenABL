@@ -67,6 +67,14 @@ void MasonBackend::initEnv(const BackendContext &ctx) {
   std::string masonDir = ctx.depsDir + "/mason";
   if (directoryExists(masonDir)) {
     std::string jarPath = masonDir + "/mason.jar";
+
+    // Automatically detect J3D support on Ubuntu
+    std::string j3dCore = "/usr/share/java/j3dcore.jar";
+    std::string j3dUtils = "/usr/share/java/j3dutils.jar";
+    if (fileExists(j3dCore) && fileExists(j3dUtils)) {
+      jarPath += ":" + j3dCore + ":" + j3dUtils;
+    }
+
     setenv("MASON_JAR", jarPath.c_str(), true);
   }
 }

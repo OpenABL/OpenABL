@@ -30,7 +30,8 @@ Some of the backends have additional build or runtime dependencies. Most of them
 can be installed by running:
 
 ```sh
-sudo apt-get install git autoconf libtool libxml2-utils xsltproc default-jdk \
+sudo apt-get install git autoconf libtool libxml2-utils xsltproc \
+                     default-jdk libjava3d-java \
                      libgl1-mesa-dev libglu1-mesa-dev libglew-dev freeglut3-dev
 ```
 
