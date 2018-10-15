@@ -760,10 +760,11 @@ void MasonPrinter::printUI() {
   for (const AST::AgentDeclaration *agent : script.agents) {
     if (dim == 2) {
       *this << "        envPortrayal.setPortrayalForClass("
-            << agent->name << ".class, new OvalProtrayal2D(scale) {\n"
+            << agent->name << ".class, new OvalPortrayal2D() {\n"
             "            public void draw(Object object, Graphics2D graphics, DrawInfo2D info) {\n"
             "                " << agent->name << " agent = (" << agent->name << ") object;\n"
             "                paint = new Color(sim.getColor(agent));\n"
+            "                scale = defaultScale * sim.getSize(agent);\n"
             "                super.draw(object, graphics, info);\n"
             "            }\n"
             "        });\n";
