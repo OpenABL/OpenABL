@@ -1,0 +1,6 @@
+language: c
+
+script:
+    - mkdir ./build
+    - cmake -Bbuild -H.
+    - make -Cbuild -j2
