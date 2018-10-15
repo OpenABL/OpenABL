@@ -1,2 +1,2 @@
 Trying to assign value of type agentType{Foo} to variable of type int on line 6
-Trying to assign value of type agentMember{.bar} to variable of type int on line 7
+Trying to assign value of type agentMember{Foo.bar} to variable of type int on line 7

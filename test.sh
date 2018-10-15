@@ -17,6 +17,15 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 shopt -s nullglob
 
+if [ -e $DIR/OpenABL ]; then
+  OPENABL_BIN=$DIR/OpenABL
+elif [ -e $DIR/build/OpenABL ]; then
+  OPENABL_BIN=$DIR/build/OpenABL
+else
+  echo "Could not find OpenABL binary"
+  return 1
+fi
+
 # Save compilation time (FlameGPU)
 export SMS=32
 
@@ -25,7 +34,7 @@ export SMS=32
 for file in $DIR/test/*.abl; do
   noExtName=${file%.abl}
   echo $file
-  $DIR/OpenABL --lint-only -i $file 2> $noExtName.out
+  $OPENABL_BIN --lint-only -i $file 2> $noExtName.out
   rm -f $noExtName.diff
   if [ -f $noExtName.exp ]; then
     diff -b $noExtName.out $noExtName.exp > $noExtName.diff
@@ -50,7 +59,7 @@ for file in $DIR/examples/*abl; do
   mkdir -p $TARGET_DIR
 
   # Lint-only test
-  $DIR/OpenABL --lint-only -i $file > $TARGET_DIR/lint.out
+  $OPENABL_BIN --lint-only -i $file > $TARGET_DIR/lint.out
   if [ $? -ne 0 ]; then
     echo "LINT-FAIL $TARGET_DIR/lint.out"
     cat $TARGET_DIR/lint.out
@@ -64,7 +73,7 @@ for file in $DIR/examples/*abl; do
     mkdir -p $BACKEND_DIR
 
     # Codegen + Build test
-    $DIR/OpenABL -i $file -o $BACKEND_DIR -b $backend -B > build.log 2>&1
+    $OPENABL_BIN -i $file -o $BACKEND_DIR -b $backend -B > build.log 2>&1
     if [ $? -ne 0 ]; then
       echo "BUILD-FAIL $BACKEND_DIR/build.log"
       cat build.log

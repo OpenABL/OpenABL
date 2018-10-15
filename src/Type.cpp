@@ -51,7 +51,7 @@ static void printType(std::ostream &s, Type t) {
 
     AST::AgentDeclaration *decl = t.getAgentDecl();
     if (decl) {
-      s << "agentType{" << decl->name << "}";
+      s << "{" << decl->name << "}";
     }
   } else if (t.isAgentMember()) {
     s << "agentMember";
