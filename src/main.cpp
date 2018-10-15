@@ -89,6 +89,26 @@ void registerBuiltinFunctions(FunctionList &funcs) {
   };
   funcs.add(sumFn);
 
+  // count() how often a member has a certain value. The type of the second
+  // argument must match the type of the member
+  FunctionSignature countFn(
+      "count", "count_member", { Type::AGENT_MEMBER, Type::UNRESOLVED }, Type::INT32,
+      FunctionSignature::SEQ_STEP_ONLY, nullptr);
+  countFn.customIsCompatibleWith = [](const std::vector<Type> &argTypes) {
+    if (argTypes.size() != 2 && !argTypes[0].isAgentMember()) {
+      return false;
+    }
+
+    AST::AgentMember *member = argTypes[0].getAgentMember();
+    return argTypes[1].isCompatibleWith(member->type->resolved);
+  };
+  countFn.customGetConcreteSignature = [countFn](const std::vector<Type> &argTypes) {
+    FunctionSignature copy = countFn;
+    copy.paramTypes = argTypes;
+    return copy;
+  };
+  funcs.add(countFn);
+
   // log_csv() is a variadic function. We don't have native support for variadics,
   // implement some custom handlers.
   FunctionSignature logCsvFn(

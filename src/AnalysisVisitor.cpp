@@ -1326,7 +1326,11 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
   expr.calledFunc = sig->decl;
 
   if (expr.name == "count" || expr.name == "sum") {
-    script.reductions.insert(expr.calledSig.paramTypes[0]);
+    ReductionKind kind =
+      expr.calledSig.name == "count" ? ReductionKind::COUNT_TYPE :
+      expr.calledSig.name == "count_member" ? ReductionKind::COUNT_MEMBER :
+      ReductionKind::SUM_MEMBER;
+    script.reductions.insert({ kind, expr.calledSig.paramTypes[0] });
   }
 
   if (expr.name == "log_csv") {

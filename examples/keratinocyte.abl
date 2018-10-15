@@ -444,6 +444,16 @@ step resolve_forces(Keratinocyte in -> out) {
   out.pos = new_pos;
 }
 
+sequential step gather_stats() {
+  int num_stem = count(Keratinocyte.type, K_TYPE_STEM);
+  int num_ta = count(Keratinocyte.type, K_TYPE_TA);
+  int num_comm = count(Keratinocyte.type, K_TYPE_COMM);
+  int num_corn = count(Keratinocyte.type, K_TYPE_CORN);
+  int num_hacat = count(Keratinocyte.type, K_TYPE_HACAT);
+  float exec_time = getLastExecTime();
+  log_csv(num_stem, num_ta, num_comm, num_corn, num_hacat, exec_time);
+}
+
 void main() {
   for (int i : 0..num_agents) {
     // XXX What is the correct initialization?
@@ -465,6 +475,7 @@ void main() {
   }
 
   simulate(num_timesteps) {
-    cycle, differentiate, death_signal, migrate, resolve_forces
+    cycle, differentiate, death_signal, migrate, resolve_forces,
+    gather_stats
   }
 }

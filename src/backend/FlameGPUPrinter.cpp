@@ -183,9 +183,17 @@ void FlameGPUPrinter::print(const AST::CallExpression &expr) {
         return;
       } else if (expr.name == "count") {
         Type type = expr.getArg(0).type;
-        AST::AgentDeclaration *decl = type.getAgentDecl();
-        std::string state = decl->name + "_default";
-        *this << "get_agent_" << decl->name << "_" << state << "_count()";
+        if (expr.getNumArgs() == 2) {
+          AST::AgentDeclaration *decl = type.getAgentDecl();
+          AST::AgentMember *member = type.getAgentMember();
+          std::string state = decl->name + "_default";
+          *this << "count_" << decl->name << "_" << state << "_" << member->name
+                << "_variable(" << expr.getArg(1) << ")";
+        } else {
+          AST::AgentDeclaration *decl = type.getAgentDecl();
+          std::string state = decl->name + "_default";
+          *this << "get_agent_" << decl->name << "_" << state << "_count()";
+        }
         return;
       } else if (expr.name == "sum") {
         Type type = expr.getArg(0).type;

@@ -178,8 +178,15 @@ void MasonPrinter::print(const AST::CallExpression &expr) {
       *this << "_isDead = true";
     } else if (name == "count") {
       Type type = expr.getArg(0).type;
-      AST::AgentDeclaration *decl = type.getAgentDecl();
-      *this << "count" << decl->name << "()";
+      if (expr.getNumArgs() == 2) {
+        AST::AgentDeclaration *decl = type.getAgentDecl();
+        AST::AgentMember *member = type.getAgentMember();
+        *this << "count" << decl->name << "_" << member->name << "("
+              << expr.getArg(1) << ")";
+      } else {
+        AST::AgentDeclaration *decl = type.getAgentDecl();
+        *this << "count" << decl->name << "()";
+      }
     } else if (name == "sum") {
       Type type = expr.getArg(0).type;
       AST::AgentDeclaration *decl = type.getAgentDecl();
@@ -614,8 +621,10 @@ void MasonPrinter::print(const AST::Script &script) {
   }
 
   // Print reducton helper functions
-  for (const Type &type : script.reductions) {
-    if (type.isAgentType()) {
+  for (const ReductionInfo &info : script.reductions) {
+    ReductionKind kind = info.first;
+    Type type = info.second;
+    if (kind == ReductionKind::COUNT_TYPE) {
       AST::AgentDeclaration *decl = type.getAgentDecl();
       *this << nl << "public int count" << decl->name << "() {" << indent << nl
             << "Bag bag = env.getAllObjects();" << nl
@@ -626,7 +635,23 @@ void MasonPrinter::print(const AST::Script &script) {
             << outdent << nl << "}" << nl
             << "return count;"
             << outdent << nl << "}" << nl;
-    } else if (type.isAgentMember()) {
+    } else if (kind == ReductionKind::COUNT_MEMBER) {
+      AST::AgentDeclaration *decl = type.getAgentDecl();
+      AST::AgentMember *member = type.getAgentMember();
+      Type memberType = member->type->resolved;
+      *this << nl << "public int count" << decl->name << "_" << member->name << "("
+            << memberType << " value) {" << indent << nl
+            << "Bag bag = env.getAllObjects();" << nl
+            << "int count = 0;" << nl
+            << "for (int i = 0; i < bag.size(); i++) {" << indent << nl
+            << "Object maybe_agent = bag.get(i);" << nl
+            << "if (!(maybe_agent instanceof " << decl->name << ")) continue;"
+            << decl->name << " agent = (" << decl->name << ") maybe_agent;" << nl
+            << "if (agent.getInState()." << member->name << " == value) count++;" << nl
+            << outdent << nl << "}" << nl
+            << "return count;"
+            << outdent << nl << "}" << nl;
+    } else if (kind == ReductionKind::SUM_MEMBER) {
       AST::AgentDeclaration *decl = type.getAgentDecl();
       AST::AgentMember *member = type.getAgentMember();
       Value identity = Value::getSumIdentity(member->type->resolved);

@@ -192,4 +192,22 @@ struct FunctionList {
   }
 };
 
+/* Supported types of reductions across all agents */
+enum class ReductionKind {
+  COUNT_TYPE,
+  COUNT_MEMBER,
+  SUM_MEMBER,
+};
+
+using ReductionInfo = std::pair<ReductionKind, Type>;
+
+}
+
+namespace std {
+  template<> struct hash<OpenABL::ReductionInfo> {
+    size_t operator()(const OpenABL::ReductionInfo &t) const {
+      return std::hash<OpenABL::ReductionKind>()(t.first)
+           ^ std::hash<OpenABL::Type>()(t.second);
+    }
+  };
 }
