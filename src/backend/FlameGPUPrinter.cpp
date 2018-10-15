@@ -91,6 +91,7 @@ static bool isSameVar(const AST::Expression &expr, const AST::Var *var) {
 
 void FlameGPUPrinter::print(const AST::AssignStatement &stmt) {
   if (auto *memAcc = dynamic_cast<AST::MemberAccessExpression *>(&*stmt.left)) {
+    // out.member = value
     if (isSameVar(*memAcc->expr, currentOutVar)) {
       // Write to current agent variable. Rewrite it to the input variable instead
       const std::string &name = memAcc->member;
@@ -123,7 +124,26 @@ void FlameGPUPrinter::print(const AST::AssignStatement &stmt) {
       }
       return;
     }
+
+    // out.vec_member.x = value
+    if (auto *memAcc2 = dynamic_cast<AST::MemberAccessExpression *>(&*memAcc->expr)) {
+      if (isSameVar(*memAcc2->expr, currentOutVar)) {
+        assert(memAcc2->type.isVec());
+
+        const std::string &memberName = memAcc2->member;
+        const std::string &dimName = memAcc->member;
+        const AST::AgentMember *posMember = currentAgent->getPositionMember();
+        if (posMember && memberName == posMember->name) {
+          // Special case position member, as FlameGPU requires specific names here...
+          *this << "in->" << dimName << " = " << *stmt.right << ";";
+        } else {
+          *this << "in->" << memberName << "_" << dimName << " = " << *stmt.right << ";";
+        }
+        return;
+      }
+    }
   }
+
   GenericPrinter::print(stmt);
 }
 
