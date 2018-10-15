@@ -41,8 +41,15 @@ clean-flame:
 
 flamegpu: flamegpu/FLAMEGPU
 
-flamegpu/FLAMEGPU:
-	git clone https://github.com/FLAMEGPU/FLAMEGPU flamegpu/FLAMEGPU
+flamegpu/FLAMEGPU: flamegpu/FLAMEGPU.zip
+	cd flamegpu; \
+		unzip -D FLAMEGPU.zip; \
+		mv FLAMEGPU-master FLAMEGPU
+
+flamegpu/FLAMEGPU.zip:
+	mkdir -p flamegpu;
+	wget https://github.com/FLAMEGPU/FLAMEGPU/archive/master.zip \
+		-O flamegpu/FLAMEGPU.zip
 
 clean-flamegpu:
 	rm -rf flamegpu
