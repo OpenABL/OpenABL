@@ -265,6 +265,15 @@ void DMasonPrinter::print(const AST::CallExpression &expr) {
       if (!isRuntimeAdd) {
         *this << outdent << nl << "}" << nl;
       }
+    } else if (name == "count" || name == "sum") {
+      // TODO
+      *this << "0";
+    } else if (name == "getLastExecTime") {
+      // TODO
+      *this << "0.0";
+    } else if (name == "log_csv") {
+      // TODO
+      *this << "//log_csv()";
     } else if (name == "save") {
       // TODO Handle save
       *this << "//save()";
@@ -398,7 +407,8 @@ void DMasonPrinter::print(const AST::Script &script) {
     }
   }
 
-  *this <<"public DistributedField<Double" << dim << "D> getField() {" << indent << nl
+  *this << nl
+        <<"public DistributedField<Double" << dim << "D> getField() {" << indent << nl
         <<"return env;" << nl
         <<"}" << outdent << nl
         <<"public void addToField(RemotePositionedAgent<Double" << dim << "D> rm, Double" << dim << "D loc) {"<< indent << nl
