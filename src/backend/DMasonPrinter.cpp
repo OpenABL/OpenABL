@@ -413,6 +413,9 @@ void DMasonPrinter::print(const AST::Script &script) {
         << outdent << nl << "}";
   *this << nl << "public static int getColor(Object obj) {" << indent
         << nl << "return 0;"
+        << outdent << nl << "}"
+        << nl << "public static int getSize(Object obj) {" << indent
+        << nl << "return 1;"
         << outdent << nl << "}";
 
   *this << outdent << nl << "}";

@@ -216,7 +216,7 @@ void AnalysisVisitor::enter(AST::FunctionDeclaration &decl) {
   // codegen it. A more general solution would be to not emit functions that aren't
   // used.
   if ((decl.name == "getColor" || decl.name == "getSize")
-      && backend != "mason" && backend != "mason2" && backend != "dmason") {
+      && backend != "mason" && backend != "dmason") {
     currentFunc = &decl;
     return;
   }
