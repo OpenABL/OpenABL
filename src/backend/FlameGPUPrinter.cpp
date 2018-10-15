@@ -285,6 +285,17 @@ void FlameGPUPrinter::print(const AST::MemberAccessExpression &expr) {
   }
 }
 
+void FlameGPUPrinter::print(const AST::ReturnStatement &stmt) {
+  if (currentFunc) {
+    // We're inside a step function, where we need to "return 0;"
+    assert(!stmt.expr);
+    *this << "return 0;";
+    return;
+  }
+
+  GenericPrinter::print(stmt);
+}
+
 void FlameGPUPrinter::print(const AST::ConstDeclaration &stmt) {
   if (stmt.type->resolved.isVec()) {
     // Don't generate constants for vec2/vec3, as we can't initialized them
@@ -509,7 +520,6 @@ void FlameGPUPrinter::print(const AST::Script &script) {
         *this << nl << "return 0;";
       }
       *this << outdent << nl << "}\n\n";
-      currentFunc = nullptr;
     }
   }
 

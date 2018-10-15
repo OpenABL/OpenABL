@@ -34,6 +34,7 @@ struct FlameGPUPrinter : public GenericPrinter {
   void print(const AST::AgentCreationExpression &);
   void print(const AST::NewArrayExpression &);
   void print(const AST::MemberAccessExpression &);
+  void print(const AST::ReturnStatement &);
   void print(const AST::ForStatement &);
   void print(const AST::SimulateStatement &);
   void print(const AST::AgentMember &);
