@@ -1,7 +1,15 @@
 language: c
 
+addons:
+  apt:
+    packages:
+      - libjava3d-java
+
+install:
+    - make -Cdeps mason
+
 script:
     - mkdir ./build
     - cmake -Bbuild -H.
     - make -Cbuild -j2
-    - BACKENDS=c ./test.sh
+    - BACKENDS="c mason" ./test.sh
