@@ -58,7 +58,13 @@ void DMasonBackend::generate(
 
   bool useFloat = ctx.config.getBool("use_float", false);
   if (useFloat) {
-    throw BackendError("Floats are not supported by the Mason backend");
+    throw BackendError("Floats are not supported by the DMason backend");
+  }
+
+  if (script.usesRuntimeAdditionAtDifferentPos) {
+    throw BackendError(
+      "Runtime addition of agents at a different position "
+      "than the parent is not supported by DMason");
   }
 
   writeToFile(ctx.outputDir + "/Sim.java", generateMainCode(script));

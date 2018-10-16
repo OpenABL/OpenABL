@@ -1301,11 +1301,10 @@ void AnalysisVisitor::leave(AST::CallExpression &expr) {
         auto it2 = creationExpr->memberMap.find(posMember->name);
         assert(it2 != creationExpr->memberMap.end());
 
-        /*const AST::Expression &posExpr = *it2->second;
+        const AST::Expression &posExpr = *it2->second;
         if (!isInPos(posExpr, posMember->name, *currentFunc)) {
-          err << "Position of runtime-added agent must be original position of agent" << expr.loc;
-          return;
-        }*/
+          script.usesRuntimeAdditionAtDifferentPos = true;
+        }
       }
 
       if (currentFunc->runtimeAddedAgent) {

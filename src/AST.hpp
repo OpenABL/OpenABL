@@ -693,6 +693,7 @@ struct Script : public Node {
   bool usesRuntimeAddition = false;
   bool usesLogging = false;
   bool usesTiming = false;
+  bool usesRuntimeAdditionAtDifferentPos = false;
 
   Script(DeclarationList *decls, Location loc)
     : Node{loc}, decls{decls} {}
