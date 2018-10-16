@@ -33,7 +33,7 @@ default_agent_ranges = {
     'mason2': (250, 128000),
     'dmason': (250, 128000),
     'flame': (250, 4000),
-    'flamegpu': (250, 10240000),
+    'flamegpu': (250, 1024000),
 }
 
 epilog = '''
