@@ -206,7 +206,7 @@ using ReductionInfo = std::pair<ReductionKind, Type>;
 namespace std {
   template<> struct hash<OpenABL::ReductionInfo> {
     size_t operator()(const OpenABL::ReductionInfo &t) const {
-      return std::hash<OpenABL::ReductionKind>()(t.first)
+      return std::hash<int>()(static_cast<int>(t.first))
            ^ std::hash<OpenABL::Type>()(t.second);
     }
   };
