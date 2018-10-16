@@ -4,3 +4,4 @@ script:
     - mkdir ./build
     - cmake -Bbuild -H.
     - make -Cbuild -j2
+    - BACKENDS=c ./test.sh

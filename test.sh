@@ -23,8 +23,10 @@ elif [ -e $DIR/build/OpenABL ]; then
   OPENABL_BIN=$DIR/build/OpenABL
 else
   echo "Could not find OpenABL binary"
-  return 1
+  exit 1
 fi
+
+EXIT_CODE=0
 
 # Save compilation time (FlameGPU)
 export SMS=32
@@ -39,12 +41,14 @@ for file in $DIR/test/*.abl; do
   if [ -f $noExtName.exp ]; then
     diff -b $noExtName.out $noExtName.exp > $noExtName.diff
     if [ $? -ne 0 ]; then
-        echo "DIFF $noExtName.diff"
-        cat $noExtName.diff
+      echo "DIFF $noExtName.diff"
+      cat $noExtName.diff
+      EXIT_CODE=1
     fi
   else
     echo "OUT Missing .exp file"
     cat $noExtName.out
+    EXIT_CODE=1
   fi
 done
 
@@ -63,6 +67,7 @@ for file in $DIR/examples/*abl; do
   if [ $? -ne 0 ]; then
     echo "LINT-FAIL $TARGET_DIR/lint.out"
     cat $TARGET_DIR/lint.out
+    EXIT_CODE=1
     continue
   fi
 
@@ -77,6 +82,9 @@ for file in $DIR/examples/*abl; do
     if [ $? -ne 0 ]; then
       echo "BUILD-FAIL $BACKEND_DIR/build.log"
       cat build.log
+      #EXIT_CODE=1 # Need to distinguish "unsupported" from "error"
     fi
   done
 done
+
+exit $EXIT_CODE
