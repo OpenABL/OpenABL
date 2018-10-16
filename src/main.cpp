@@ -267,6 +267,11 @@ int main(int argc, char **argv) {
 
   try {
     backend.generate(mainScript, backendCtx);
+  } catch (const BackendError &e) {
+    // The backend does not support a feature.
+    // Return a different exit code to distinguish this case.
+    std::cerr << e.what() << std::endl;
+    return 2;
   } catch (const std::runtime_error &e) {
     std::cerr << e.what() << std::endl;
     return 1;

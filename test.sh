@@ -79,10 +79,16 @@ for file in $DIR/examples/*abl; do
 
     # Codegen + Build test
     $OPENABL_BIN -i $file -o $BACKEND_DIR -b $backend -B > build.log 2>&1
-    if [ $? -ne 0 ]; then
+    BUILD_EXIT_CODE=$?
+    if [ $BUILD_EXIT_CODE -eq 2 ]; then
+      # Some feature not supported by backend
+      echo "BUILD-SKIP $BACKEND_DIR/build.log"
+      cat build.log
+    elif [ $BUILD_EXIT_CODE -ne 0 ]; then
+      # Actual build failure
       echo "BUILD-FAIL $BACKEND_DIR/build.log"
       cat build.log
-      #EXIT_CODE=1 # Need to distinguish "unsupported" from "error"
+      EXIT_CODE=1
     fi
   done
 done
