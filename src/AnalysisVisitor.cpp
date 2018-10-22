@@ -333,7 +333,7 @@ Value AnalysisVisitor::evalExpression(const AST::Expression &expr) {
           } else {
             Value v1 = evalExpression(call->getArg(0)).toFloatImplicit();
             Value v2 = evalExpression(call->getArg(1)).toFloatImplicit();
-            Value v3 = evalExpression(call->getArg(1)).toFloatImplicit();
+            Value v3 = evalExpression(call->getArg(2)).toFloatImplicit();
             if (v1.isInvalid() || v2.isInvalid() || v3.isInvalid()) {
               return {};
             }

@@ -69,7 +69,9 @@ param int num_timesteps = 100;
 // Keep a constant initial agent density
 float SURFACE_WIDTH = 50 * sqrt(num_agents);
 
-environment { max: float3(SURFACE_WIDTH) }
+environment {
+  max: float3(SURFACE_WIDTH, SURFACE_WIDTH, 100)
+}
 
 int getColor(Keratinocyte k) {
   if (k.type == K_TYPE_STEM) {

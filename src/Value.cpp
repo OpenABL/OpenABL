@@ -376,7 +376,7 @@ AST::Expression *Value::toExpression() const {
       args->emplace_back(makeFloatLiteral(vec3.x));
       args->emplace_back(makeFloatLiteral(vec3.y));
       args->emplace_back(makeFloatLiteral(vec3.z));
-      auto *call = new AST::CallExpression("float2", args, location{});
+      auto *call = new AST::CallExpression("float3", args, location{});
       call->kind = AST::CallExpression::Kind::CTOR;
       call->type = type;
       return call;
