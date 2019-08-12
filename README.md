@@ -207,3 +207,20 @@ run scripts.
  * `dmason` backend:
    * `DMASON_JAR` must be set to the DMASON Jar file.
    * `DMASON_RESOURCES` must be set to the DMASON `resources` directory.
+
+## Reference
+
+If you find this code useful in your research, please consider citing:
+
+```
+@inproceedings{CosenzaEUROPAR18,
+  author    = {Biagio Cosenza and Nikita Popov and Ben Juurlink and Paul Richmond and Mozhgan Kabiri Chimeh and Carmine Spagnuolo and Gennaro Cordasco and Vittorio Scarano},
+  title     = {OpenABL: A Domain-Specific Language for Parallel and Distributed Agent-Based Simulations},
+  booktitle = {International European Conference on Parallel and Distributed Computing (Euro-Par)},
+  pages     = {505--518},
+  year      = {2018},
+  url       = {https://doi.org/10.1007/978-3-319-96983-1\_36},
+  doi       = {10.1007/978-3-319-96983-1\_36}
+}
+```
+
